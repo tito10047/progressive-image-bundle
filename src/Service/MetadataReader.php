@@ -38,25 +38,26 @@ class MetadataReader {
 			try {
 				$path = $this->pathResolver->resolve($src, []);
 			}catch (PathResolutionException $e){
-				if ($this->fallbackPath === null) {
-					$this->dispatcher->dispatch(
-						new ImageNotFoundEvent($src, get_class($this->loader)),
-						ImageNotFoundEvent::NAME
-					);
+				$this->dispatchEvent($src);
+
+				if (!$this->fallbackPath){
 					throw $e;
 				}
-
 				try {
 					$path = $this->pathResolver->resolve($this->fallbackPath, []);
 				}catch (PathResolutionException $e){
-					$this->dispatcher->dispatch(
-						new ImageNotFoundEvent($src, get_class($this->loader)),
-						ImageNotFoundEvent::NAME
-					);
+					$this->dispatchEvent($this->fallbackPath);
 					throw $e;
 				}
 			}
 			return $this->analyzer->analyze($this->loader, $path);
 		});
+	}
+
+	function dispatchEvent(string $src): void {
+		$this->dispatcher->dispatch(
+			new ImageNotFoundEvent($src, get_class($this->loader)),
+			ImageNotFoundEvent::NAME
+		);
 	}
 }

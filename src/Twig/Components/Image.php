@@ -10,7 +10,7 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 
 #[AsTwigComponent]
-class ProgressiveImageComponent {
+class Image {
 
 
 	public string         $src;

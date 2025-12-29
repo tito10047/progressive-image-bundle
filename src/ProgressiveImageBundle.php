@@ -2,10 +2,14 @@
 
 namespace Tito10047\ProgressiveImageBundle;
 
+use Symfony\Component\DependencyInjection\Exception\LogicException;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Contracts\Cache\CacheInterface;
 use Tito10047\ProgressiveImageBundle\Analyzer\GdImageAnalyzer;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImagickAnalyzer;
+use Tito10047\ProgressiveImageBundle\DependencyInjection\Compiler\ProgressiveImageBundleCompilerPass;
+use Tito10047\ProgressiveImageBundle\DependencyInjection\ProgressiveImageExtension;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
@@ -19,13 +23,19 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
  */
 class ProgressiveImageBundle extends AbstractBundle
 {
+
+	protected string $extensionAlias = 'progressive_image';
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition->import('../config/definition.php');
     }
+
     
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
+		if (!isset($builder->getParameter('kernel.bundles')['TwigBundle'])) {
+			throw new LogicException('The TwigBundle is not registered in your application. Try running "composer require symfony/twig-bundle".');
+		}
         $container->import('../config/services.php');
 
         $this->configureResolvers($config, $container);
@@ -38,11 +48,12 @@ class ProgressiveImageBundle extends AbstractBundle
 		};
 
 		$resolver   = $config['resolver']??'filesystem';
-		$resolverId = match ($resolver) {
-			"filesystem"=>"progressive_image.resolver.filesystem",
-			"asset_mapper"=>"progressive_image.resolver.asset_mapper",
-			default => $resolver,
-		};
+		$maybeService = 'progressive_image.resolver.' . $resolver;
+		if ($builder->hasDefinition($maybeService)) {
+			$resolverId = $maybeService;
+		}else{
+			$resolverId = $resolver;
+		}
 		$loaderId = $config['loader']??'progressive_image.filesystem.loader';
 		$cacheId = $config['cache']??CacheInterface::class;
 
@@ -61,6 +72,17 @@ class ProgressiveImageBundle extends AbstractBundle
         if (isset($config['fallback_image'])) {
             $container->services()->get(MetadataReader::class)->arg('$fallbackPath', $config['fallback_image']);
         }
+
+
+			// 3. "Vložíme" našu konfiguráciu priamo do TwigComponentBundle
+			$builder->prependExtensionConfig('twig_component', [
+				'defaults' => [
+					'EasyCorp\\Bundle\\EasyAdminBundle\\Twig\\Component\\' => [
+						'template_directory' => '@PgImage/components/',
+						'name_prefix' => 'pgi',
+					],
+				],
+			]);
     }
 
     private function configureResolvers(array $config, ContainerConfigurator $container): void
@@ -100,4 +122,9 @@ class ProgressiveImageBundle extends AbstractBundle
                  ->arg('$allowUnresolvable', true);
         }
     }
+
+	public function getNamespace(): string {
+		return 'PgImage';
+	}
+
 }

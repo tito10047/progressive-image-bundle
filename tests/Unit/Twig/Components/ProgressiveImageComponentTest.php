@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
-use Tito10047\ProgressiveImageBundle\Twig\Components\ProgressiveImageComponent;
+use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 
 class ProgressiveImageComponentTest extends TestCase
 {
@@ -26,7 +26,7 @@ class ProgressiveImageComponentTest extends TestCase
             ->with('test.jpg')
             ->willReturn('decorated-test.jpg');
 
-        $component = new ProgressiveImageComponent($metadataReader, [$decorator]);
+        $component = new Image($metadataReader, [$decorator]);
         $component->src = 'test.jpg';
         $component->postMount();
 
@@ -43,7 +43,7 @@ class ProgressiveImageComponentTest extends TestCase
             ->method('getMetadata')
             ->willReturn(null);
 
-        $component = new ProgressiveImageComponent($metadataReader, []);
+        $component = new Image($metadataReader, []);
         $component->src = 'test.jpg';
         $component->postMount();
 

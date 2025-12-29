@@ -14,7 +14,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 ErrorHandler::register(null, false);
 
-(new Dotenv())->bootEnv(dirname(__DIR__).'/tests/App/AssetMapper/.env');
+(new Dotenv())->bootEnv(dirname(__DIR__).'/tests/.env');
 //$kernel = new Kernel('test', 'AssetMapper/config');
 //(new Symfony\Component\Filesystem\Filesystem())->remove($kernel->getCacheDir());
 //

@@ -4,6 +4,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Integration;
 
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
+use Symfony\UX\StimulusBundle\StimulusBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
@@ -23,6 +24,7 @@ class ProgressiveImageTestingKernel extends Kernel {
 			new FrameworkBundle(),
 			new TwigComponentBundle(),
 			new TwigBundle(),
+			new StimulusBundle(),
 			new ProgressiveImageBundle(),
 		];
 	}

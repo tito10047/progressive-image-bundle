@@ -11,6 +11,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
+use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 
@@ -64,11 +65,18 @@ class ImageComponentTest extends PGITestCase {
 		$html = $this->renderTwigComponent(
 			name:"pgi:Image",
 			data:[
-				"src"=>"/test.png"
+				"src"=>"/test.png",
+				"alt"=>"test image"
 			]
 		);
 
-		$this->assertStringContainsString('data-src="/test.png"', $html);
+		$stimulus = ProgressiveImageBundle::STIMULUS_CONTROLLER;
+
+		$this->assertStringContainsString("data-{$stimulus}-src-value=\"/test.png\"", $html);
+		$this->assertStringContainsString("data-controller=\"{$stimulus}\"", $html);
+		$this->assertStringContainsString("data-{$stimulus}-target=\"placeholder\"", $html);
+		$this->assertStringContainsString("data-{$stimulus}-target=\"highRes\"", $html);
+		$this->assertStringContainsString("data-{$stimulus}-target=\"errorOverlay\"", $html);
 	}
 
 	private function _bootKernel(): void {

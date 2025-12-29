@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@hotwired/stimulus": "^3.2.2",
+    "core-js": "^3.47.0"
+  }
+}

@@ -1,0 +1,43 @@
+{
+    "name": "tito10047/progressive-image-bundle",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "description": "Lqip image preloading",
+    "minimum-stability": "stable",
+    "keywords": [
+        "symfony",
+        "preference",
+        "batch",
+        "pagination",
+        "ui",
+        "symfony-ux"
+    ],
+    "require": {
+        "php": ">=8.2",
+        "kornrunner/blurhash": "^1.2",
+        "symfony/framework-bundle": "^6.4|^7.4|^6.4|^7.4|^8.0",
+        "symfony/translation": "^6.4|^7.4|^8.0",
+        "symfony/twig-bundle": "^6.4|^7.4|^8.0",
+        "symfony/ux-twig-component": "^2.31",
+    },
+    "require-dev": {
+        "ext-imagick": "*",
+        "liip/imagine-bundle": "^2.16",
+        "symfony/asset-mapper": "^6.4|^7.4|^8.0"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Tito10047\\ProgressiveImageBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tito10047\\ProgressiveImageBundle\\Tests\\": "tests/"
+        }
+    }
+}

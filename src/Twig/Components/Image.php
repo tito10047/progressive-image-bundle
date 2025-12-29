@@ -13,9 +13,9 @@ use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 class Image {
 
 
-	public string         $src;
-	public string         $filter;
-	public string         $alt;
+	public ?string         $src = null;
+	public ?string         $filter = null;
+	public ?string         $alt = null;
 	private ?ImageMetadata $metadata;
 
 	/**

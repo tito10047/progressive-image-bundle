@@ -19,7 +19,6 @@ class ImageComponentTest extends PGITestCase {
 
 
 	function testDefaultRendered() {
-		$this->markTestSkipped("Not working yet");
 		self::bootKernel([
 
 		]);

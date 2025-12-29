@@ -38,12 +38,6 @@ class ProgressiveImageTestingKernel extends Kernel {
 					'log' => true,
 				],
 			]);
-			$container->loadFromExtension('twig_component', [
-				'anonymous_template_directory' => 'components/',
-				'defaults' => [
-					'App\Twig\Components\\'=> 'components/'
-				]
-			]);
 			$container->loadFromExtension('progressive_image', $this->knpUIpsumConfig);
 		});
 	}

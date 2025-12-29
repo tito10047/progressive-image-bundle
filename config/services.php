@@ -7,6 +7,7 @@ use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
@@ -34,4 +35,6 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('progressive_image.resolver.filesystem',FileSystemResolver::class);
     $services->set('progressive_image.resolver.asset_mapper',AssetMapperResolver::class);
+
+
 };

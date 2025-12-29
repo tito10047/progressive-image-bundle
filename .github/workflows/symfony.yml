@@ -15,7 +15,6 @@ jobs:
         runs-on: ${{ matrix.operating-system }}
 
         # Docs: https://docs.github.com/en/actions/using-containerized-services
-        services:
         strategy:
             fail-fast: false
             matrix:

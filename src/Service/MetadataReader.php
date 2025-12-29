@@ -30,14 +30,22 @@ class MetadataReader {
 	 * @throws InvalidArgumentException
 	 * @throws PathResolutionException
 	 */
-	public function getMetadata(string $src):ImageMetadata {
+	public function getMetadata(string $src): ?ImageMetadata {
 		return $this->cache->get(md5($src), function (ItemInterface $item) use ($src) {
 			if ($this->ttl){
 				$item->expiresAfter($this->ttl);
 			}
 			try {
 				$path = $this->pathResolver->resolve($src, []);
-			}catch (PathResolutionException){
+			}catch (PathResolutionException $e){
+				if ($this->fallbackPath === null) {
+					$this->dispatcher->dispatch(
+						new ImageNotFoundEvent($src, get_class($this->loader)),
+						ImageNotFoundEvent::NAME
+					);
+					throw $e;
+				}
+
 				try {
 					$path = $this->pathResolver->resolve($this->fallbackPath, []);
 				}catch (PathResolutionException $e){

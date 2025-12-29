@@ -12,7 +12,7 @@ class FileSystemLoader implements LoaderInterface {
 	private $file;
 
 	public function load(string $path) {
-		if (![file_exists($path), is_file($path)]) {
+		if (!file_exists($path) || !is_file($path)) {
 			throw new PathResolutionException("Path $path does not exist or is not a file.");
 		}
 		return $this->file = fopen($path, 'r');

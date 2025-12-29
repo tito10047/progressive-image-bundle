@@ -59,9 +59,6 @@ class GdImageAnalyzer implements ImageAnalyzerInterface {
 
 		$hash = Blurhash::encode($pixels, $this->componentsX, $this->componentsY);
 
-		imagedestroy($image);
-		imagedestroy($resizedImage);
-
 		return new ImageMetadata(
 			$hash,
 			$width,

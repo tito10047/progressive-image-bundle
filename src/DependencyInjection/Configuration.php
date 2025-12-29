@@ -76,8 +76,8 @@ class Configuration implements ConfigurationInterface
                     ->scalarPrototype()->end()
                 ->end()
             ->end()
-        ;
-
+        ->end()
+    ;
         return $treeBuilder;
     }
 }

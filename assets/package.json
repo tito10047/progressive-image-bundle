@@ -1,5 +1,5 @@
 {
-  "name": "@tito10047/persistent-state-bundle",
+  "name": "@tito10047/progressive-image-bundle",
   "description": "Easily manage persistent checkbox selections and key-value settings in Symfony applications.",
   "version": "1.0.0",
   "license": "MIT",
@@ -11,14 +11,14 @@
   "symfony": {
     "controllers": {
       "selection": {
-        "main": "controllers/selection_controller.js",
+        "main": "controllers/progressive-image_controller.js",
         "webpackMode": "eager",
         "fetch": "eager",
         "enabled": true
       }
     },
     "importmap": {
-      "@hotwired/stimulus": "^3.0.0"
+      "blurhash": "2.0.5"
     }
   },
   "peerDependencies": {

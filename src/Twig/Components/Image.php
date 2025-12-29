@@ -7,6 +7,7 @@ use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
+use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 
 #[AsTwigComponent]
@@ -56,4 +57,7 @@ class Image {
 		return $src;
 	}
 
+	public function getController(): ?string {
+		return ProgressiveImageBundle::STIMULUS_CONTROLLER;
+	}
 }

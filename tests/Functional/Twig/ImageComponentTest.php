@@ -9,6 +9,7 @@
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
 
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
@@ -17,11 +18,17 @@ class ImageComponentTest extends PGITestCase {
 
 	use InteractsWithTwigComponents;
 
+	private string     $tempDir;
+	private Filesystem $fs;
+
+	protected function setUp(): void {
+		$this->fs      = new Filesystem();
+		$this->tempDir = sys_get_temp_dir() . '/progressive_image_test_' . uniqid();
+		$this->fs->mkdir($this->tempDir);
+	}
 
 	function testDefaultRendered() {
-		self::bootKernel([
-
-		]);
+		self::bootKernel();
 
 		$component = $this->mountTwigComponent(
 			name: 'pgi:Image',
@@ -32,5 +39,50 @@ class ImageComponentTest extends PGITestCase {
 
 		$this->assertInstanceOf(Image::class, $component);
 		$this->assertSame("/foo.jpg", $component->src);
+	}
+
+	public function testGenerateHash():void {
+		$this->_bootKernel();
+
+		/** @var Image $component */
+		$component = $this->mountTwigComponent(
+			name: 'pgi:Image',
+			data:[
+				"src"=>"/test.png"
+			]
+		);
+		$this->assertInstanceOf(Image::class, $component);
+
+		$this->assertNotEmpty($component->getHash());
+		$this->assertGreaterThan(0, $component->getWidth());
+		$this->assertGreaterThan(0, $component->getHeight());
+	}
+
+	public function testRender():void {
+		$this->bootKernel();
+
+		$html = $this->renderTwigComponent(
+			name:"pgi:Image",
+			data:[
+				"src"=>"/test.png"
+			]
+		);
+
+		$this->assertStringContainsString('data-src="/test.png"', $html);
+	}
+
+	private function _bootKernel(): void {
+		$imagePath = $this->tempDir . '/test.png';
+		$this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);
+
+		self::bootKernel([
+			'resolvers' => [
+				'test' => [
+					'type'  => 'filesystem',
+					'roots' => [realpath($this->tempDir)]
+				]
+			],
+			'resolver'  => 'test'
+		]);
 	}
 }

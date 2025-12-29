@@ -1,20 +1,19 @@
-<div {{ attributes.defaults(stimulus_controller('Component/ProgressiveImage/ProgressiveImage', {
-	src: asset(src) | imagine_filter(filter),
-	errorSrc: asset('images/image-not-found.webp'),
+<div {{ attributes.defaults(stimulus_controller(this.controller, {
+	src: asset(this.decoratedSrc),
 	hash: this.hash
 })).defaults({
 	class:'relative overflow-hidden'
 }) }}
 >
 	<canvas
-			{{ stimulus_target('Component/ProgressiveImage/ProgressiveImage','placeholder') }}
-			width="32" height="32"
+			{{ stimulus_target(this.controller,'placeholder') }}
+			width="{{ this.width }}" height="{{ this.height }}"
 			class="absolute inset-0 w-full h-full"
 			title="{{ 'Loading...'|trans }}"
 	></canvas>
 
 <img
-	{{ stimulus_target('Component/ProgressiveImage/ProgressiveImage','highRes') }}
+	{{ stimulus_target(this.controller,'highRes') }}
 		class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ease-in-out"
 {#	{{ attributes.only('class').defaults({class:'absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ease-in-out'}) }}#}
 	alt="{{ alt }}"
@@ -23,11 +22,11 @@
 >
 	{# 3. HTML Error Overlay - zobrazí sa len pri chybe #}
 	<div
-			{{ stimulus_target('Component/ProgressiveImage/ProgressiveImage','errorOverlay') }}
+			{{ stimulus_target(this.controller,'errorOverlay') }}
 			class="hidden absolute inset-0 w-full h-full z-20 opacity-0 transition-opacity duration-700 ease-in-out"
 	>
 		{# Pozadie pre 404 (bez textu) #}
-		<img src="{{ asset('images/error_overlay.png') }}" class="absolute inset-0 w-full h-full object-cover" alt="Image not found">
+{#		<img src="{{ asset('images/error_overlay.png') }}" class="absolute inset-0 w-full h-full object-cover" alt="Image not found">#}
 
 		{# HTML Textová vrstva #}
 		<div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-center p-4">

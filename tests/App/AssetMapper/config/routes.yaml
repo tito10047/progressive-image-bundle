@@ -1,0 +1,5 @@
+controllers:
+    resource:
+        path: ../Src/Controller/
+        namespace: Tito10047\ProgressiveImageBundle\Tests\App\AssetMapper\Src\Controller
+    type: attribute

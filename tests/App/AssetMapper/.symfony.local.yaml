@@ -1,0 +1,6 @@
+proxy:
+    domains:
+        - pgi-mapper
+http:
+    daemon: true
+workers:

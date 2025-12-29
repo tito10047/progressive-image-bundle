@@ -33,7 +33,7 @@ class FileSystemResolver implements PathResolverInterface
     /**
      * @throws PathResolutionException
      */
-    public function resolve(string $path): string
+    public function resolve(string $path, array $context = []): string
     {
         if (null !== $absolute = $this->locateUsingRootPlaceholder($path)) {
             return $this->sanitizeAbsolutePath($absolute);

@@ -16,14 +16,18 @@
         "php": ">=8.2",
         "kornrunner/blurhash": "^1.2",
         "symfony/framework-bundle": "^6.4|^7.4|^6.4|^7.4|^8.0",
+        "symfony/stimulus-bundle": "^2.31",
         "symfony/translation": "^6.4|^7.4|^8.0",
         "symfony/twig-bundle": "^6.4|^7.4|^8.0",
-        "symfony/ux-twig-component": "^2.31",
+        "symfony/ux-twig-component": "^2.31"
     },
     "require-dev": {
         "ext-imagick": "*",
         "liip/imagine-bundle": "^2.16",
-        "symfony/asset-mapper": "^6.4|^7.4|^8.0"
+        "symfony/asset-mapper": "^6.4|^7.4|^8.0",
+        "symfony/dotenv": "^7.4",
+        "symfony/test-pack": "^1.2",
+        "symfony/yaml": "^7.4"
     },
     "config": {
         "sort-packages": true,

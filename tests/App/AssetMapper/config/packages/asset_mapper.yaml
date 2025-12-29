@@ -1,0 +1,13 @@
+framework:
+    asset_mapper:
+        # The paths to make available to the asset mapper.
+        paths:
+            - '%kernel.project_dir%/tests/App/AssetMapper/assets'
+        missing_import_mode: strict
+        importmap_path: '%kernel.project_dir%/tests/App/AssetMapper/importmap.php'
+        vendor_dir: '%kernel.project_dir%/tests/App/AssetMapper/assets/vendor/'
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn

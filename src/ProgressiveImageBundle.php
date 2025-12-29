@@ -2,6 +2,13 @@
 
 namespace Tito10047\ProgressiveImageBundle;
 
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Contracts\Cache\CacheInterface;
+use Tito10047\ProgressiveImageBundle\Analyzer\GdImageAnalyzer;
+use Tito10047\ProgressiveImageBundle\Analyzer\ImagickAnalyzer;
+use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
+use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
+use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -20,5 +27,77 @@ class ProgressiveImageBundle extends AbstractBundle
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $container->import('../config/services.php');
+
+        $this->configureResolvers($config, $container);
+
+        $driver = $config['driver'] ?? 'gd';
+		$analyzerId = match ($driver) {
+			"imagick" => "progressive_image.analyzer.imagick",
+			"gd" => "progressive_image.analyzer.gd",
+			default => $driver,
+		};
+
+		$resolver   = $config['resolver']??'filesystem';
+		$resolverId = match ($resolver) {
+			"filesystem"=>"progressive_image.resolver.filesystem",
+			"asset_mapper"=>"progressive_image.resolver.asset_mapper",
+			default => $resolver,
+		};
+		$loaderId = $config['loader']??'progressive_image.filesystem.loader';
+		$cacheId = $config['cache']??CacheInterface::class;
+
+        $container->services()
+            ->get(MetadataReader::class)
+            ->arg('$analyzer', new Reference($analyzerId))
+            ->arg('$loader', new Reference($loaderId))
+            ->arg('$pathResolver', new Reference($resolverId))
+			->arg('$cache', new Reference($cacheId))
+        ;
+
+        if (isset($config['ttl'])) {
+            $container->services()->get(MetadataReader::class)->arg('$ttl', $config['ttl']);
+        }
+
+        if (isset($config['fallback_image'])) {
+            $container->services()->get(MetadataReader::class)->arg('$fallbackPath', $config['fallback_image']);
+        }
+    }
+
+    private function configureResolvers(array $config, ContainerConfigurator $container): void
+    {
+        $resolvers = $config['resolvers'] ?? [];
+        foreach ($resolvers as $name => $resolverConfig) {
+            $id = 'progressive_image.resolver.' . $name;
+            $services = $container->services();
+
+            if ('filesystem' === $resolverConfig['type']) {
+                $services->set($id, FileSystemResolver::class)
+                    ->arg('$roots', $resolverConfig['roots'] ?? [])
+                    ->arg('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? false);
+            } elseif ('asset_mapper' === $resolverConfig['type']) {
+                $services->set($id, AssetMapperResolver::class);
+            }
+            // Chain resolver logic can be added here if needed
+        }
+
+        if (isset($config['resolver']) && !isset($resolvers[$config['resolver']])) {
+             // If a default resolver type is used but not defined in resolvers array
+             if (in_array($config['resolver'], ['filesystem', 'asset_mapper'])) {
+                  // handle basic types if they are used as string directly
+             }
+        }
+        
+        // Register a default alias if possible
+        if (isset($config['resolver']) && isset($resolvers[$config['resolver']])) {
+            $container->services()->alias('progressive_image.resolver.default', 'progressive_image.resolver.' . $config['resolver']);
+        } elseif (!empty($resolvers)) {
+            $firstResolver = array_key_first($resolvers);
+            $container->services()->alias('progressive_image.resolver.default', 'progressive_image.resolver.' . $firstResolver);
+        } else {
+             // Fallback if no resolvers defined, register a basic one to avoid ServiceNotFoundException
+             $container->services()->set('progressive_image.resolver.default', FileSystemResolver::class)
+                 ->arg('$roots', ['%kernel.project_dir%/public'])
+                 ->arg('$allowUnresolvable', true);
+        }
     }
 }

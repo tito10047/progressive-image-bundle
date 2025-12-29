@@ -1,4 +1,4 @@
-my_image_custom:
+progressive_image:
     resolvers:
         my_path_resolver:
             type: "filesystem"
@@ -12,7 +12,7 @@ my_image_custom:
                 - 'my_path_resolver'
                 - 'my_asset_mapper_resolver'
     driver: "gd" # alebo "imagick"
-    loader: "app.loader"
+    loader: "progressive_image.filesystem.loader"
     resolver: "my_path_resolver"
     cache:  "app.cache.progressive_image"
 
@@ -22,7 +22,7 @@ my_image_custom:
     fallback_image: "/images/placeholder.jpg"
 
     path_decorators:
-        - "app.handler.LiipPathHandler"
+        - "progressive_image.decorator.liipath"
 when@dev:
-    my_image_custom:
+    progressive_image:
         resolver: chain

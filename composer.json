@@ -4,6 +4,12 @@
     "license": "MIT",
     "description": "Lqip image preloading",
     "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "Jozef Môstka",
+            "email": "jozef@mostka.sk"
+        }
+    ],
     "keywords": [
         "symfony",
         "preference",
@@ -33,6 +39,18 @@
         "sort-packages": true,
         "allow-plugins": {
         }
+    },
+    "extra": {
+        "symfony-web-dir": "./tests/App/AssetMapper/public",
+        "public-dir": "./tests/App/AssetMapper/public",
+        "symfony": {
+            "require": "6.4.*"
+        }
+    },
+    "scripts" : {
+        "test": [
+            "phpunit"
+        ]
     },
     "autoload": {
         "psr-4": {

@@ -1,12 +1,18 @@
 import { Controller } from '@hotwired/stimulus';
 import { decode } from 'blurhash';
 export default class extends Controller {
-	static targets = ["highRes", "placeholder", "errorOverlay"];
-    static values = { hash: String, src: String };
+	static targets = ["placeholder", "errorOverlay"];
+    static values = { hash: String };
 
 	connect() {
         this.renderBlurhash();
-		this.preloadImage();
+
+        // Senior tip: Ak obrázok zlyhal skôr, než sa stihol pripojiť JS
+        if (this.highResTarget.complete && this.highResTarget.naturalWidth === 0) {
+            this.handleError();
+        } else if (this.highResTarget.complete && this.highResTarget.naturalWidth > 0) {
+            this.reveal();
+        }
 	}
 
     renderBlurhash() {
@@ -22,45 +28,27 @@ export default class extends Controller {
 		ctx.putImageData(imageData, 0, 0);
     }
 
+    reveal() {
+        this.highResTarget.style.opacity = '1';
+        if (this.hasPlaceholderTarget) {
+            setTimeout(() => this.placeholderTarget.style.display = 'none', 1000);
+        }
+    }
 
-	preloadImage() {
-		const img = new Image();
-		img.src = this.srcValue;
+    handleError() {
+        // 1. Skryjeme placeholder aj pôvodný (rozbitý) obrázok
+        if (this.hasPlaceholderTarget) this.placeholderTarget.style.display = 'none';
+        this.highResTarget.style.display = 'none';
 
-		if (img.complete) {
-			this.showImmediately(this.highResTarget);
-			this.highResTarget.src = this.srcValue;
-			return;
-		}
-
-		img.onload = () => {
-			this.revealTarget(this.highResTarget);
-			this.highResTarget.src = this.srcValue;
-		};
-
-		img.onerror = () => {
-			console.warn("Obraz nenačítaný, zobrazujem lokalizované 404 HTML.");
-			this.revealTarget(this.errorOverlayTarget);
-		};
-	}
-
-	showImmediately(target) {
-		target.style.transition = 'none';
-		target.style.display = 'block';
-		target.style.opacity = 1;
-		// Vynútenie prekreslenia (reflow), aby sa transition: none aplikovalo okamžite
-		target.offsetHeight; 
-		target.style.transition = '';
-	}
-
-	revealTarget(target) {
-		// Zobrazíme element v DOM
-		target.style.display = 'block';
-
-		// Malý timeout, aby prehliadač stihol zaregistrovať odstránenie 'hidden'
-		// a spustil CSS transition pre opacity
-		setTimeout(() => {
-			target.style.opacity = 1;
-		}, 10);
-	}
+        // 2. Zobrazíme error overlay
+        if (this.hasErrorOverlayTarget) {
+            this.errorOverlayTarget.style.display = 'block';
+            // Malý delay pre plynulý fade-in overlayu, ak máš transition
+            setTimeout(() => {
+                this.errorOverlayTarget.style.opacity = '1';
+            }, 50);
+        }
+        
+        console.error(`ProgressiveImage: Failed to load image at ${this.highResTarget.src}`);
+    }
 }

@@ -4,7 +4,6 @@
 {% endif %}
 
 <div {{ attributes.defaults(stimulus_controller(this.controller, {
-	src: asset(this.decoratedSrc),
 	hash: this.hash
 })).defaults({
 	class:'progressive-image-container',
@@ -21,6 +20,9 @@
 			{{ stimulus_target(this.controller,'highRes') }}
 			class="progressive-image-high-res"
 			alt="{{ this.alt }}"
+			src="{{ asset(this.decoratedSrc) }}"
+			{{ stimulus_action(this.controller, 'reveal', 'load') }}
+			{{ stimulus_action(this.controller, 'handleError', 'error') }}
 	>
 	<div
 			{{ stimulus_target(this.controller,'errorOverlay') }}

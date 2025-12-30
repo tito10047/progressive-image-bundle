@@ -16,8 +16,8 @@ class LiipImagineDecoratorTest extends PGITestCase
         $cacheManager = $this->createMock(CacheManager::class);
         $cacheManager->expects($this->once())
             ->method('getBrowserPath')
-            ->with('images/test.jpg', 'my_filter')
-            ->willReturn('http://localhost/media/cache/resolve/my_filter/images/test.jpg');
+            ->with('images/test.jpg', 'preview_big')
+            ->willReturn('http://localhost/media/cache/resolve/preview_big/images/test.jpg');
 
         self::bootKernel([
             "progressive_image"=>[
@@ -35,12 +35,14 @@ class LiipImagineDecoratorTest extends PGITestCase
             data: [
                 'src' => 'images/test.jpg',
                 'context' => [
-                    'filter' => 'my_filter'
+                    'filter' => 'preview_big'
                 ]
             ]
         );
 
         $this->assertInstanceOf(Image::class, $component);
-        $this->assertSame('http://localhost/media/cache/resolve/my_filter/images/test.jpg', $component->getDecoratedSrc());
+        $this->assertSame('http://localhost/media/cache/resolve/preview_big/images/test.jpg', $component->getDecoratedSrc());
+        $this->assertSame(20, $component->getWidth());
+        $this->assertSame(20, $component->getHeight());
     }
 }

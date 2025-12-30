@@ -12,7 +12,7 @@
 Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background, eliminating layout shifts and boosting SEO.
 
 ```twig
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" />
+<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" >Image Not Found</twig:pgi:Image>
 ```
 
 ![Progressive Image Preview](docs/preview.gif)
@@ -24,7 +24,7 @@ Deliver lightning-fast user experiences by serving beautiful Blurhash placeholde
 -   **Modern Frontend Stack:** Built on **Symfony UX Twig Components** and **Stimulus** for a seamless, reactive developer experience.
 -   **Cloud-Ready Architecture:** Flexible `LoaderInterface` supports local files, network drives, and S3 (via custom loaders).
 -   **Advanced Path Resolution:** Resolve images via Filesystem, AssetMapper, or a custom Chain resolver.
--   **Developer Experience (DX):** Simple `<twig:image>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
+-   **Developer Experience (DX):** Simple `<twig:twig:pgi>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
 
 ## 📦 Installation
 
@@ -45,8 +45,8 @@ return [
 ```
 
 ## ⚙️ Configuration
-
-Create `config/packages/progressive_image.yaml` to configure your resolvers and loaders.
+This configuration is optional,
+create `config/packages/progressive_image.yaml` to configure your resolvers and loaders.
 
 ```yaml
 progressive_image:
@@ -77,8 +77,6 @@ progressive_image:
     hash_resolution:
         width: 10
         height: 8
-        
-    fallback_image: "/images/placeholder.jpg" # Optional fallback when image is missing
 
     # Integrations
     path_decorators:
@@ -99,17 +97,12 @@ Simply use the provided Twig component in your templates. The component automati
 
 {# With custom attributes and LiipImagine filter #}
 <twig:pgi:Image 
+    :context="{ 'filter': 'my_liip_filter' }"
     src="uploads/portrait.png" 
     alt="User Profile"
     class="rounded-full shadow-lg"
     style="border: 2px solid #fff;"
 />
-```
-
-### Passing Context
-You can pass additional context to path decorators:
-```twig
-<twig:pgi:Image src="photo.jpg" :context="{ 'filter': 'my_liip_filter' }" />
 ```
 
 ## 🏗️ Architecture

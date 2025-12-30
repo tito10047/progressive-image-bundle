@@ -26,14 +26,4 @@ class LiipImagineDecoratorTest extends TestCase
         $this->assertSame($expectedUrl, $result);
     }
 
-    public function testResolveThrowsExceptionIfFilterIsMissing(): void
-    {
-        $cacheManager = $this->createMock(CacheManager::class);
-        $decorator = new LiipImagineDecorator($cacheManager);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('filter is required');
-
-        $decorator->decorate('test.jpg', []);
-    }
 }

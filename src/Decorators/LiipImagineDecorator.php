@@ -14,7 +14,10 @@ class LiipImagineDecorator implements PathDecoratorInterface {
 
 
 	public function decorate(string $path, array $context = []): string {
-		$filter = $context['filter'] ?? throw new \InvalidArgumentException('filter is required');
+		$filter = $context['filter'] ?? null;
+		if (!$filter) {
+			return $path;
+		}
 		$config = $context['config'] ?? [];
 		$resolver = $context['resolver'] ?? null;
 		$referenceType = $context['referenceType'] ?? UrlGeneratorInterface::ABSOLUTE_URL;

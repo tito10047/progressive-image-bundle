@@ -1,6 +1,6 @@
 {% set initialStyle = '' %}
 {% if  this.height > 0 %}
-{% set initialStyle = "--img-aspect: " ~ (this.width  / this.height) ~ "; --img-width: " ~ this.width ~ "px;" %}
+	{% set initialStyle = "--img-aspect: " ~ (this.width  / this.height) ~ "; --img-width: " ~ this.width ~ "px;" %}
 {% endif %}
 
 <div {{ attributes.defaults(stimulus_controller(this.controller, {
@@ -22,18 +22,21 @@
 			alt="{{ this.alt }}"
 			src="{{ asset(this.decoratedSrc) }}"
 			loading="lazy"
-			{{ stimulus_action(this.controller, 'reveal', 'load') }}
-			{{ stimulus_action(this.controller, 'handleError', 'error') }}
+			{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
 	>
-	<div
-			{{ stimulus_target(this.controller,'errorOverlay') }}
-			class="progressive-image-error-overlay"
-	>
-		<div class="progressive-image-error-content">
-			<h6 class="progressive-image-error-title">404</h6>
-			<p class="progressive-image-error-message">
-				{{ '404 image not found'|trans }}
-			</p>
+	{% if this.hash is null %}
+		<div
+				{{ stimulus_target(this.controller,'errorOverlay') }}
+				class="progressive-image-error-overlay"
+		>
+			{% block error %}
+				<div class="progressive-image-error-content">
+					<h6 class="progressive-image-error-title">{{ "Oops! Something went wrong"|trans({},"progressive_image") }}</h6>
+					<p class="progressive-image-error-message">
+						{{ 'This image decided to stay incognito. Maybe it’s still putting on makeup, or it just got lost in data hell.'|trans({},"progressive_image") }}
+					</p>
+				</div>
+			{% endblock %}
 		</div>
-	</div>
+	{% endif %}
 </div>

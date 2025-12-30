@@ -41,12 +41,9 @@ export default class extends Controller {
     }
 
     handleError() {
-        // 1. Skryjeme placeholder aj pôvodný (rozbitý) obrázok
-        if (this.hasPlaceholderTarget) this.placeholderTarget.style.display = 'none';
-        this.highResTarget.style.display = 'none';
-
-        // 2. Zobrazíme error overlay
         if (this.hasErrorOverlayTarget) {
+			if (this.hasPlaceholderTarget) this.placeholderTarget.style.display = 'none';
+			this.highResTarget.style.display = 'none';
             this.errorOverlayTarget.style.display = 'block';
             // Malý delay pre plynulý fade-in overlayu, ak máš transition
             setTimeout(() => {

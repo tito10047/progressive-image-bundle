@@ -21,7 +21,8 @@
 			class="progressive-image-high-res"
 			alt="{{ this.alt }}"
 			src="{{ asset(this.decoratedSrc) }}"
-			loading="lazy"
+			{{ attributes.only('lazy') }}
+			{{ attributes.only('fetchpriority') }}
 			{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
 	>
 	{% if this.hash is null %}

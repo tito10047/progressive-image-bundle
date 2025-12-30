@@ -20,6 +20,13 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 
 	public function prepend(ContainerBuilder $builder): void
 	{
+		$builder->prependExtensionConfig('framework', [
+			'asset_mapper' => [
+				'paths' => [
+					__DIR__.'/../../assets' => 'tito10047/progressive-image-bundle',
+				],
+			],
+		]);
 		$builder->prependExtensionConfig('twig_component', [
 			'defaults' => [
 				'Tito10047\ProgressiveImageBundle\Twig\Components\\' => [
@@ -29,6 +36,8 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 			],
 		]);
 	}
+
+
 
 	public function load(array $configs, ContainerBuilder $container): void {
 
@@ -50,7 +59,7 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 			default => $driver,
 		};
 
-		$resolver   = $configs['resolver']??'filesystem';
+		$resolver   = $configs['resolver']??'default';
 		$maybeService = 'progressive_image.resolver.' . $resolver;
 		if ($container->hasDefinition($maybeService)) {
 			$resolverId = $maybeService;
@@ -92,7 +101,7 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 
 			if ('filesystem' === $resolverConfig['type']) {
 				$container->register($id, FileSystemResolver::class)
-					->setArgument('$roots', $resolverConfig['roots'] ?? [])
+					->setArgument('$roots', $resolverConfig['roots'] ?? ["%kernel.project_dir%/public"])
 					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? false);
 			} elseif ('asset_mapper' === $resolverConfig['type']) {
 				$container->register($id, AssetMapperResolver::class);

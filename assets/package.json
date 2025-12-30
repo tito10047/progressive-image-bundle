@@ -10,11 +10,14 @@
   ],
   "symfony": {
     "controllers": {
-      "selection": {
+      "progressive-image": {
         "main": "controllers/progressive-image_controller.js",
         "webpackMode": "eager",
         "fetch": "eager",
-        "enabled": true
+        "enabled": true,
+        "autoimport": {
+          "@tito10047/progressive-image-bundle/styles/style.css": true
+        }
       }
     },
     "importmap": {

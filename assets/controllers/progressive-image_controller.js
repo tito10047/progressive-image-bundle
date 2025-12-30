@@ -1,6 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
 import { decode } from 'blurhash';
-
 export default class extends Controller {
 	static targets = ["highRes", "placeholder", "errorOverlay"];
     static values = { hash: String, src: String };
@@ -14,11 +13,13 @@ export default class extends Controller {
 		if (this.hashValue.length<6){
 			return;
 		}
-        const pixels = decode(this.hashValue, 32, 32);
-        const ctx = this.placeholderTarget.getContext('2d');
-        const imageData = ctx.createImageData(32, 32);
-        imageData.data.set(pixels);
-        ctx.putImageData(imageData, 0, 0);
+		const width = this.placeholderTarget.width;
+		const height = this.placeholderTarget.height;
+		const pixels = decode(this.hashValue, width, height);
+		const ctx = this.placeholderTarget.getContext('2d');
+		const imageData = ctx.createImageData(width, height);
+		imageData.data.set(pixels);
+		ctx.putImageData(imageData, 0, 0);
     }
 
 
@@ -28,8 +29,8 @@ export default class extends Controller {
 
 		img.onload = () => {
 			this.revealTarget(this.highResTarget);
-			// Nastavíme src až po načítaní, aby sme sa vyhli bliknutiu
 			this.highResTarget.src = this.srcValue;
+			this.highResTarget.style.opacity = 1;
 		};
 
 		img.onerror = () => {
@@ -40,13 +41,12 @@ export default class extends Controller {
 
 	revealTarget(target) {
 		// Zobrazíme element v DOM
-		target.classList.remove('hidden');
+		target.style.display = 'block';
 
 		// Malý timeout, aby prehliadač stihol zaregistrovať odstránenie 'hidden'
 		// a spustil CSS transition pre opacity
 		setTimeout(() => {
-			target.classList.remove('opacity-0');
-			target.classList.add('opacity-100');
+			target.style.opacity = 1;
 		}, 10);
 	}
 }

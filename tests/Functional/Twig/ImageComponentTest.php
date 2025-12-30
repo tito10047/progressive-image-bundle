@@ -72,7 +72,7 @@ class ImageComponentTest extends PGITestCase {
 
 		$stimulus = ProgressiveImageBundle::STIMULUS_CONTROLLER;
 
-		$this->assertStringContainsString("data-{$stimulus}-src-value=\"/test.png\"", $html);
+		$this->assertStringContainsString("src=\"/test.png\"", $html);
 		$this->assertStringContainsString("data-controller=\"{$stimulus}\"", $html);
 		$this->assertStringContainsString("data-{$stimulus}-target=\"placeholder\"", $html);
 		$this->assertStringContainsString("data-{$stimulus}-target=\"highRes\"", $html);

@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 import { decode } from 'blurhash';
 export default class extends Controller {
-	static targets = ["placeholder", "errorOverlay"];
+	static targets = ["highRes", "placeholder", "errorOverlay"];
     static values = { hash: String };
 
 	connect() {

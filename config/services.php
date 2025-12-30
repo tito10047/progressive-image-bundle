@@ -36,5 +36,9 @@ return static function (ContainerConfigurator $container): void {
     $services->set('progressive_image.resolver.filesystem',FileSystemResolver::class);
     $services->set('progressive_image.resolver.asset_mapper',AssetMapperResolver::class);
 
+	$services->set('progressive_image.decorator.liip_imagine', \Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator::class)
+		->arg('$cache', service('liip_imagine.cache.manager'))
+	;
+
 
 };

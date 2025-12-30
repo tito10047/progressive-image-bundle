@@ -17,6 +17,7 @@ class Image {
 	public ?string         $src = null;
 	public ?string         $filter = null;
 	public ?string         $alt = null;
+	public array $context = [];
 	private ?ImageMetadata $metadata;
 
 	/**
@@ -52,7 +53,7 @@ class Image {
 	public function getDecoratedSrc(): string {
 		$src = $this->src;
 		foreach ($this->pathDecorator as $decorator) {
-			$src = $decorator->decorate($src);
+			$src = $decorator->decorate($src, $this->context);
 		}
 		return $src;
 	}

@@ -70,7 +70,7 @@ class MetadataReaderTest extends TestCase
 
         $this->pathResolver->expects($this->once())
             ->method('resolve')
-            ->with($src, [])
+            ->with($src)
             ->willReturn($path);
 
         $this->analyzer->expects($this->once())
@@ -105,7 +105,7 @@ class MetadataReaderTest extends TestCase
 
         $this->pathResolver->expects($this->once())
             ->method('resolve')
-            ->with($src, [])
+            ->with($src)
             ->willThrowException(new PathResolutionException());
 
         $this->dispatcher->expects($this->once())

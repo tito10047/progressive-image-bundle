@@ -22,7 +22,7 @@ progressive_image:
     fallback_image: "/images/placeholder.jpg"
 
     path_decorators:
-        - "progressive_image.decorator.liipath"
+        - "progressive_image.decorator.liip_imagine"
 when@dev:
     progressive_image:
         resolver: chain

@@ -8,5 +8,5 @@ interface PathResolverInterface {
 	/**
 	 * @throws PathResolutionException
 	 */
-	public function resolve(string $path, array $context): string;
+	public function resolve(string $path): string;
 }

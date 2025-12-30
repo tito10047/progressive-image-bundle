@@ -12,7 +12,7 @@ class AssetMapperResolver implements PathResolverInterface
     ) {
     }
 
-    public function resolve(string $path, array $context = []): string
+    public function resolve(string $path): string
     {
         $path = '/'.mb_ltrim($path, '/');
         foreach ($this->assetMapper->allAssets() as $assetCandidate) {

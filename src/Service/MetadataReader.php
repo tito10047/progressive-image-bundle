@@ -36,7 +36,7 @@ class MetadataReader {
 				$item->expiresAfter($this->ttl);
 			}
 			try {
-				$path = $this->pathResolver->resolve($src, []);
+				$path = $this->pathResolver->resolve($src);
 			}catch (PathResolutionException $e){
 				$this->dispatchEvent($src);
 
@@ -44,7 +44,7 @@ class MetadataReader {
 					throw $e;
 				}
 				try {
-					$path = $this->pathResolver->resolve($this->fallbackPath, []);
+					$path = $this->pathResolver->resolve($this->fallbackPath);
 				}catch (PathResolutionException $e){
 					$this->dispatchEvent($this->fallbackPath);
 					throw $e;

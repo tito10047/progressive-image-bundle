@@ -38,13 +38,15 @@ class MetadataReaderTest extends PGITestCase {
 		$this->fs->copy(__DIR__ . '/../Fixtures/test.png', $imagePath);
 
 		self::bootKernel([
-			'resolvers' => [
-				'test' => [
-					'type'  => 'filesystem',
-					'roots' => [realpath($this->tempDir)]
-				]
-			],
-			'resolver'  => 'test'
+			"progressive_image" => [
+				'resolvers' => [
+					'test' => [
+						'type'  => 'filesystem',
+						'roots' => [realpath($this->tempDir)]
+					]
+				],
+				'resolver'  => 'test'
+			]
 		]);
 
 		$metadataReader = self::getContainer()->get(MetadataReader::class);
@@ -58,13 +60,15 @@ class MetadataReaderTest extends PGITestCase {
 
 	public function testGetMetadataThrowsExceptionForNonExistentFile(): void {
 		self::bootKernel([
-			'resolvers' => [
-				'test' => [
-					'type'  => 'filesystem',
-					'roots' => [realpath($this->tempDir)]
-				]
-			],
-			'resolver'  => 'test'
+			"progressive_image" => [
+				'resolvers' => [
+					'test' => [
+						'type'  => 'filesystem',
+						'roots' => [realpath($this->tempDir)]
+					]
+				],
+				'resolver'  => 'test'
+			]
 		]);
 
 		$metadataReader = self::getContainer()->get(MetadataReader::class);
@@ -78,14 +82,16 @@ class MetadataReaderTest extends PGITestCase {
 		$this->fs->copy(__DIR__ . '/../Fixtures/test.png', $fallbackPath);
 
 		self::bootKernel([
-			'resolvers'      => [
-				'test' => [
-					'type'  => 'filesystem',
-					'roots' => [$this->tempDir]
-				]
-			],
-			'resolver'       => 'test',
-			'fallback_image' => 'fallback.png'
+			"progressive_image" => [
+				'resolvers'      => [
+					'test' => [
+						'type'  => 'filesystem',
+						'roots' => [$this->tempDir]
+					]
+				],
+				'resolver'       => 'test',
+				'fallback_image' => 'fallback.png'
+			]
 		]);
 
 		/** @var MetadataReader $metadataReader */

@@ -33,8 +33,8 @@ class ImageComponentTest extends PGITestCase {
 
 		$component = $this->mountTwigComponent(
 			name: 'pgi:Image',
-			data:[
-				"src"=>"/foo.jpg"
+			data: [
+				"src" => "/foo.jpg"
 			]
 		);
 
@@ -42,14 +42,14 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertSame("/foo.jpg", $component->src);
 	}
 
-	public function testGenerateHash():void {
+	public function testGenerateHash(): void {
 		$this->_bootKernel();
 
 		/** @var Image $component */
 		$component = $this->mountTwigComponent(
 			name: 'pgi:Image',
-			data:[
-				"src"=>"/test.png"
+			data: [
+				"src" => "/test.png"
 			]
 		);
 		$this->assertInstanceOf(Image::class, $component);
@@ -59,14 +59,14 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertGreaterThan(0, $component->getHeight());
 	}
 
-	public function testRender():void {
+	public function testRender(): void {
 		$this->bootKernel();
 
 		$html = $this->renderTwigComponent(
-			name:"pgi:Image",
-			data:[
-				"src"=>"/test.png",
-				"alt"=>"test image"
+			name: "pgi:Image",
+			data: [
+				"src" => "/test.png",
+				"alt" => "test image"
 			]
 		);
 
@@ -84,13 +84,15 @@ class ImageComponentTest extends PGITestCase {
 		$this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);
 
 		self::bootKernel([
-			'resolvers' => [
-				'test' => [
-					'type'  => 'filesystem',
-					'roots' => [realpath($this->tempDir)]
-				]
-			],
-			'resolver'  => 'test'
+			"progressive_image" => [
+				'resolvers' => [
+					'test' => [
+						'type'  => 'filesystem',
+						'roots' => [realpath($this->tempDir)]
+					]
+				],
+				'resolver'  => 'test'
+			]
 		]);
 	}
 }

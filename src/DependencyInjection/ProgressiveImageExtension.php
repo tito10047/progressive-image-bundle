@@ -86,8 +86,9 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 
 		$container->register(Image::class, Image::class)
 			->setArgument(0, new Reference(MetadataReader::class))
-			->setArgument(1, [])
-			->addTag('twig.component');
+			->setArgument(1, array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
+			->addTag('twig.component')
+			->setPublic(true);
 
 
 	}

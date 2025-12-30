@@ -21,7 +21,7 @@ class LiipImagineDecoratorTest extends TestCase
             ->willReturn($expectedUrl);
 
         $decorator = new LiipImagineDecorator($cacheManager);
-        $result = $decorator->resolve($path, ['filter' => $filter]);
+        $result = $decorator->decorate($path, ['filter' => $filter]);
 
         $this->assertSame($expectedUrl, $result);
     }
@@ -34,6 +34,6 @@ class LiipImagineDecoratorTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('filter is required');
 
-        $decorator->resolve('test.jpg', []);
+        $decorator->decorate('test.jpg', []);
     }
 }

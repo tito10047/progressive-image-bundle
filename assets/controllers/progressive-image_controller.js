@@ -27,16 +27,30 @@ export default class extends Controller {
 		const img = new Image();
 		img.src = this.srcValue;
 
+		if (img.complete) {
+			this.showImmediately(this.highResTarget);
+			this.highResTarget.src = this.srcValue;
+			return;
+		}
+
 		img.onload = () => {
 			this.revealTarget(this.highResTarget);
 			this.highResTarget.src = this.srcValue;
-			this.highResTarget.style.opacity = 1;
 		};
 
 		img.onerror = () => {
 			console.warn("Obraz nenačítaný, zobrazujem lokalizované 404 HTML.");
 			this.revealTarget(this.errorOverlayTarget);
 		};
+	}
+
+	showImmediately(target) {
+		target.style.transition = 'none';
+		target.style.display = 'block';
+		target.style.opacity = 1;
+		// Vynútenie prekreslenia (reflow), aby sa transition: none aplikovalo okamžite
+		target.offsetHeight; 
+		target.style.transition = '';
 	}
 
 	revealTarget(target) {

@@ -7,6 +7,11 @@ export default class extends Controller {
 	connect() {
         this.renderBlurhash();
 
+        // Ak obrázok ešte nie je načítaný, nastavíme mu opacity na 0 bez transition
+        if (!this.highResTarget.complete) {
+            this.highResTarget.style.opacity = '0';
+        }
+
         // Senior tip: Ak obrázok zlyhal skôr, než sa stihol pripojiť JS
         if (this.highResTarget.complete && this.highResTarget.naturalWidth === 0) {
             this.handleError();

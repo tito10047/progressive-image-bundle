@@ -4,6 +4,8 @@ body {
 
 .progressive-image-container {
 	position: relative;
+	width: var(--img-width, auto);
+	aspect-ratio: var(--img-aspect, auto);
 	overflow: hidden;
 }
 

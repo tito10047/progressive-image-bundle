@@ -1,8 +1,14 @@
+{% set initialStyle = '' %}
+{% if  this.height > 0 %}
+{% set initialStyle = "aspect-ratio: " ~ (this.width  / this.height) ~ "; width: " ~ this.width ~ "px;" %}
+{% endif %}
+
 <div {{ attributes.defaults(stimulus_controller(this.controller, {
 	src: asset(this.decoratedSrc),
 	hash: this.hash
 })).defaults({
-	class:'progressive-image-container'
+	class:'progressive-image-container',
+	style: initialStyle
 }) }}
 >
 	<canvas

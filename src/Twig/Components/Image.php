@@ -17,8 +17,11 @@ class Image {
 	public ?string         $src = null;
 	public ?string         $filter = null;
 	public ?string         $alt = null;
-	public array $context = [];
+	public array           $context = [];
 	private ?ImageMetadata $metadata;
+	private string         $decoratedSrc;
+	private ?int           $decoratedWidth;
+	private ?int           $decoratedHeight;
 
 	/**
 	 * @param iterable<PathDecoratorInterface> $pathDecorator
@@ -36,6 +39,17 @@ class Image {
 		}catch (PathResolutionException){
 			$this->metadata = null;
 		}
+		$this->decoratedSrc = $this->src;
+		$this->decoratedWidth = $this->metadata?->width;
+		$this->decoratedHeight = $this->metadata?->height;
+		foreach ($this->pathDecorator as $decorator) {
+			$this->decoratedSrc = $decorator->decorate($this->decoratedSrc, $this->context);
+			$size = $decorator->getSize($this->decoratedSrc, $this->context);
+			if ($size){
+				$this->decoratedWidth = $size["width"];
+				$this->decoratedHeight = $size["height"];
+			}
+		}
 	}
 
 	public function getHash(): ?string {
@@ -43,19 +57,15 @@ class Image {
 	}
 
 	public function getWidth():?int {
-		return $this->metadata?->width;
+		return $this->decoratedWidth??$this->metadata?->width;
 	}
 
 	public function getHeight():?int {
-		return $this->metadata?->height;
+		return $this->decoratedHeight??$this->metadata?->height;
 	}
 
 	public function getDecoratedSrc(): string {
-		$src = $this->src;
-		foreach ($this->pathDecorator as $decorator) {
-			$src = $decorator->decorate($src, $this->context);
-		}
-		return $src;
+		return $this->decoratedSrc??$this->src;
 	}
 
 	public function getController(): ?string {

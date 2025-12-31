@@ -59,6 +59,7 @@ jobs:
                     php-version: "${{ matrix.php-version }}"
                     ini-values: memory_limit=-1
                     extensions: imagick
+                    tools: php-coveralls
 
             -   name: "Configure Symfony"
                 run: 'composer config extra.symfony.require "${{ matrix.symfony }}"'
@@ -76,20 +77,14 @@ jobs:
                     key: "php-${{ matrix.php-version }}-symfony-${{ matrix.symfony }}-${{ matrix.liip }}"
                     restore-keys: "php-${{ matrix.php-version }}-symfony-${{ matrix.symfony }}-${{ matrix.liip }}"
 
+            -   name: "Remove Liip bundle"
+                run: composer remove liip/imagine-bundle --dev --no-update
+                if: matrix.liip == 'without'
+
             -   name: "Install highest dependencies"
                 run: |
                     composer global require php-coveralls/php-coveralls
-                    if [ "${{ matrix.liip }}" = "without" ]; then
-                      echo "Removing liip/imagine-bundle as requested by matrix"
-                      composer remove liip/imagine-bundle --dev --no-update
-                      # Odstránime lock súbor, aby sme vynútili čistý update bez zmienky o liip
-                      rm -f composer.lock
-                    fi
                     composer update --no-interaction --no-progress --no-suggest
-                    if [ "${{ matrix.liip }}" = "without" ]; then
-                      echo "Verifying liip/imagine-bundle is gone"
-                      composer show liip/imagine-bundle 2>/dev/null && (echo "Error: liip/imagine-bundle still exists!"; exit 1) || echo "Confirmed: liip/imagine-bundle is removed"
-                    fi
 
 
             -   name: Execute tests (Unit and Feature tests) via PHPUnit

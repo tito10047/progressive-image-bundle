@@ -9,7 +9,7 @@
 
 
 ### High-performance progressive image loading for Symfony.
-Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle eliminated layout shifts (Zero CLS), boosts SEO with smart preload injection, and features an intelligent responsive strategy with upscale protection. Built with a stream-based architecture for minimal memory footprint even with massive images.
+Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
 
 ```twig
 <twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" >Image Not Found</twig:pgi:Image>

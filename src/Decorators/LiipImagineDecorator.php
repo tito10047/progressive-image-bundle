@@ -21,6 +21,9 @@ class LiipImagineDecorator implements PathDecoratorInterface {
 		if (!$filter) {
 			return $path;
 		}
+		if ($this->cache->isStored($path, $filter)) {
+			return $this->cache->resolve($path, $filter);
+		}
 		$config = $context['config'] ?? [];
 		$resolver = $context['resolver'] ?? null;
 		$referenceType = $context['referenceType'] ?? UrlGeneratorInterface::ABSOLUTE_URL;

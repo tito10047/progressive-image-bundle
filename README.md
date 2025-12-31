@@ -153,6 +153,7 @@ Using complex responsive logic is now as simple as naming a preset.
 <twig:pgi:Image src="blog/hero.jpg" preset="article_hero" />
 ```
 
+
 ## ⚡ Smart Preload Injection (LCP Optimization)
 
 One of the biggest challenges for Core Web Vitals (LCP) is the "Indirect Discovery" of images. If your hero image is hidden behind a component or managed by JavaScript, the browser's preload scanner won't find it fast enough.
@@ -165,6 +166,50 @@ This bundle solves this by implementing a **Dependency Discovery Pattern**:
 - **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
 - **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
 
+### LiipImagine Integration & Automatic Filter Generation
+
+If you use [LiipImagineBundle](https://github.com/liip/LiipImagineBundle), this bundle can automatically generate the necessary `filter_sets` for your responsive breakpoints.
+
+When you define breakpoints in `progressive_image`, the bundle analyzes your existing `liip_imagine` configuration and creates new filter variants for each breakpoint (except for the `cache` set).
+
+#### How it works:
+1. **Naming:** For a filter named `preview_big`, it generates `preview_big_sm`, `preview_big_md`, etc.
+2. **Smart Sizing:** If the original filter contains a `thumbnail` filter, the bundle automatically sets the `size` to match the breakpoint width while **preserving the original aspect ratio** (e.g., `[480, 270]` for a 16:9 source filter and `sm: 480`).
+3. **Inheritance:** All other settings like `quality`, `format`, and `post_processors` are preserved from the parent filter.
+
+#### Example:
+```yaml
+progressive_image:
+    responsive_strategy:
+        breakpoints:
+            sm: 480
+            md: 800
+
+liip_imagine:
+    filter_sets:
+        preview_big:
+            quality: 75
+            filters:
+                thumbnail: { size: [ 500, 500 ], mode: outbound }
+            post_processors:
+                cwebp: { q: 75, m: 6 }
+```
+
+The bundle will automatically "prepend" these configurations to LiipImagine:
+```yaml
+liip_imagine:
+    filter_sets:
+        preview_big_sm:
+            quality: 75
+            filters:
+                thumbnail: { size: [ 480, 480 ], mode: outbound }
+            post_processors: { cwebp: { q: 75, m: 6 } }
+        preview_big_md:
+            quality: 75
+            filters:
+                thumbnail: { size: [ 800, 800 ], mode: outbound }
+            post_processors: { cwebp: { q: 75, m: 6 } }
+```
 ## 🏗️ Architecture
 
 ### Stream-based Approach

@@ -36,6 +36,48 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 				],
 			],
 		]);
+
+		$configs = $builder->getExtensionConfig($this->getAlias());
+		$configs = $this->processConfiguration(new Configuration(), $configs);
+
+		if (isset($configs['responsive_strategy']['breakpoints'])) {
+			$breakpoints = $configs['responsive_strategy']['breakpoints'];
+			$liipConfigs = $builder->getExtensionConfig('liip_imagine');
+
+			$newFilterSets = [];
+			foreach ($liipConfigs as $liipConfig) {
+				if (isset($liipConfig['filter_sets'])) {
+					foreach ($liipConfig['filter_sets'] as $setName => $setConfig) {
+						foreach ($breakpoints as $breakpointName => $width) {
+							$newSetName = $setName . '_' . $breakpointName;
+							if (isset($newFilterSets[$newSetName])) {
+								continue;
+							}
+							$newSetConfig = $setConfig;
+
+							if (isset($newSetConfig['filters']['thumbnail']['size'])) {
+								[$origWidth, $origHeight] = $newSetConfig['filters']['thumbnail']['size'];
+								if ($origWidth > 0 && $origHeight > 0) {
+									$ratio = $origHeight / $origWidth;
+									$newHeight = (int) round($width * $ratio);
+									$newSetConfig['filters']['thumbnail']['size'] = [$width, $newHeight];
+								} else {
+									$newSetConfig['filters']['thumbnail']['size'] = [$width, $width];
+								}
+							}
+
+							$newFilterSets[$newSetName] = $newSetConfig;
+						}
+					}
+				}
+			}
+
+			if (!empty($newFilterSets)) {
+				$builder->prependExtensionConfig('liip_imagine', [
+					'filter_sets' => $newFilterSets,
+				]);
+			}
+		}
 	}
 
 

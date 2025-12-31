@@ -47,6 +47,7 @@ class ProgressiveImageTestingKernel extends Kernel {
 				],
 				'http_method_override' => false,
 			]);
+
 			$container->loadFromExtension('liip_imagine', [
 				"loaders"   => [
 					"default" => [

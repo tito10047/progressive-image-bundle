@@ -24,7 +24,8 @@ Deliver lightning-fast user experiences by serving beautiful Blurhash placeholde
 -   **Modern Frontend Stack:** Built on **Symfony UX Twig Components** and **Stimulus** for a seamless, reactive developer experience.
 -   **Cloud-Ready Architecture:** Flexible `LoaderInterface` supports local files, network drives, and S3 (via custom loaders).
 -   **Advanced Path Resolution:** Resolve images via Filesystem, AssetMapper, or a custom Chain resolver.
--   **Developer Experience (DX):** Simple `<twig:twig:pgi>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
+-   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
+-   **Developer Experience (DX):** Simple `<twig:pgi:Image>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
 
 ## 📦 Installation
 
@@ -95,6 +96,9 @@ Simply use the provided Twig component in your templates. The component automati
 {# Simple usage #}
 <twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" />
 
+{# Optimize LCP by preloading the image #}
+<twig:pgi:Image src="images/hero.jpg" preload />
+
 {# With custom attributes and LiipImagine filter #}
 <twig:pgi:Image 
     :context="{ 'filter': 'my_liip_filter' }"
@@ -104,6 +108,18 @@ Simply use the provided Twig component in your templates. The component automati
     style="border: 2px solid #fff;"
 />
 ```
+
+## ⚡ Smart Preload Injection (LCP Optimization)
+
+One of the biggest challenges for Core Web Vitals (LCP) is the "Indirect Discovery" of images. If your hero image is hidden behind a component or managed by JavaScript, the browser's preload scanner won't find it fast enough.
+
+This bundle solves this by implementing a **Dependency Discovery Pattern**:
+1. **Collection:** While Twig renders your components, the bundle automatically collects the URLs of images marked with the `preload` attribute.
+2. **Injection:** A Kernel Response Listener intercepts the final response and injects `<link rel="preload">` tags directly into the HTML `<head>` (or as HTTP Link headers) before it's sent to the user.
+
+**Key Benefits:**
+- **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
+- **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
 
 ## 🏗️ Architecture
 

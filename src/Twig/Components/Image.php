@@ -2,6 +2,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Twig\Components;
 
+use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
@@ -22,6 +23,8 @@ class Image {
 	private string         $decoratedSrc;
 	private ?int           $decoratedWidth;
 	private ?int           $decoratedHeight;
+	public bool $preload = false;
+	public string $priority = 'high';
 
 	/**
 	 * @param iterable<PathDecoratorInterface> $pathDecorator
@@ -29,6 +32,7 @@ class Image {
 	public function __construct(
 		private readonly MetadataReader $analyzer,
 		private readonly iterable       $pathDecorator,
+		private readonly PreloadCollector $preloadCollector,
 	) {
 	}
 
@@ -49,6 +53,9 @@ class Image {
 				$this->decoratedWidth = $size["width"];
 				$this->decoratedHeight = $size["height"];
 			}
+		}
+		if ($this->preload){
+			$this->preloadCollector->add($this->decoratedSrc,"image",$this->priority);
 		}
 	}
 

@@ -1,5 +1,7 @@
 <?php
 
+use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
+use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Analyzer\GdImageAnalyzer;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImagickAnalyzer;
 use Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator;
@@ -40,6 +42,13 @@ return static function (ContainerConfigurator $container): void {
 	$services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
 		->arg('$cache', service('liip_imagine.cache.manager'))
 		->arg('$configuration', service('liip_imagine.filter.configuration'))
+	;
+
+	$services->set(PreloadCollector::class);
+
+	$services->set(KernelResponseEventListener::class)
+		->arg('$preloadCollector', service(PreloadCollector::class))
+		->tag('kernel.event_listener', ['event' => 'kernel.response'])
 	;
 
 

@@ -13,6 +13,7 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
+use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -87,6 +88,7 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 		$container->register(Image::class, Image::class)
 			->setArgument(0, new Reference(MetadataReader::class))
 			->setArgument(1, array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
+			->setArgument(2, new Reference(PreloadCollector::class))
 			->addTag('twig.component')
 			->setPublic(true);
 

@@ -9,10 +9,16 @@
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
 
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
+use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 
 class ImageComponentTest extends PGITestCase {
@@ -79,11 +85,55 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertStringContainsString("data-{$stimulus}-target=\"errorOverlay\"", $html);
 	}
 
-	private function _bootKernel(): void {
+	public function testPreloadHeader(): void {
+		$cacheManager = $this->createMock(CacheManager::class);
+		$cacheManager->expects($this->once())
+			->method('getBrowserPath')
+			->with('/test.png', 'preview_big')
+			->willReturn('http://localhost/media/cache/resolve/preview_big/test.png');
+
+		$this->_bootKernel([
+			"progressive_image" => [
+				'path_decorators' => ['progressive_image.decorator.liip_imagine']
+			]
+		]);
+
+		self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
+
+		$this->renderTwigComponent(
+			name: "pgi:Image",
+			data: [
+				"src" => "/test.png",
+				"preload" => true,
+				"priority" => "high",
+				"context" => [
+					"filter" => "preview_big"
+				]
+			]
+		);
+
+		$preloadCollector = self::getContainer()->get(PreloadCollector::class);
+		$urls = $preloadCollector->getUrls();
+
+		$expectedUrl = 'http://localhost/media/cache/resolve/preview_big/test.png';
+		$this->assertArrayHasKey($expectedUrl, $urls);
+
+		$eventListener = self::getContainer()->get(KernelResponseEventListener::class);
+		$request = new Request();
+		$response = new \Symfony\Component\HttpFoundation\Response();
+		$event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
+
+		$eventListener($event);
+
+		$this->assertTrue($response->headers->has('Link'));
+		$this->assertStringContainsString('<' . $expectedUrl . '>; rel=preload; as=image; fetchpriority=high', $response->headers->get('Link'));
+	}
+
+	private function _bootKernel(array $extraOptions = []): void {
 		$imagePath = $this->tempDir . '/test.png';
 		$this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);
 
-		self::bootKernel([
+		$options = array_merge_recursive([
 			"progressive_image" => [
 				'resolvers' => [
 					'test' => [
@@ -93,6 +143,8 @@ class ImageComponentTest extends PGITestCase {
 				],
 				'resolver'  => 'test'
 			]
-		]);
+		], $extraOptions);
+
+		self::bootKernel($options);
 	}
 }

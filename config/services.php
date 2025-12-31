@@ -8,6 +8,7 @@ use Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator;
 use Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
+use Tito10047\ProgressiveImageBundle\SrcsetGenerator\LiipImagineSrcsetGenerator;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
@@ -42,6 +43,10 @@ return static function (ContainerConfigurator $container): void {
 	$services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
 		->arg('$cache', service('liip_imagine.cache.manager'))
 		->arg('$configuration', service('liip_imagine.filter.configuration'))
+	;
+
+	$services->set('progressive_image.responsive_generator.liip_imagine', LiipImagineSrcsetGenerator::class)
+		->arg('$decorator', service('progressive_image.decorator.liip_imagine'))
 	;
 
 	$services->set(PreloadCollector::class);

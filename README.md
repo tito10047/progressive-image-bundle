@@ -19,12 +19,16 @@ Deliver lightning-fast user experiences by serving beautiful Blurhash placeholde
 
 ## 🚀 Key Features
 
+### Core Features
+-   **Smart Responsive Strategy:** Breakpoint-First approach with built-in **Upscale Protection**. Never serve blurry upscaled images again.
+-   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
 -   **Zero CLS (Cumulative Layout Shift):** Automatically extracts and injects image dimensions to reserve space, ensuring a stable layout during loading.
+
+### Other Features
 -   **Smart Metadata Extraction:** Uses PHP Streams to read only the necessary bytes for dimensions and hashes—no more loading 20MB images into RAM.
 -   **Modern Frontend Stack:** Built on **Symfony UX Twig Components** and **Stimulus** for a seamless, reactive developer experience.
 -   **Cloud-Ready Architecture:** Flexible `LoaderInterface` supports local files, network drives, and S3 (via custom loaders).
 -   **Advanced Path Resolution:** Resolve images via Filesystem, AssetMapper, or a custom Chain resolver.
--   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
 -   **Developer Experience (DX):** Simple `<twig:pgi:Image>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
 
 ## 📦 Installation
@@ -107,6 +111,46 @@ Simply use the provided Twig component in your templates. The component automati
     class="rounded-full shadow-lg"
     style="border: 2px solid #fff;"
 />
+```
+
+## 🚀 Smart Responsive Strategy
+Stop managing magic pixel numbers. This bundle introduces a Breakpoint-First approach with built-in Upscale Protection.
+
+### 1. Define once, use everywhere
+Instead of hardcoding widths in every template, define your project's grid in a central configuration. Use meaningful aliases like `sm`, `md`, or `xl`.
+
+```yaml
+# config/packages/progressive_image.yaml
+progressive_image:
+    responsive_strategy:
+        breakpoints:
+            sm: 480
+            md: 800
+            lg: 1200
+            xl: 1920
+        
+        fallback_widths: [ sm, md, lg, xl ] # Default srcset
+        
+        presets:
+            article_hero:
+                widths: [ md, lg, xl ]
+                sizes: "(max-width: 1024px) 100vw, 1024px"
+```
+
+### 2. Intelligence: Built-in Upscale Protection
+
+The bundle never generates an image larger than the original source. For example, if you have a preset requesting `xl` (1920px) but the user uploads a 1000px image:
+- The bundle automatically filters out 1200px and 1920px variants.
+- It serves the 800px (`md`) and the 1000px (original) instead.
+
+**Result:** No blurry upscaled images, saved CPU cycles, and reduced storage waste.
+
+### 3. Seamless Twig Integration
+Using complex responsive logic is now as simple as naming a preset.
+
+```twig
+{# Automatically handles srcset, sizes, and upscale protection #}
+<twig:pgi:Image src="blog/hero.jpg" preset="article_hero" />
 ```
 
 ## ⚡ Smart Preload Injection (LCP Optimization)

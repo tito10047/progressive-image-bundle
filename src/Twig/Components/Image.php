@@ -2,6 +2,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Twig\Components;
 
+use Tito10047\ProgressiveImageBundle\SrcsetGenerator\SrcsetGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PostMount;
@@ -25,14 +26,27 @@ class Image {
 	private ?int           $decoratedHeight;
 	public bool $preload = false;
 	public string $priority = 'high';
+	public ?string $preset = null;
 
 	/**
 	 * @param iterable<PathDecoratorInterface> $pathDecorator
+	 * @param $defaultPreset null|array{
+	 *     widths: array<string, int>,
+	 *     sizes: string
+	 * }
+	 * @param $presets null|array<string,array{
+	 *      widths: array<string, int>,
+	 *      sizes: string
+	 *  }>
 	 */
 	public function __construct(
 		private readonly MetadataReader $analyzer,
 		private readonly iterable       $pathDecorator,
 		private readonly PreloadCollector $preloadCollector,
+		private readonly ?SrcsetGeneratorInterface $srcsetGenerator,
+		private ?array $breakpoints,
+		private ?array $defaultPreset,
+		private ?array $presets,
 	) {
 	}
 
@@ -43,6 +57,7 @@ class Image {
 		}catch (PathResolutionException){
 			$this->metadata = null;
 		}
+		$this->context["filter"] ??= $this->preset;
 		$this->decoratedSrc = $this->src;
 		$this->decoratedWidth = $this->metadata?->width;
 		$this->decoratedHeight = $this->metadata?->height;
@@ -57,6 +72,51 @@ class Image {
 		if ($this->preload){
 			$this->preloadCollector->add($this->decoratedSrc,"image",$this->priority);
 		}
+	}
+
+	public function getSrcSet():string {
+		if (!$this->srcsetGenerator){
+			return '';
+		}
+		$presetName = $this->preset ?? '';
+		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
+		if (empty($preset['widths'])) {
+			return '';
+		}
+
+		$breakpoints = [];
+		foreach ($preset['widths'] as $name) {
+			if (isset($this->breakpoints[$name])) {
+				$breakpoints[$name] = $this->breakpoints[$name];
+			}
+		}
+
+		if (empty($breakpoints)) {
+			return '';
+		}
+
+		$urls = $this->srcsetGenerator->generate(
+			$this->src,
+			$breakpoints,
+			$this->context
+		);
+		$src="";
+		foreach ($urls as $breakpoint=>$url){
+			$width = $breakpoints[$breakpoint];
+			$src.="\n{$url} {$width}w,";
+		}
+		$src = rtrim($src,",");
+		return $src ? "srcset=\"$src\"" : "";
+	}
+
+	public function getSizes():string {
+		$presetName = $this->preset ?? '';
+		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
+		$sizes = $preset["sizes"] ?? null;
+		if (!$sizes){
+			return '';
+		}
+		return "sizes=\"{$sizes}\"";
 	}
 
 	public function getHash(): ?string {

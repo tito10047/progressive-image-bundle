@@ -1,4 +1,22 @@
 progressive_image:
+    responsive_strategy:
+        breakpoints:
+            sm: 480
+            md: 800
+            lg: 1200
+            xl: 1920
+
+        fallback_widths: [ sm, md, lg, xl ]
+        fallback_sizes: "100vw"
+
+        presets:
+            article_hero:
+                widths: [ md, lg, xl ]
+                sizes: "(max-width: 1024px) 100vw, 1024px"
+            user_avatar:
+                widths: [ sm, md ]
+                sizes: "150px"
+        generator: 'progressive_image.responsive_generator.liip_imagine'
     resolvers:
         my_path_resolver:
             type: "filesystem"

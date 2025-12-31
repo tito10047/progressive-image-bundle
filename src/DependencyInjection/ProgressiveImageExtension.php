@@ -85,10 +85,23 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 			$definition->setArgument('$fallbackPath', $configs['fallback_image']);
 		}
 
+		$responsiveConfig = $configs['responsive_strategy'] ?? [];
+		$breakpoints = $responsiveConfig['breakpoints'] ?? [];
+		$defaultPreset = [
+			'widths' => $responsiveConfig['fallback_widths'] ?? [],
+			'sizes' => $responsiveConfig['fallback_sizes'] ?? '100vw',
+		];
+		$presets = $responsiveConfig['presets'] ?? [];
+		$generatorId = $responsiveConfig['generator'] ?? null;
+
 		$container->register(Image::class, Image::class)
 			->setArgument(0, new Reference(MetadataReader::class))
 			->setArgument(1, array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
 			->setArgument(2, new Reference(PreloadCollector::class))
+			->setArgument(3, $generatorId ? new Reference($generatorId) : null)
+			->setArgument(4, $breakpoints)
+			->setArgument(5, $defaultPreset)
+			->setArgument(6, $presets)
 			->addTag('twig.component')
 			->setPublic(true);
 

@@ -11,6 +11,9 @@ class LiipImagineDecoratorTest extends TestCase
 {
     public function testResolve(): void
     {
+        if (!class_exists(CacheManager::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
         $cacheManager = $this->createMock(CacheManager::class);
         $filterConfig = $this->createMock(FilterConfiguration::class);
         $path = 'images/test.jpg';

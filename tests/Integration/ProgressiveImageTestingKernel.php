@@ -21,14 +21,19 @@ class ProgressiveImageTestingKernel extends Kernel {
 	}
 
 	public function registerBundles(): iterable {
-		return [
+		$bundles = [
 			new FrameworkBundle(),
 			new TwigComponentBundle(),
 			new TwigBundle(),
 			new StimulusBundle(),
 			new ProgressiveImageBundle(),
-			new LiipImagineBundle(),
 		];
+
+		if (class_exists(LiipImagineBundle::class)) {
+			$bundles[] = new LiipImagineBundle();
+		}
+
+		return $bundles;
 	}
 
 	public function registerContainerConfiguration(LoaderInterface $loader): void {
@@ -48,27 +53,29 @@ class ProgressiveImageTestingKernel extends Kernel {
 				'http_method_override' => false,
 			]);
 
-			$container->loadFromExtension('liip_imagine', [
-				"loaders"   => [
-					"default" => [
-						"filesystem" => [
-							"data_root" => "%kernel.project_dir%/tests/Functional/Fixtures/images"
+			if (class_exists(LiipImagineBundle::class)) {
+				$container->loadFromExtension('liip_imagine', [
+					"loaders"   => [
+						"default" => [
+							"filesystem" => [
+								"data_root" => "%kernel.project_dir%/tests/Functional/Fixtures/images"
+							]
 						]
-					]
-				],
-				"filter_sets" => [
-					"cache"       => [],
-					"preview_big" => [
-						"quality" => 75,
-						"filters" => [
-							"thumbnail" => [
-								"size" => [20, 20],
-								"mode" => "outbound"
+					],
+					"filter_sets" => [
+						"cache"       => [],
+						"preview_big" => [
+							"quality" => 75,
+							"filters" => [
+								"thumbnail" => [
+									"size" => [20, 20],
+									"mode" => "outbound"
+								]
 							]
 						]
 					]
-				]
-			]);
+				]);
+			}
 
 			$container->loadFromExtension('framework', [
 				'secret'                => 'F00',

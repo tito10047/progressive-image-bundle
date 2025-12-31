@@ -86,6 +86,9 @@ class ImageComponentTest extends PGITestCase {
 	}
 
 	public function testPreloadHeader(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$cacheManager = $this->createMock(CacheManager::class);
 		$cacheManager->expects($this->once())
 			->method('getBrowserPath')

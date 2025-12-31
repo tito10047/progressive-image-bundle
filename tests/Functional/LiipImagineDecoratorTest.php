@@ -13,6 +13,9 @@ class LiipImagineDecoratorTest extends PGITestCase
 
     public function testImageComponentWithLiipImagineDecorator(): void
     {
+        if (!class_exists(CacheManager::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
         $cacheManager = $this->createMock(CacheManager::class);
         $cacheManager->expects($this->once())
             ->method('getBrowserPath')

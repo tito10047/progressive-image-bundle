@@ -13,6 +13,9 @@ class ResponsiveStrategyTest extends PGITestCase
 
     public function testResponsiveImageComponent(): void
     {
+        if (!class_exists(CacheManager::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
         $cacheManager = $this->createMock(CacheManager::class);
         $cacheManager->method('getBrowserPath')
             ->willReturnCallback(function($path, $filter) {

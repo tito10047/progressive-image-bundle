@@ -3,10 +3,19 @@
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional;
 
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
+use Liip\ImagineBundle\LiipImagineBundle;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 
 class PrependExtensionTest extends PGITestCase
 {
+    protected function setUp(): void
+    {
+        if (!class_exists(LiipImagineBundle::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
+        parent::setUp();
+    }
+
     public function testLiipImagineConfigIsPrepended(): void
     {
         self::bootKernel([

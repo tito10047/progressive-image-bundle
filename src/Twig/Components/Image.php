@@ -109,15 +109,15 @@ class Image {
 		$src="";
 		foreach ($urls as $breakpoint=>$url){
 			$width = $breakpoints[$breakpoint];
-			$src.="\n{$url} {$width}w,";
+			$src.=" {$url} {$width}w,";
 		}
 		$src = rtrim($src,",");
-		return $src ?: null;
+		return trim($src) ?: null;
 	}
 
 	public function getSrcSet():string {
 		$src = $this->getRawSrcSet();
-		return $src ? "srcset=\"$src\"" : "";
+		return trim($src) ? "srcset=\"$src\"" : "";
 	}
 
 	public function getRawSizes(): ?string {

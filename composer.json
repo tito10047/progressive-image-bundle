@@ -27,7 +27,7 @@
         "symfony/translation": "^6.4|^7.4|^8.0",
         "symfony/twig-bundle": "^7.4",
         "symfony/ux-twig-component": "^2.31",
-        "symfony/web-link": "^8.0"
+        "symfony/web-link": "^6.4|^7.4|^8.0"
     },
     "require-dev": {
         "ext-imagick": "*",

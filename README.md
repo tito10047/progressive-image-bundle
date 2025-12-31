@@ -148,24 +148,6 @@ The bundle never generates an image larger than the original source. For example
 ### 3. Seamless Twig Integration
 Using complex responsive logic is now as simple as naming a preset.
 
-```twig
-{# Automatically handles srcset, sizes, and upscale protection #}
-<twig:pgi:Image src="blog/hero.jpg" preset="article_hero" />
-```
-
-
-## ⚡ Smart Preload Injection (LCP Optimization)
-
-One of the biggest challenges for Core Web Vitals (LCP) is the "Indirect Discovery" of images. If your hero image is hidden behind a component or managed by JavaScript, the browser's preload scanner won't find it fast enough.
-
-This bundle solves this by implementing a **Dependency Discovery Pattern**:
-1. **Collection:** While Twig renders your components, the bundle automatically collects the URLs of images marked with the `preload` attribute.
-2. **Injection:** A Kernel Response Listener intercepts the final response and injects `<link rel="preload">` tags directly into the HTML `<head>` (or as HTTP Link headers) before it's sent to the user.
-
-**Key Benefits:**
-- **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
-- **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
-
 ### LiipImagine Integration & Automatic Filter Generation
 
 If you use [LiipImagineBundle](https://github.com/liip/LiipImagineBundle), this bundle can automatically generate the necessary `filter_sets` for your responsive breakpoints.
@@ -210,6 +192,24 @@ liip_imagine:
                 thumbnail: { size: [ 800, 800 ], mode: outbound }
             post_processors: { cwebp: { q: 75, m: 6 } }
 ```
+```twig
+{# Automatically handles srcset, sizes, and upscale protection #}
+<twig:pgi:Image src="blog/hero.jpg" preset="article_hero" />
+```
+
+
+## ⚡ Smart Preload Injection (LCP Optimization)
+
+One of the biggest challenges for Core Web Vitals (LCP) is the "Indirect Discovery" of images. If your hero image is hidden behind a component or managed by JavaScript, the browser's preload scanner won't find it fast enough.
+
+This bundle solves this by implementing a **Dependency Discovery Pattern**:
+1. **Collection:** While Twig renders your components, the bundle automatically collects the URLs of images marked with the `preload` attribute.
+2. **Injection:** A Kernel Response Listener intercepts the final response and injects `<link rel="preload">` tags directly into the HTML `<head>` (or as HTTP Link headers) before it's sent to the user.
+
+**Key Benefits:**
+- **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
+- **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
+
 ## 🏗️ Architecture
 
 ### Stream-based Approach

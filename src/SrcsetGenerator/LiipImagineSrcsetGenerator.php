@@ -16,6 +16,7 @@ class LiipImagineSrcsetGenerator implements SrcsetGeneratorInterface{
 			$url = $this->decorator->decorate($path, ['filter' => $filter]);
 			$set[$breakpoint] = $url;
 		}
+		$set['original']= $this->decorator->decorate($path, ['filter' => $baseFilter]);
 
 		return $set;
 

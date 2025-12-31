@@ -108,7 +108,11 @@ class Image {
 		);
 		$src="";
 		foreach ($urls as $breakpoint=>$url){
-			$width = $breakpoints[$breakpoint];
+			if ($breakpoint=='original'){
+				$width = $this->getWidth();
+			}else {
+				$width = $breakpoints[$breakpoint];
+			}
 			$src.=" {$url} {$width}w,";
 		}
 		$src = rtrim($src,",");

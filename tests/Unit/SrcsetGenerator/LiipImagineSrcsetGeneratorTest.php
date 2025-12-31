@@ -11,11 +11,12 @@ class LiipImagineSrcsetGeneratorTest extends TestCase
     public function testGenerate(): void
     {
         $decorator = $this->createMock(LiipImagineDecorator::class);
-        $decorator->expects($this->exactly(2))
+        $decorator->expects($this->exactly(3))
             ->method('decorate')
             ->willReturnMap([
                 ['image.jpg', ['filter' => 'progressive_image_filter_sm'], '/cache/sm/image.jpg'],
                 ['image.jpg', ['filter' => 'progressive_image_filter_md'], '/cache/md/image.jpg'],
+                ['image.jpg', ['filter' => 'progressive_image_filter'], '/cache/md/image.jpg'],
             ]);
 
         $generator = new LiipImagineSrcsetGenerator($decorator);
@@ -26,6 +27,7 @@ class LiipImagineSrcsetGeneratorTest extends TestCase
         $this->assertEquals([
             'sm' => '/cache/sm/image.jpg',
             'md' => '/cache/md/image.jpg',
+			'original' => '/cache/md/image.jpg'
         ], $result);
     }
 }

@@ -16,7 +16,7 @@ class LiipImagineSrcsetGeneratorTest extends TestCase
             ->willReturnMap([
                 ['image.jpg', ['filter' => 'progressive_image_filter_sm'], '/cache/sm/image.jpg'],
                 ['image.jpg', ['filter' => 'progressive_image_filter_md'], '/cache/md/image.jpg'],
-                ['image.jpg', ['filter' => 'progressive_image_filter'], '/cache/md/image.jpg'],
+                ['image.jpg', ['filter' => 'progressive_image_filter'], '/cache/original/image.jpg'],
             ]);
 
         $generator = new LiipImagineSrcsetGenerator($decorator);
@@ -27,7 +27,7 @@ class LiipImagineSrcsetGeneratorTest extends TestCase
         $this->assertEquals([
             'sm' => '/cache/sm/image.jpg',
             'md' => '/cache/md/image.jpg',
-			'original' => '/cache/md/image.jpg'
+			'original' => '/cache/original/image.jpg'
         ], $result);
     }
 }

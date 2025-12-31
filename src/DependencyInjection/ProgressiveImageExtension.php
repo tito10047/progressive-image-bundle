@@ -19,6 +19,11 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 class ProgressiveImageExtension extends Extension implements PrependExtensionInterface {
 
+    public function getAlias(): string
+    {
+        return 'progressive_image';
+    }
+
 	public function prepend(ContainerBuilder $builder): void
 	{
 		$builder->prependExtensionConfig('framework', [

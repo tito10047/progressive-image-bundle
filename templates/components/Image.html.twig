@@ -24,6 +24,8 @@
 			{{ attributes.only('lazy') }}
 			{{ attributes.only('fetchpriority') }}
 			{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
+			{{ this.srcSet }}
+			{{ this.sizes }}
 	>
 	{% if this.hash is null %}
 		<div

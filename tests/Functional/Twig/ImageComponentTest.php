@@ -132,6 +132,54 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertStringContainsString('<' . $expectedUrl . '>; rel=preload; as=image; fetchpriority=high', $response->headers->get('Link'));
 	}
 
+	public function testRenderWithResponsiveStrategy(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$cacheManager = $this->createMock(CacheManager::class);
+		$cacheManager->expects($this->exactly(2))
+			->method('getBrowserPath')
+			->willReturnMap([
+				['/test.png', 'hero_mobile', [], 'http://localhost/media/cache/resolve/hero_mobile/test.png'],
+				['/test.png', 'hero_desktop', [], 'http://localhost/media/cache/resolve/hero_desktop/test.png'],
+			]);
+
+		$this->_bootKernel([
+			"progressive_image" => [
+				'responsive_strategy' => [
+					'breakpoints' => [
+						'mobile' => 320,
+						'tablet' => 768,
+						'desktop' => 1024,
+					],
+					'presets' => [
+						'hero' => [
+							'widths' => ['mobile', 'desktop'],
+							'sizes' => '(max-width: 768px) 100vw, 50vw',
+						]
+					],
+					'generator' => 'progressive_image.responsive_generator.liip_imagine'
+				]
+			]
+		]);
+
+		self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
+
+		$html = $this->renderTwigComponent(
+			name: "pgi:Image",
+			data: [
+				"src" => "/test.png",
+				"preset" => "hero",
+			]
+		);
+
+		$this->assertStringContainsString('srcset=&quot;', $html);
+		$this->assertStringContainsString('320w', $html);
+		$this->assertStringContainsString('1024w', $html);
+		$this->assertStringNotContainsString('768w', $html);
+		$this->assertStringContainsString('sizes=&quot;(max-width: 768px) 100vw, 50vw&quot;', $html);
+	}
+
 	private function _bootKernel(array $extraOptions = []): void {
 		$imagePath = $this->tempDir . '/test.png';
 		$this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);

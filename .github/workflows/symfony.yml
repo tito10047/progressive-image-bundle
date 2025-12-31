@@ -79,10 +79,17 @@ jobs:
             -   name: "Install highest dependencies"
                 run: |
                     composer global require php-coveralls/php-coveralls
-                    if [ "${{ matrix.liip }}" == "without" ]; then
+                    if [ "${{ matrix.liip }}" = "without" ]; then
+                      echo "Removing liip/imagine-bundle as requested by matrix"
                       composer remove liip/imagine-bundle --dev --no-update
+                      # Odstránime lock súbor, aby sme vynútili čistý update bez zmienky o liip
+                      rm -f composer.lock
                     fi
                     composer update --no-interaction --no-progress --no-suggest
+                    if [ "${{ matrix.liip }}" = "without" ]; then
+                      echo "Verifying liip/imagine-bundle is gone"
+                      composer show liip/imagine-bundle 2>/dev/null && (echo "Error: liip/imagine-bundle still exists!"; exit 1) || echo "Confirmed: liip/imagine-bundle is removed"
+                    fi
 
 
             -   name: Execute tests (Unit and Feature tests) via PHPUnit

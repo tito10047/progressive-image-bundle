@@ -49,7 +49,9 @@ return static function (ContainerConfigurator $container): void {
 		->arg('$decorator', service('progressive_image.decorator.liip_imagine'))
 	;
 
-	$services->set(PreloadCollector::class);
+	$services->set(PreloadCollector::class)
+		->arg('$requestStack', service('request_stack'))
+	;
 
 	$services->set(KernelResponseEventListener::class)
 		->arg('$preloadCollector', service(PreloadCollector::class))

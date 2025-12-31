@@ -82,6 +82,21 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertStringContainsString("data-controller=\"{$stimulus}\"", $html);
 		$this->assertStringContainsString("data-{$stimulus}-target=\"placeholder\"", $html);
 		$this->assertStringContainsString("data-{$stimulus}-target=\"highRes\"", $html);
+	}
+
+	public function testRenderMissingImage(): void {
+		$this->bootKernel();
+
+		$html = $this->renderTwigComponent(
+			name: "pgi:Image",
+			data: [
+				"src" => "/test2.png",
+				"alt" => "test image"
+			]
+		);
+
+		$stimulus = ProgressiveImageBundle::STIMULUS_CONTROLLER;
+
 		$this->assertStringContainsString("data-{$stimulus}-target=\"errorOverlay\"", $html);
 	}
 
@@ -193,6 +208,72 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertStringContainsString('1024w', $html);
 		$this->assertStringNotContainsString('768w', $html);
 		$this->assertStringContainsString('sizes="(max-width: 1024px) 100vw, 1024px"', $html);
+	}
+
+	public function testPreloadHeaderWithSrcset(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$cacheManager = $this->createMock(CacheManager::class);
+		$cacheManager->method('getBrowserPath')
+			->willReturnCallback(function($path, $filter) {
+				return 'http://localhost/media/cache/resolve/' . $filter . $path;
+			});
+
+		$this->_bootKernel([
+			"progressive_image" => [
+				'path_decorators' => ['progressive_image.decorator.liip_imagine'],
+				'responsive_strategy' => [
+					'breakpoints' => [
+						'mobile' => 320,
+						'desktop' => 1024,
+					],
+					'fallback_widths' => ['mobile', 'desktop'],
+					'fallback_sizes' => '(max-width: 1024px) 100vw, 1024px',
+					'generator' => 'progressive_image.responsive_generator.liip_imagine'
+				]
+			]
+		]);
+
+		self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
+
+		$this->renderTwigComponent(
+			name: "pgi:Image",
+			data: [
+				"src" => "/test.png",
+				"preload" => true,
+				"priority" => "high",
+			]
+		);
+
+		$preloadCollector = self::getContainer()->get(PreloadCollector::class);
+		$urls = $preloadCollector->getUrls();
+
+		$expectedUrl = 'http://localhost/test.png';
+		// LiipImagineDecorator might be used, let's check what URL we got
+		$actualUrl = array_key_first($urls);
+
+		$eventListener = self::getContainer()->get(KernelResponseEventListener::class);
+		$request = new Request();
+		$response = new \Symfony\Component\HttpFoundation\Response();
+		$response->setContent('<html><head></head><body></body></html>');
+		$event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
+
+		$eventListener($event);
+
+		$this->assertTrue($response->headers->has('Link'));
+		$linkHeader = $response->headers->get('Link');
+		$this->assertStringContainsString('rel=preload', $linkHeader);
+		$this->assertStringContainsString('as=image', $linkHeader);
+		$this->assertStringContainsString('imagesrcset="', $linkHeader);
+		$this->assertStringContainsString('320w', $linkHeader);
+		$this->assertStringContainsString('1024w', $linkHeader);
+		$this->assertStringContainsString('imagesizes="(max-width: 1024px) 100vw, 1024px"', $linkHeader);
+
+		$content = $response->getContent();
+		$this->assertStringContainsString('<link rel="preload"', $content);
+		$this->assertStringContainsString('imagesrcset="', $content);
+		$this->assertStringContainsString('imagesizes="(max-width: 1024px) 100vw, 1024px"', $content);
 	}
 
 	private function _bootKernel(array $extraOptions = []): void {

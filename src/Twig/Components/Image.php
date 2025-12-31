@@ -70,18 +70,24 @@ class Image {
 			}
 		}
 		if ($this->preload){
-			$this->preloadCollector->add($this->decoratedSrc,"image",$this->priority);
+			$this->preloadCollector->add(
+				$this->getDecoratedSrc(),
+				"image",
+				$this->priority,
+				$this->getRawSrcSet(),
+				$this->getRawSizes()
+			);
 		}
 	}
 
-	public function getSrcSet():string {
+	public function getRawSrcSet(): ?string {
 		if (!$this->srcsetGenerator){
-			return '';
+			return null;
 		}
 		$presetName = $this->preset ?? '';
 		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
 		if (empty($preset['widths'])) {
-			return '';
+			return null;
 		}
 
 		$breakpoints = [];
@@ -92,7 +98,7 @@ class Image {
 		}
 
 		if (empty($breakpoints)) {
-			return '';
+			return null;
 		}
 
 		$urls = $this->srcsetGenerator->generate(
@@ -106,13 +112,22 @@ class Image {
 			$src.="\n{$url} {$width}w,";
 		}
 		$src = rtrim($src,",");
+		return $src ?: null;
+	}
+
+	public function getSrcSet():string {
+		$src = $this->getRawSrcSet();
 		return $src ? "srcset=\"$src\"" : "";
 	}
 
-	public function getSizes():string {
+	public function getRawSizes(): ?string {
 		$presetName = $this->preset ?? '';
 		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
-		$sizes = $preset["sizes"] ?? null;
+		return $preset["sizes"] ?? null;
+	}
+
+	public function getSizes():string {
+		$sizes = $this->getRawSizes();
 		if (!$sizes){
 			return '';
 		}

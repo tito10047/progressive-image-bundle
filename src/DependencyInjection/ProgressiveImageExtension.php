@@ -149,6 +149,7 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 			->setArgument(4, $breakpoints)
 			->setArgument(5, $defaultPreset)
 			->setArgument(6, $presets)
+            ->setShared(false)
 			->addTag('twig.component')
 			->setPublic(true);
 

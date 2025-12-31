@@ -137,12 +137,10 @@ class ImageComponentTest extends PGITestCase {
 			$this->markTestSkipped('LiipImagineBundle is not installed.');
 		}
 		$cacheManager = $this->createMock(CacheManager::class);
-		$cacheManager->expects($this->exactly(2))
-			->method('getBrowserPath')
-			->willReturnMap([
-				['/test.png', 'hero_mobile', [], 'http://localhost/media/cache/resolve/hero_mobile/test.png'],
-				['/test.png', 'hero_desktop', [], 'http://localhost/media/cache/resolve/hero_desktop/test.png'],
-			]);
+		$cacheManager->method('getBrowserPath')
+			->willReturnCallback(function($path, $filter) {
+				return 'http://localhost/media/cache/resolve/' . $filter . $path;
+			});
 
 		$this->_bootKernel([
 			"progressive_image" => [
@@ -152,6 +150,8 @@ class ImageComponentTest extends PGITestCase {
 						'tablet' => 768,
 						'desktop' => 1024,
 					],
+					'fallback_widths' => ['mobile', 'desktop'],
+        			'fallback_sizes' => '(max-width: 1024px) 100vw, 1024px',
 					'presets' => [
 						'hero' => [
 							'widths' => ['mobile', 'desktop'],
@@ -173,11 +173,26 @@ class ImageComponentTest extends PGITestCase {
 			]
 		);
 
-		$this->assertStringContainsString('srcset=&quot;', $html);
+		$this->assertStringContainsString('srcset="', $html);
 		$this->assertStringContainsString('320w', $html);
 		$this->assertStringContainsString('1024w', $html);
 		$this->assertStringNotContainsString('768w', $html);
-		$this->assertStringContainsString('sizes=&quot;(max-width: 768px) 100vw, 50vw&quot;', $html);
+		$this->assertStringContainsString('sizes="(max-width: 768px) 100vw, 50vw"', $html);
+
+		// test fallback
+		$html = $this->renderTwigComponent(
+			name: "pgi:Image",
+			data: [
+				"src" => "/test.png",
+				"preset" => "category",
+			]
+		);
+
+		$this->assertStringContainsString('srcset="', $html);
+		$this->assertStringContainsString('320w', $html);
+		$this->assertStringContainsString('1024w', $html);
+		$this->assertStringNotContainsString('768w', $html);
+		$this->assertStringContainsString('sizes="(max-width: 1024px) 100vw, 1024px"', $html);
 	}
 
 	private function _bootKernel(array $extraOptions = []): void {

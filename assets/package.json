@@ -1,6 +1,6 @@
 {
   "name": "@tito10047/progressive-image-bundle",
-  "description": "Easily manage persistent checkbox selections and key-value settings in Symfony applications.",
+  "description": "High-performance progressive image loading for Symfony. Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders.",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",

@@ -2,7 +2,7 @@
     "name": "tito10047/progressive-image-bundle",
     "type": "symfony-bundle",
     "license": "MIT",
-    "description": "Lqip image preloading",
+    "description": "High-performance progressive image loading bundle for Symfony with Blurhash placeholders, zero CLS, and smart responsive strategies.",
     "minimum-stability": "stable",
     "authors": [
         {

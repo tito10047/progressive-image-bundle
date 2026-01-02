@@ -6,11 +6,21 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 class PGITestCase extends KernelTestCase {
+	protected static function getKernelClass(): string
+	{
+		return ProgressiveImageTestingKernel::class;
+	}
+
+	protected static function createKernel(array $options = []): KernelInterface
+	{
+		return new ProgressiveImageTestingKernel($options);
+	}
+
 	protected static function bootKernel(array $options = []): KernelInterface
 	{
 		static::ensureKernelShutdown();
 
-		$kernel = new ProgressiveImageTestingKernel($options);
+		$kernel = static::createKernel($options);
 		$kernel->boot();
 		static::$kernel = $kernel;
 		static::$booted = true;

@@ -56,7 +56,7 @@ class ProgressiveImageTestingKernel extends Kernel {
 				'http_method_override' => false,
 			]);
 
-            $container->setAlias('test.service_container', 'service_container')->setPublic(true);
+//            $container->setAlias('test.service_container', 'service_container')->setPublic(true);
 
 			if (class_exists(LiipImagineBundle::class)) {
 				$container->loadFromExtension('liip_imagine', [
@@ -89,6 +89,12 @@ class ProgressiveImageTestingKernel extends Kernel {
 				'handle_all_throwables' => true,
 				'php_errors'            => [
 					'log' => true,
+				],
+			]);
+			$container->loadFromExtension('twig_component', [
+				'anonymous_template_directory'                => 'components/',
+				'defaults'                => [
+					'App\Twig\Components\\'=>"%kernel.project_dir%/tests/Functional/Fixtures/templates/components/"
 				],
 			]);
 			foreach($this->options as $bundle=>$options) {

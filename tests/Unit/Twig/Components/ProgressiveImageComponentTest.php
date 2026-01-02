@@ -29,7 +29,7 @@ class ProgressiveImageComponentTest extends TestCase
             ->willReturn('decorated-test.jpg');
 		$collector = $this->createMock(PreloadCollector::class);
 
-        $component = new Image($metadataReader, [$decorator],$collector, null, null, null, null);
+        $component = new Image($metadataReader, [$decorator],null,$collector);
         $component->src = 'test.jpg';
         $component->postMount();
 
@@ -47,7 +47,7 @@ class ProgressiveImageComponentTest extends TestCase
             ->willReturn(null);
 		$collector = $this->createMock(PreloadCollector::class);
 
-        $component = new Image($metadataReader, [],$collector, null, null, null, null);
+        $component = new Image($metadataReader, [],null,$collector);
         $component->src = 'test.jpg';
         $component->postMount();
 
@@ -57,41 +57,4 @@ class ProgressiveImageComponentTest extends TestCase
         $this->assertSame('test.jpg', $component->getDecoratedSrc());
     }
 
-    public function testSrcSetAndSizes(): void
-    {
-        $metadataReader = $this->createMock(MetadataReader::class);
-        $collector = $this->createMock(PreloadCollector::class);
-        $srcsetGenerator = $this->createMock(SrcsetGeneratorInterface::class);
-
-        $breakpoints = ['sm' => 480, 'md' => 800];
-        $defaultPreset = ['widths' => ['sm', 'md'], 'sizes' => '100vw'];
-        $presets = [
-            'hero' => ['widths' => ['md'], 'sizes' => '50vw']
-        ];
-
-        $srcsetGenerator->expects($this->any())
-            ->method('generate')
-            ->willReturnCallback(function($path, $breakpoints) {
-                if (count($breakpoints) === 2) {
-                    return ['sm' => 'sm.jpg', 'md' => 'md.jpg'];
-                }
-                return ['md' => 'hero-md.jpg'];
-            });
-
-        $component = new Image($metadataReader, [], $collector, $srcsetGenerator, $breakpoints, $defaultPreset, $presets);
-        $component->src = 'test.jpg';
-        $component->postMount();
-
-        $this->assertStringContainsString('srcset="', $component->getSrcSet());
-        $this->assertStringContainsString('sm.jpg 480w', $component->getSrcSet());
-        $this->assertStringContainsString('md.jpg 800w', $component->getSrcSet());
-        $this->assertSame('sizes="100vw"', $component->getSizes());
-
-        // Test with preset
-        $component->preset = 'hero';
-        $component->postMount();
-        
-        $this->assertStringContainsString('hero-md.jpg 800w', $component->getSrcSet());
-        $this->assertSame('sizes="50vw"', $component->getSizes());
-    }
 }

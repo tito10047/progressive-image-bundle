@@ -14,6 +14,7 @@ use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
+use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -115,40 +116,32 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 			$resolverId = $resolver;
 		}
 		$loaderId = $configs['loader']??'progressive_image.filesystem.loader';
-		$cacheId = $configs['cache']??CacheInterface::class;
+		$cacheId = $configs['cache']??'cache.app';
 
 		$definition = $container->getDefinition(MetadataReader::class);
 		$definition->setArgument('$analyzer', new Reference($analyzerId))
 			->setArgument('$loader', new Reference($loaderId))
 			->setArgument('$pathResolver', new Reference($resolverId))
 			->setArgument('$cache', new Reference($cacheId))
+            ->setArgument('$ttl', $configs['ttl'] ?? null)
+            ->setArgument('$fallbackPath', $configs['fallback_image'] ?? null)
 		;
 
-		if (isset($configs['ttl'])) {
-			$definition->setArgument('$ttl', $configs['ttl']);
-		}
-
-		if (isset($configs['fallback_image'])) {
-			$definition->setArgument('$fallbackPath', $configs['fallback_image']);
-		}
-
 		$responsiveConfig = $configs['responsive_strategy'] ?? [];
-		$breakpoints = $responsiveConfig['breakpoints'] ?? [];
-		$defaultPreset = [
-			'widths' => $responsiveConfig['fallback_widths'] ?? [],
-			'sizes' => $responsiveConfig['fallback_sizes'] ?? '100vw',
-		];
-		$presets = $responsiveConfig['presets'] ?? [];
 		$generatorId = $responsiveConfig['generator'] ?? null;
 
+        $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
+            ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
+            ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
+            ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
+            ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(\Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface::class))
+        ;
+
 		$container->register(Image::class, Image::class)
-			->setArgument(0, new Reference(MetadataReader::class))
-			->setArgument(1, array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
-			->setArgument(2, new Reference(PreloadCollector::class))
-			->setArgument(3, $generatorId ? new Reference($generatorId) : null)
-			->setArgument(4, $breakpoints)
-			->setArgument(5, $defaultPreset)
-			->setArgument(6, $presets)
+			->setArgument('$analyzer', new Reference(MetadataReader::class))
+			->setArgument('$pathDecorator', array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
+            ->setArgument('$responsiveAttributeGenerator', new Reference(ResponsiveAttributeGenerator::class))
+			->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setShared(false)
 			->addTag('twig.component')
 			->setPublic(true);

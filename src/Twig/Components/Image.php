@@ -3,6 +3,7 @@
 namespace Tito10047\ProgressiveImageBundle\Twig\Components;
 
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
+use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\SrcsetGenerator\SrcsetGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
@@ -25,11 +26,15 @@ class Image {
 	private string         $decoratedSrc;
 	private ?int           $decoratedWidth;
 	private ?int           $decoratedHeight;
-	public bool $preload = false;
-	public string $priority = 'high';
-	public ?string $grid = null;
-	public ?string $ratio = null;
-	private array $breakpoinsts = [];
+	public bool            $preload = false;
+	public string          $priority = 'high';
+	public ?string         $grid = null;
+	public ?string         $ratio = null;
+	private array          $breakpoinsts = [];
+	/**
+	 * @var array{sizes: string, srcset: string}|null
+	 */
+	private ?array         $responsiveAttributes = null;
 
 	/**
 	 * @param iterable<PathDecoratorInterface> $pathDecorator
@@ -45,8 +50,8 @@ class Image {
 	public function __construct(
 		private readonly MetadataReader $analyzer,
 		private readonly iterable       $pathDecorator,
-		private readonly PreloadCollector $preloadCollector,
-		private readonly ?SrcsetGeneratorInterface $srcsetGenerator,
+		private readonly ?ResponsiveAttributeGenerator $responsiveAttributeGenerator,
+		private readonly PreloadCollector            $preloadCollector,
 	) {
 	}
 
@@ -57,7 +62,6 @@ class Image {
 		}catch (PathResolutionException){
 			$this->metadata = null;
 		}
-		$this->context["filter"] ??= $this->preset;
 		$this->decoratedSrc = $this->src;
 		$this->decoratedWidth = $this->metadata?->width;
 		$this->decoratedHeight = $this->metadata?->height;
@@ -69,7 +73,26 @@ class Image {
 				$this->decoratedHeight = $size["height"];
 			}
 		}
-		$this->breakpoinsts = BreakpointAssignment::parseSegments($this->grid, $this->ratio);
+		$this->breakpoinsts = $this->grid ? BreakpointAssignment::parseSegments($this->grid, $this->ratio) : [];
+		if ($this->breakpoinsts) {
+			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->decoratedWidth ?? 0, $this->preload);
+		}elseif ($this->preload){
+			$this->preloadCollector->add($this->decoratedSrc, "image", $this->priority);
+		}
+	}
+
+	public function getSrcset():string {
+		if (!$this->responsiveAttributes){
+			return "";
+		}
+		return "srcset=\"{$this->responsiveAttributes['srcset']}";
+	}
+
+	public function getSizes():string {
+		if (!$this->responsiveAttributes){
+			return "";
+		}
+		return "sizes=\"{$this->responsiveAttributes["sizes"]}\"";
 	}
 
 	public function getHash(): ?string {

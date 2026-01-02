@@ -2,6 +2,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Twig\Components;
 
+use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\SrcsetGenerator\SrcsetGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
@@ -26,7 +27,9 @@ class Image {
 	private ?int           $decoratedHeight;
 	public bool $preload = false;
 	public string $priority = 'high';
-	public ?string $preset = null;
+	public ?string $grid = null;
+	public ?string $ratio = null;
+	private array $breakpoinsts = [];
 
 	/**
 	 * @param iterable<PathDecoratorInterface> $pathDecorator
@@ -44,9 +47,6 @@ class Image {
 		private readonly iterable       $pathDecorator,
 		private readonly PreloadCollector $preloadCollector,
 		private readonly ?SrcsetGeneratorInterface $srcsetGenerator,
-		private ?array $breakpoints,
-		private ?array $defaultPreset,
-		private ?array $presets,
 	) {
 	}
 
@@ -69,73 +69,7 @@ class Image {
 				$this->decoratedHeight = $size["height"];
 			}
 		}
-		if ($this->preload){
-			$this->preloadCollector->add(
-				$this->getDecoratedSrc(),
-				"image",
-				$this->priority,
-				$this->getRawSrcSet(),
-				$this->getRawSizes()
-			);
-		}
-	}
-
-	public function getRawSrcSet(): ?string {
-		if (!$this->srcsetGenerator){
-			return null;
-		}
-		$presetName = $this->preset ?? '';
-		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
-		if (empty($preset['widths'])) {
-			return null;
-		}
-
-		$breakpoints = [];
-		foreach ($preset['widths'] as $name) {
-			if (isset($this->breakpoints[$name])) {
-				$breakpoints[$name] = $this->breakpoints[$name];
-			}
-		}
-
-		if (empty($breakpoints)) {
-			return null;
-		}
-
-		$urls = $this->srcsetGenerator->generate(
-			$this->src,
-			$breakpoints,
-			$this->context
-		);
-		$src="";
-		foreach ($urls as $breakpoint=>$url){
-			if ($breakpoint=='original'){
-				$width = $this->getWidth();
-			}else {
-				$width = $breakpoints[$breakpoint];
-			}
-			$src.=" {$url} {$width}w,";
-		}
-		$src = rtrim($src,",");
-		return trim($src) ?: null;
-	}
-
-	public function getSrcSet():string {
-		$src = $this->getRawSrcSet();
-		return trim($src) ? "srcset=\"$src\"" : "";
-	}
-
-	public function getRawSizes(): ?string {
-		$presetName = $this->preset ?? '';
-		$preset = $this->presets[$presetName] ?? $this->defaultPreset;
-		return $preset["sizes"] ?? null;
-	}
-
-	public function getSizes():string {
-		$sizes = $this->getRawSizes();
-		if (!$sizes){
-			return '';
-		}
-		return "sizes=\"{$sizes}\"";
+		$this->breakpoinsts = BreakpointAssignment::parseSegments($this->grid, $this->ratio);
 	}
 
 	public function getHash(): ?string {

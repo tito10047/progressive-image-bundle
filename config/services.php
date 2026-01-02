@@ -1,5 +1,7 @@
 <?php
 
+use Symfony\Component\DependencyInjection\Parameter;
+use Symfony\Component\HttpFoundation\UriSigner;
 use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Analyzer\GdImageAnalyzer;
@@ -8,10 +10,8 @@ use Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator;
 use Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
-use Tito10047\ProgressiveImageBundle\SrcsetGenerator\LiipImagineSrcsetGenerator;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
@@ -45,10 +45,6 @@ return static function (ContainerConfigurator $container): void {
 		->arg('$configuration', service('liip_imagine.filter.configuration'))
 	;
 
-	$services->set('progressive_image.responsive_generator.liip_imagine', LiipImagineSrcsetGenerator::class)
-		->arg('$decorator', service('progressive_image.decorator.liip_imagine'))
-	;
-
 	$services->set(PreloadCollector::class)
 		->arg('$requestStack', service('request_stack'))
 	;
@@ -57,6 +53,39 @@ return static function (ContainerConfigurator $container): void {
 		->arg('$preloadCollector', service(PreloadCollector::class))
 		->tag('kernel.event_listener', ['event' => 'kernel.response'])
 	;
+    
+    if (class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
+		$services->set(\Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator::class)
+			->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
+		;
 
+		$services->set(\Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator::class)
+			->arg('$cacheManager', service('liip_imagine.cache.manager'))
+			->arg('$router', service('router'))
+			->arg('$uriSigner', service('uri_signer'))
+			->arg('$runtimeConfigGenerator', service(\Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator::class))
+			->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
+			->public()
+		;
 
+		$services->set('uri_signer', UriSigner::class)
+			->args([
+				new Parameter('kernel.secret'),
+				'_hash',
+				'_expiration',
+				service('clock')->nullOnInvalid(),
+			])
+			->public()
+			->lazy()
+			->alias(UriSigner::class, 'uri_signer');
+        $services->set(\Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class)
+            ->arg('$signer', service('uri_signer'))
+            ->arg('$filterService', service('liip_imagine.service.filter'))
+            ->arg('$dataManager', service('liip_imagine.data.manager'))
+            ->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
+            ->arg('$controllerConfig', service('liip_imagine.controller.config'))
+            ->arg('$runtimeConfigGenerator', service(\Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator::class))
+            ->public()
+        ;
+    }
 };

@@ -1,21 +1,22 @@
 progressive_image:
-    responsive_strategy:
-        breakpoints:
-            sm: 480
-            md: 800
-            lg: 1200
-            xl: 1920
+    progressive_image:
+        grid:
+            framework: custom # Alebo ponechať prázdne
+            columns: 16       # Vlastný počet stĺpcov
+            layouts:
+                desktop:
+                    min_viewport: 1024
+                    max_container: 1000
+                mobile:
+                    min_viewport: 0
+                    max_container: ~ # Fluid (100vw)
+        ratios:
+            square: 1/1
+            landscape: 16/9
+            portrait: 3/4
+            cinema: 21/9
+            auto: ~
 
-        fallback_widths: [ sm, md, lg, xl ]
-        fallback_sizes: "100vw"
-
-        presets:
-            article_hero:
-                widths: [ md, lg, xl ]
-                sizes: "(max-width: 1024px) 100vw, 1024px"
-            user_avatar:
-                widths: [ sm, md ]
-                sizes: "150px"
         generator: 'progressive_image.responsive_generator.liip_imagine'
     resolvers:
         my_path_resolver:

@@ -114,4 +114,5 @@ class Image {
 	public function getController(): ?string {
 		return ProgressiveImageBundle::STIMULUS_CONTROLLER;
 	}
+
 }

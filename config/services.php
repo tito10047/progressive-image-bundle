@@ -1,5 +1,7 @@
 <?php
 
+use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
+use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
 use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\HttpFoundation\UriSigner;
@@ -99,4 +101,17 @@ return static function (ContainerConfigurator $container): void {
 		->arg('$preloadCollector', service(PreloadCollector::class))
 		->tag('kernel.event_listener', ['event' => 'kernel.response'])
 	;
+
+    $services->set(TransparentCacheExtension::class)
+        ->arg('$cache', service('progressive_image.image_cache_service'))
+        ->arg('$ttl', new Parameter('progressive_image.ttl'))
+        ->tag('twig.extension')
+    ;
+
+    $services->set(TransparentImageCacheSubscriber::class)
+        ->arg('$cache', service('progressive_image.image_cache_service'))
+        ->arg('$enabled', new Parameter('progressive_image.image_cache_enabled'))
+        ->arg('$ttl', new Parameter('progressive_image.ttl'))
+        ->tag('kernel.event_subscriber')
+    ;
 };

@@ -15,10 +15,6 @@ class ProgressiveImageBundle extends AbstractBundle
 	public const STIMULUS_CONTROLLER = 'tito10047--progressive-image-bundle--progressive-image';
 
 	protected string $extensionAlias = 'progressive_image';
-    public function configure(DefinitionConfigurator $definition): void
-    {
-        $definition->import('../config/definition.php');
-    }
 
 	public function getContainerExtension(): ?ExtensionInterface
 	{

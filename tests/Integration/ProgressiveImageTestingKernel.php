@@ -82,15 +82,6 @@ class ProgressiveImageTestingKernel extends Kernel {
 				]);
 			}
 
-			$container->loadFromExtension('framework', [
-				'secret'                => 'F00',
-				'test'                  => true,
-				'http_method_override'  => true,
-				'handle_all_throwables' => true,
-				'php_errors'            => [
-					'log' => true,
-				],
-			]);
 			$container->loadFromExtension('twig_component', [
 				'anonymous_template_directory'                => 'components/',
 				'defaults'                => [
@@ -100,6 +91,7 @@ class ProgressiveImageTestingKernel extends Kernel {
 			foreach($this->options as $bundle=>$options) {
 				$container->loadFromExtension($bundle, $options);
 			}
+
 		});
 	}
 

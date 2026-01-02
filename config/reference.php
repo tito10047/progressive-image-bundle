@@ -745,11 +745,14 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     loader?: scalar|null, // Default: null
  *     resolver?: scalar|null, // Default: null
  *     cache?: scalar|null, // Default: null
+ *     image_cache_service?: scalar|null, // Default: "cache.app"
  *     hash_resolution?: array{
  *         width?: int, // Default: 10
  *         height?: int, // Default: 8
  *     },
  *     fallback_image?: scalar|null, // Default: null
+ *     image_cache_enabled?: bool, // Default: false
+ *     ttl?: int, // Default: null
  *     responsive_strategy?: array{
  *         grid?: array{
  *             framework?: "bootstrap"|"tailwind"|"custom", // Default: "custom"

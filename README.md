@@ -23,6 +23,7 @@ Deliver lightning-fast user experiences by serving beautiful Blurhash placeholde
 -   **Smart Responsive Strategy:** Breakpoint-First approach with built-in **Upscale Protection**. Never serve blurry upscaled images again.
 -   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
 -   **Zero CLS (Cumulative Layout Shift):** Automatically extracts and injects image dimensions to reserve space, ensuring a stable layout during loading.
+-   **Transparent HTML Caching:** Optional caching of the rendered component HTML to avoid repeated Blurhash generation and metadata extraction, significantly improving response times for heavy pages.
 
 ### Other Features
 -   **Smart Metadata Extraction:** Uses PHP Streams to read only the necessary bytes for dimensions and hashes—no more loading 20MB images into RAM.
@@ -82,6 +83,11 @@ progressive_image:
     hash_resolution:
         width: 10
         height: 8
+
+    # Transparent HTML Caching
+    image_cache_enabled: false # Set to true to enable HTML caching
+    image_cache_service: "cache.app" # The cache service to use
+    ttl: 3600 # Cache TTL in seconds (null = default)
 
     # Integrations
     path_decorators:
@@ -208,6 +214,28 @@ This bundle solves this by implementing a **Dependency Discovery Pattern**:
 **Key Benefits:**
 - **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
 - **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
+- **Smart Logic:** Only preloads if `preload` attribute is present on the component.
+
+## ⚡ Transparent HTML Caching
+
+While this bundle is highly optimized for performance, generating Blurhashes and extracting metadata still takes some CPU cycles. On pages with dozens of images, this can add up.
+
+Transparent HTML caching allows you to store the final rendered HTML of the `<twig:pgi:Image>` component in your cache (e.g., Redis or APCu).
+
+### How it works:
+1. When enabled, the bundle checks the cache before rendering the component.
+2. If a cached version exists, it returns it immediately, skipping all PHP logic (metadata extraction, Blurhash generation, path resolution).
+3. If not, it renders the component normally and stores the result in the cache for future requests.
+
+The cache key is automatically generated based on all input properties passed to the component, ensuring that different images or filters never collide.
+
+### Configuration:
+```yaml
+progressive_image:
+    image_cache_enabled: true
+    image_cache_service: 'cache.app' # Use any PSR-6 or PSR-16 cache service
+    ttl: 86400 # Cache for 24 hours
+```
 
 ## 🏗️ Architecture
 

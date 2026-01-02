@@ -15,6 +15,8 @@ use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
+use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
+use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -118,6 +120,9 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 		}
 		$loaderId = $configs['loader']??'progressive_image.filesystem.loader';
 		$cacheId = $configs['cache']??'cache.app';
+		$imageCacheServiceId = $configs['image_cache_service'] ?? 'cache.app';
+		$imageCacheEnabled = $configs['image_cache_enabled'] ?? false;
+		$ttl = $configs['ttl'] ?? null;
 
 		$definition = $container->getDefinition(MetadataReader::class);
 		$definition->setArgument('$analyzer', new Reference($analyzerId))
@@ -127,6 +132,9 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
             ->setArgument('$ttl', $configs['ttl'] ?? null)
             ->setArgument('$fallbackPath', $configs['fallback_image'] ?? null)
 		;
+		$container->setParameter('progressive_image.image_cache_enabled', $imageCacheEnabled);
+		$container->setParameter('progressive_image.ttl', $ttl);
+		$container->setAlias('progressive_image.image_cache_service', $imageCacheServiceId);
 
 		$responsiveConfig = $configs['responsive_strategy'] ?? [];
 		$generatorId = $responsiveConfig['generator'] ?? null;

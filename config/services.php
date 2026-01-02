@@ -49,21 +49,12 @@ return static function (ContainerConfigurator $container): void {
     $services->set('progressive_image.resolver.filesystem',FileSystemResolver::class);
     $services->set('progressive_image.resolver.asset_mapper',AssetMapperResolver::class);
 
-	$services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
-		->arg('$cache', service('liip_imagine.cache.manager'))
-		->arg('$configuration', service('liip_imagine.filter.configuration'))
-	;
-
-	$services->set(PreloadCollector::class)
-		->arg('$requestStack', service('request_stack'))
-	;
-
-	$services->set(KernelResponseEventListener::class)
-		->arg('$preloadCollector', service(PreloadCollector::class))
-		->tag('kernel.event_listener', ['event' => 'kernel.response'])
-	;
-    
     if (class_exists(LiipImagineBundle::class)) {
+        $services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
+            ->arg('$cache', service('liip_imagine.cache.manager'))
+            ->arg('$configuration', service('liip_imagine.filter.configuration'))
+        ;
+
 		$services->set(LiipImagineRuntimeConfigGenerator::class)
 			->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
 		;
@@ -99,4 +90,13 @@ return static function (ContainerConfigurator $container): void {
             ->public()
         ;
     }
+
+	$services->set(PreloadCollector::class)
+		->arg('$requestStack', service('request_stack'))
+	;
+
+	$services->set(KernelResponseEventListener::class)
+		->arg('$preloadCollector', service(PreloadCollector::class))
+		->tag('kernel.event_listener', ['event' => 'kernel.response'])
+	;
 };

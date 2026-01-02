@@ -15,13 +15,18 @@ class FrameworkGridTest extends PGITestCase
     private Filesystem $fs;
 
     protected function setUp(): void {
+        if (!class_exists(CacheManager::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
         $this->fs      = new Filesystem();
         $this->tempDir = sys_get_temp_dir() . '/progressive_image_test_framework_' . uniqid();
         $this->fs->mkdir($this->tempDir);
     }
 
     protected function tearDown(): void {
-        $this->fs->remove($this->tempDir);
+        if (isset($this->fs)) {
+            $this->fs->remove($this->tempDir);
+        }
         parent::tearDown();
     }
 

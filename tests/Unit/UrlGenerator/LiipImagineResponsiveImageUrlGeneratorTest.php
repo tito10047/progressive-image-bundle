@@ -24,6 +24,9 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
 	protected function setUp(): void
 	{
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$this->cacheManager = $this->createMock(CacheManager::class);
 		$this->router = $this->createMock(UrlGeneratorInterface::class);
 		$this->uriSigner = $this->createMock(UriSigner::class);

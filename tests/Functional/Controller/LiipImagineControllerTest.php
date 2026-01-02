@@ -90,6 +90,9 @@ class LiipImagineControllerTest extends PGIWebTestCase {
 
     public function testIndexWithoutFilter(): void
     {
+		if (!class_exists(\Liip\ImagineBundle\Imagine\Cache\CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
         $client = static::createClient([
 			"liip_imagine" => [
 				"loaders"   => [

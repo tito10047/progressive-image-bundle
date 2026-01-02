@@ -107,9 +107,11 @@ class ProgressiveImageTestingKernel extends Kernel {
     public function loadRoutes(LoaderInterface $loader): RouteCollection
     {
         $routes = new RouteCollection();
-        $routes->add('progressive_image_filter', new Route('/progressive-image', [
-            '_controller' => \Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class . '::index',
-        ]));
+        if (class_exists(\Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class)) {
+            $routes->add('progressive_image_filter', new Route('/progressive-image', [
+                '_controller' => \Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class . '::index',
+            ]));
+        }
 
         return $routes;
     }

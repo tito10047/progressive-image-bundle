@@ -16,6 +16,9 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
 	protected function setUp(): void
 	{
+		if (!class_exists(FilterConfiguration::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$this->filterConfiguration = $this->createMock(FilterConfiguration::class);
 		$this->generator = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration);
 	}

@@ -16,6 +16,7 @@ use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
+use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 class ProgressiveImageExtension extends Extension implements PrependExtensionInterface {
@@ -130,17 +131,19 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 		$responsiveConfig = $configs['responsive_strategy'] ?? [];
 		$generatorId = $responsiveConfig['generator'] ?? null;
 
-        $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
-            ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
-            ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
-            ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
-            ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(\Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface::class))
-        ;
+        if ($generatorId || class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
+            $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
+                ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
+                ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
+                ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
+                ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
+            ;
+        }
 
 		$container->register(Image::class, Image::class)
 			->setArgument('$analyzer', new Reference(MetadataReader::class))
 			->setArgument('$pathDecorator', array_map(fn($id) => new Reference($id), $configs['path_decorators'] ?? []))
-            ->setArgument('$responsiveAttributeGenerator', new Reference(ResponsiveAttributeGenerator::class))
+            ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(\Liip\ImagineBundle\LiipImagineBundle::class) ? new Reference(ResponsiveAttributeGenerator::class) : null)
 			->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setShared(false)
 			->addTag('twig.component')

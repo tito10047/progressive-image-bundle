@@ -73,9 +73,47 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('fallback_image')->defaultNull()->end()
                 ->arrayNode('responsive_strategy')
+                    ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('grid')
                             ->addDefaultsIfNotSet()
+                            ->beforeNormalization()
+                                ->ifArray()
+                                ->then(function ($v) {
+                                    $framework = $v['framework'] ?? 'custom';
+                                    $defaults = [];
+
+                                    if ('bootstrap' === $framework) {
+                                        $defaults = [
+                                            'columns' => 12,
+                                            'gutter' => 24,
+                                            'layouts' => [
+                                                'xxl' => ['min_viewport' => 1400, 'max_container' => 1320],
+                                                'xl' => ['min_viewport' => 1200, 'max_container' => 1140],
+                                                'lg' => ['min_viewport' => 992, 'max_container' => 960],
+                                                'md' => ['min_viewport' => 768, 'max_container' => 720],
+                                                'sm' => ['min_viewport' => 576, 'max_container' => 540],
+                                                'xs' => ['min_viewport' => 0, 'max_container' => null],
+                                            ],
+                                        ];
+                                    } elseif ('tailwind' === $framework) {
+                                        $defaults = [
+                                            'columns' => 12,
+                                            'gutter' => 0,
+                                            'layouts' => [
+                                                '2xl' => ['min_viewport' => 1536, 'max_container' => 1536],
+                                                'xl' => ['min_viewport' => 1280, 'max_container' => 1280],
+                                                'lg' => ['min_viewport' => 1024, 'max_container' => 1024],
+                                                'md' => ['min_viewport' => 768, 'max_container' => 768],
+                                                'sm' => ['min_viewport' => 640, 'max_container' => 640],
+                                                'default' => ['min_viewport' => 0, 'max_container' => null],
+                                            ],
+                                        ];
+                                    }
+
+                                    return array_replace_recursive($defaults, $v);
+                                })
+                            ->end()
                             ->children()
                                 ->enumNode('framework')
                                     ->values(['bootstrap', 'tailwind', 'custom'])

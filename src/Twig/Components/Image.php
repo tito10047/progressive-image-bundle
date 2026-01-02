@@ -85,7 +85,7 @@ class Image {
 		if (!$this->responsiveAttributes){
 			return "";
 		}
-		return "srcset=\"{$this->responsiveAttributes['srcset']}";
+		return "srcset=\"{$this->responsiveAttributes['srcset']}\"";
 	}
 
 	public function getSizes():string {

@@ -18,7 +18,7 @@ final readonly class BreakpointAssignment
 	 */
 	public static function fromSegment(string $segment, ?string $ratio): self
 	{
-		if (!preg_match('/^([a-z]+)-([0-9]+)(?:@([a-z0-9-]+))?$/i', $segment, $matches)) {
+		if (!preg_match('/^([a-z0-9]+)-([0-9]+)(?:@([a-z0-9-]+))?$/i', $segment, $matches)) {
 			throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $segment));
 		}
 

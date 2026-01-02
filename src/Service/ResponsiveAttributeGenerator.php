@@ -46,14 +46,15 @@ class ResponsiveAttributeGenerator {
 			$size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
 			$sizesParts[]   = $size;
 
-			$url = $this->generateUrl($path, $assignment, $pixelWidth, $originalWidth, $processedWidths);
+			$url = $this->generateUrl($path, $assignment, (int) round($pixelWidth), $originalWidth, $processedWidths);
 
 			if ($url) {
+				$actualPixelWidth = (int) round($pixelWidth);
 				if ($preload) {
-					$this->preloadCollector->add($url, 'image', 'high', "{$pixelWidth}w", $size);
+					$this->preloadCollector->add($url, 'image', 'high', "{$actualPixelWidth}w", $size);
 				}
 
-				$srcsetParts[] = $url . " {$pixelWidth}w";
+				$srcsetParts[] = $url . " {$actualPixelWidth}w";
 			}
 		}
 
@@ -114,7 +115,7 @@ class ResponsiveAttributeGenerator {
 	private function generateUrl(
 		string               $path,
 		BreakpointAssignment $assignment,
-		float                $basePixelWidth,
+		int                  $basePixelWidth,
 		int                  $originalWidth,
 		array                &$processedWidths
 	): ?string {

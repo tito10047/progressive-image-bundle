@@ -12,7 +12,7 @@
 Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
 
 ```twig
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" >Image Not Found</twig:pgi:Image>
+<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" grid="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
 ```
 
 ![Progressive Image Preview](docs/preview.gif)
@@ -116,86 +116,85 @@ Simply use the provided Twig component in your templates. The component automati
 ## 🚀 Smart Responsive Strategy
 Stop managing magic pixel numbers. This bundle introduces a Breakpoint-First approach with built-in Upscale Protection.
 
-### 1. Define once, use everywhere
-Instead of hardcoding widths in every template, define your project's grid in a central configuration. Use meaningful aliases like `sm`, `md`, or `xl`.
+### 1. Define your Grid
+Configure your project's grid in a central configuration. You can use built-in frameworks like `bootstrap` or `tailwind`, or define your own.
 
 ```yaml
 # config/packages/progressive_image.yaml
 progressive_image:
     responsive_strategy:
-        breakpoints:
-            sm: 480
-            md: 800
-            lg: 1200
-            xl: 1920
-        
-        fallback_widths: [ sm, md, lg, xl ] # Default srcset
-        
-        presets:
-            article_hero:
-                widths: [ md, lg, xl ]
-                sizes: "(max-width: 1024px) 100vw, 1024px"
+        grid:
+            framework: bootstrap # automatically sets 12 columns and standard breakpoints
+            # OR custom:
+            # framework: custom
+            # columns: 12
+            # layouts:
+            #     xl: { min_viewport: 1200, max_container: 1140 }
+            #     md: { min_viewport: 768, max_container: 720 }
+            #     sm: { min_viewport: 0, max_container: null } # null means fluid (100vw)
 ```
 
-### 2. Intelligence: Built-in Upscale Protection
+### 2. Simple Grid-based Usage
+In your Twig templates, use the `grid` attribute to define how many columns the image should occupy at each breakpoint.
 
-The bundle never generates an image larger than the original source. For example, if you have a preset requesting `xl` (1920px) but the user uploads a 1000px image:
-- The bundle automatically filters out 1200px and 1920px variants.
-- It serves the 800px (`md`) and the 1000px (original) instead.
+```twig
+{# Image takes 12 columns on mobile (fluid) and 4 columns on desktop #}
+<twig:pgi:Image src="hero.jpg" grid="sm-12 xl-4" />
 
-**Result:** No blurry upscaled images, saved CPU cycles, and reduced storage waste.
+{# You can also specify aspect ratios per breakpoint #}
+<twig:pgi:Image src="hero.jpg" grid="sm-12@1-1 xl-4@16-9" />
+```
 
-### 3. Seamless Twig Integration
-Using complex responsive logic is now as simple as naming a preset.
+The bundle automatically:
+1. Calculates the exact pixel width based on your grid configuration.
+2. Generates the `srcset` with optimized image sizes.
+3. Generates the `sizes` attribute (e.g., `(min-width: 1200px) 380px, 100vw`).
+4. **Protects against upscaling**: If the original image is smaller than the calculated size, it won't generate a blurry version.
 
-### LiipImagine Integration & Automatic Filter Generation
+### 3. Aspect Ratios
+You can define global aspect ratios or use them directly in the `grid` parameter.
 
-If you use [LiipImagineBundle](https://github.com/liip/LiipImagineBundle), this bundle can automatically generate the necessary `filter_sets` for your responsive breakpoints.
-
-When you define breakpoints in `progressive_image`, the bundle analyzes your existing `liip_imagine` configuration and creates new filter variants for each breakpoint (except for the `cache` set).
-
-#### How it works:
-1. **Naming:** For a filter named `preview_big`, it generates `preview_big_sm`, `preview_big_md`, etc.
-2. **Smart Sizing:** If the original filter contains a `thumbnail` filter, the bundle automatically sets the `size` to match the breakpoint width while **preserving the original aspect ratio** (e.g., `[480, 270]` for a 16:9 source filter and `sm: 480`).
-3. **Inheritance:** All other settings like `quality`, `format`, and `post_processors` are preserved from the parent filter.
-
-#### Example:
 ```yaml
 progressive_image:
     responsive_strategy:
-        breakpoints:
-            sm: 480
-            md: 800
-
-liip_imagine:
-    filter_sets:
-        preview_big:
-            quality: 75
-            filters:
-                thumbnail: { size: [ 500, 500 ], mode: outbound }
-            post_processors:
-                cwebp: { q: 75, m: 6 }
+        ratios:
+            landscape: "16/9"
+            portrait: "3/4"
+            square: "1/1"
 ```
 
-The bundle will automatically "prepend" these configurations to LiipImagine:
-```yaml
-liip_imagine:
-    filter_sets:
-        preview_big_sm:
-            quality: 75
-            filters:
-                thumbnail: { size: [ 480, 480 ], mode: outbound }
-            post_processors: { cwebp: { q: 75, m: 6 } }
-        preview_big_md:
-            quality: 75
-            filters:
-                thumbnail: { size: [ 800, 800 ], mode: outbound }
-            post_processors: { cwebp: { q: 75, m: 6 } }
-```
+In Twig:
 ```twig
-{# Automatically handles srcset, sizes, and upscale protection #}
-<twig:pgi:Image src="blog/hero.jpg" preset="article_hero" />
+{# Use global ratio #}
+<twig:pgi:Image src="hero.jpg" grid="md-6" ratio="landscape" />
+
+{# Or override per breakpoint #}
+<twig:pgi:Image src="hero.jpg" grid="sm-12@square md-6@landscape" />
 ```
+
+### 4. Intelligence: Built-in Upscale Protection
+
+The bundle never generates an image larger than the original source. For example, if your grid calculates a required width of 1200px but the original image is only 1000px:
+- The bundle filters out any variants larger than 1000px.
+- It ensures the browser never tries to download a 1200px upscaled (and thus blurry) version.
+
+**Result:** No blurry upscaled images, saved CPU cycles, and reduced storage waste.
+
+### LiipImagine Integration
+
+If you use [LiipImagineBundle](https://github.com/liip/LiipImagineBundle), this bundle integrates seamlessly to generate thumbnails on-the-fly.
+
+By default, the bundle uses `LiipImagineResponsiveImageUrlGenerator` when LiipImagine is detected, which generates dynamic thumbnails based on the required dimensions.
+
+```yaml
+# config/packages/progressive_image.yaml
+progressive_image:
+    # This is often automatically configured if LiipImagine is present
+    # path_decorators:
+    #     - "progressive_image.decorator.liip_imagine"
+```
+
+When using `grid`, the bundle will automatically request the correct sizes from LiipImagine, using the original image's aspect ratio or the one specified in the `grid` parameter. It uses a signed URL to safely generate any required thumbnail size.
 
 
 ## ⚡ Smart Preload Injection (LCP Optimization)

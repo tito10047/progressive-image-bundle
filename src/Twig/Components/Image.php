@@ -21,6 +21,7 @@ class Image {
 	public ?string         $src = null;
 	public ?string         $filter = null;
 	public ?string         $alt = null;
+	public ?string         $pointInterest = null;
 	public array           $context = [];
 	private ?ImageMetadata $metadata;
 	private string         $decoratedSrc;
@@ -75,7 +76,7 @@ class Image {
 		}
 		$this->breakpoinsts = $this->grid ? BreakpointAssignment::parseSegments($this->grid, $this->ratio) : [];
 		if ($this->breakpoinsts) {
-			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->decoratedWidth ?? 0, $this->preload);
+			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->decoratedWidth ?? 0, $this->preload, $this->pointInterest);
 		}elseif ($this->preload){
 			$this->preloadCollector->add($this->decoratedSrc, "image", $this->priority);
 		}

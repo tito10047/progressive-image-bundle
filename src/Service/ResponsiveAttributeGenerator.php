@@ -28,7 +28,7 @@ class ResponsiveAttributeGenerator {
 	/**
 	 * @return array{sizes: string, srcset: string}
 	 */
-	public function generate(string $path, array $assignments, int $originalWidth, bool $preload): array {
+	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null): array {
 		$assignments = $this->sortAssignments($assignments);
 
 		$sizesParts      = [];
@@ -46,7 +46,7 @@ class ResponsiveAttributeGenerator {
 			$size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
 			$sizesParts[]   = $size;
 
-			$url = $this->generateUrl($path, $assignment, (int) round($pixelWidth), $originalWidth, $processedWidths);
+			$url = $this->generateUrl($path, $assignment, (int) round($pixelWidth), $originalWidth, $processedWidths, $pointInterest);
 
 			if ($url) {
 				$actualPixelWidth = (int) round($pixelWidth);
@@ -117,7 +117,8 @@ class ResponsiveAttributeGenerator {
 		BreakpointAssignment $assignment,
 		int                  $basePixelWidth,
 		int                  $originalWidth,
-		array                &$processedWidths
+		array                &$processedWidths,
+		?string              $pointInterest = null
 	): ?string {
 		$ratio = $this->resolveRatio($assignment);
 
@@ -126,7 +127,7 @@ class ResponsiveAttributeGenerator {
 		}
 
 		$targetH = $ratio ? (int) round($basePixelWidth / $ratio) : null;
-		$url     = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH);
+		$url     = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest);
 
 		$processedWidths[$basePixelWidth] = true;
 		return $url;

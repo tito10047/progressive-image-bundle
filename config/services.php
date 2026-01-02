@@ -89,6 +89,7 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
             ->arg('$controllerConfig', service('liip_imagine.controller.config'))
             ->arg('$runtimeConfigGenerator', service(LiipImagineRuntimeConfigGenerator::class))
+            ->arg('$metadataReader', service(MetadataReader::class))
             ->public()
         ;
     }

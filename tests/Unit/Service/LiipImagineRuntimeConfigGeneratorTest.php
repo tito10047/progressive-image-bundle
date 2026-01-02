@@ -62,23 +62,46 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 		], $result['config']);
 	}
 
-	public function testGenerateWithNonExistingFilter(): void
+	public function testGenerateWithPointInterest(): void
 	{
-		$this->filterConfiguration->expects($this->once())
-			->method('get')
-			->with('non_existing')
-			->willThrowException(new NonExistingFilterException());
+		$this->filterConfiguration->expects($this->never())
+			->method('get');
 
-		$result = $this->generator->generate(100, 100, 'non_existing');
+		// PoI 50x50 na 1000x1000 obrázku, cieľ 200x100
+		// stred je 500x500
+		// start by mal byť 500 - (200/2) = 400, 500 - (100/2) = 450
+		$result = $this->generator->generate(200, 100, null, '50x50', 1000, 1000);
 
-		$this->assertEquals('non_existing_100x100', $result['filterName']);
+		$this->assertEquals('200x100_50x50', $result['filterName']);
 		$this->assertEquals([
 			'filters' => [
+				'crop' => [
+					'start' => [400, 450],
+					'size' => [200, 100],
+				],
 				'thumbnail' => [
-					'size' => [100, 100],
+					'size' => [200, 100],
 					'mode' => 'outbound',
 				],
 			],
 		], $result['config']);
+	}
+
+	public function testGenerateWithPointInterestAtEdges(): void
+	{
+		// PoI 0x0 (ľavý horný roh) na 1000x1000, cieľ 200x100
+		// stred je 0x0
+		// start by mal byť 0 - 100 = -100, 0 - 50 = -50 -> orezané na 0x0
+		$result = $this->generator->generate(200, 100, null, '0x0', 1000, 1000);
+
+		$this->assertEquals([0, 0], $result['config']['filters']['crop']['start']);
+
+		// PoI 100x100 (pravý dolný roh)
+		// stred je 1000x1000
+		// start by mal byť 1000 - 100 = 900, 1000 - 50 = 950
+		// ale max start je orig - target: 1000 - 200 = 800, 1000 - 100 = 900
+		$result = $this->generator->generate(200, 100, null, '100x100', 1000, 1000);
+
+		$this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);
 	}
 }

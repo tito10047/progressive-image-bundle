@@ -23,10 +23,10 @@ class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGenera
 	) {
 	}
 
-	public function generateUrl(string $path, int $targetW, ?int $targetH): string
+	public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null): string
 	{
 		$targetH = $targetH ?? $targetW;
-		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter);
+		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter, $pointInterest);
 		$filterName = $result['filterName'];
 		$config = $result['config'];
 
@@ -46,6 +46,7 @@ class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGenera
 			'width' => $targetW,
 			'height' => $targetH,
 			'filter' => $this->filter,
+			'pointInterest' => $pointInterest,
 		], UrlGeneratorInterface::ABSOLUTE_URL);
 
 		return $this->uriSigner->sign($url);

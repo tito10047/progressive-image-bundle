@@ -103,6 +103,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 				'width' => $targetW,
 				'height' => $targetH,
 				'filter' => 'my_filter',
+				'pointInterest' => null,
 			], UrlGeneratorInterface::ABSOLUTE_URL)
 			->willReturn('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter');
 

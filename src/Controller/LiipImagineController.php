@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Controller;
 
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
+use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Liip\ImagineBundle\Config\Controller\ControllerConfig;
 use Liip\ImagineBundle\Exception\Binary\Loader\NotLoadableException;
 use Liip\ImagineBundle\Exception\Imagine\Filter\NonExistingFilterException;
@@ -29,6 +30,7 @@ class LiipImagineController
 		private readonly FilterConfiguration $filterConfiguration,
 		private readonly ControllerConfig $controllerConfig,
 		private readonly LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator,
+		private readonly MetadataReader $metadataReader,
 	) {
 	}
 
@@ -38,10 +40,21 @@ class LiipImagineController
 		#[MapQueryParameter] int $width,
 		#[MapQueryParameter] int $height,
 		#[MapQueryParameter] ?string $filter = null,
+		#[MapQueryParameter] ?string $pointInterest = null,
 	): Response {
 		$path = PathHelper::urlPathToFilePath($path);
 
-		$result = $this->runtimeConfigGenerator->generate($width, $height, $filter);
+		$origWidth = null;
+		$origHeight = null;
+		if ($pointInterest) {
+			$metadata = $this->metadataReader->getMetadata($path);
+			if ($metadata) {
+				$origWidth = $metadata->width;
+				$origHeight = $metadata->height;
+			}
+		}
+
+		$result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight);
 		$filterName = $result['filterName'];
 		$config = $result['config'];
 

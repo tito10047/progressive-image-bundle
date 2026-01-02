@@ -12,7 +12,7 @@
 Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
 
 ```twig
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" grid="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
+<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" pointInterest="50x50" grid="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
 ```
 
 ![Progressive Image Preview](docs/preview.gif)
@@ -21,6 +21,7 @@ Deliver lightning-fast user experiences by serving beautiful Blurhash placeholde
 
 ### Core Features
 -   **Smart Responsive Strategy:** Breakpoint-First approach with built-in **Upscale Protection**. Never serve blurry upscaled images again.
+-   **Point of Interest (PoI) Cropping:** Define a focal point (e.g., `75x25`) to ensure the most important part of the image is always visible when cropped for different aspect ratios.
 -   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
 -   **Zero CLS (Cumulative Layout Shift):** Automatically extracts and injects image dimensions to reserve space, ensuring a stable layout during loading.
 -   **Transparent HTML Caching:** Optional caching of the rendered component HTML to avoid repeated Blurhash generation and metadata extraction, significantly improving response times for heavy pages.
@@ -201,6 +202,22 @@ progressive_image:
 ```
 
 When using `grid`, the bundle will automatically request the correct sizes from LiipImagine, using the original image's aspect ratio or the one specified in the `grid` parameter. It uses a signed URL to safely generate any required thumbnail size.
+
+#### Point of Interest (PoI)
+
+You can specify a focal point for cropping using the `pointInterest` attribute. This is especially useful when the same image is cropped into different aspect ratios (e.g., landscape for desktop, square for mobile).
+
+The value is a string in the format `XxY`, where X and Y are percentages (0-100) of the image width and height. For example, `50x50` is the center, `0x0` is the top-left corner, and `100x100` is the bottom-right corner.
+
+```twig
+<twig:pgi:Image 
+    src="hero.jpg" 
+    pointInterest="75x25" 
+    grid="sm-12@1-1 xl-4@16-9" 
+/>
+```
+
+The bundle will automatically calculate the crop coordinates to keep the specified point as close to the center of the cropped image as possible, while ensuring the crop stays within the original image boundaries.
 
 
 ## ⚡ Smart Preload Injection (LCP Optimization)

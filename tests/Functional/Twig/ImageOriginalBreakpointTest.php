@@ -33,13 +33,19 @@ class ImageOriginalBreakpointTest extends PGITestCase
         $this->_bootKernel([
             "progressive_image" => [
                 'responsive_strategy' => [
-                    'breakpoints' => [
-                        'mobile' => 320,
-                        'desktop' => 1024,
+                    'grid' => [
+                        'columns' => 12,
+                        'layouts' => [
+                            'desktop' => [
+                                'min_viewport' => 1024,
+                                'max_container' => 1200,
+                            ],
+                            'mobile' => [
+                                'min_viewport' => 0,
+                                'max_container' => null,
+                            ],
+                        ],
                     ],
-                    'fallback_widths' => ['mobile'],
-                    'fallback_sizes' => '100vw',
-                    'generator' => 'progressive_image.responsive_generator.liip_imagine'
                 ]
             ]
         ]);
@@ -50,12 +56,13 @@ class ImageOriginalBreakpointTest extends PGITestCase
             name: "pgi:Image",
             data: [
                 "src" => "/test.png",
+                "grid" => "mobile-12 desktop-1",
             ]
         );
 
         $this->assertStringContainsString('srcset="', $html);
-        $this->assertStringContainsString('320w', $html);
         $this->assertStringContainsString('100w', $html);
+        $this->assertStringNotContainsString('1920w', $html);
     }
 
 	private function _bootKernel(array $extraOptions = []): void {

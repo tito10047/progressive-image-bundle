@@ -88,7 +88,7 @@ class Configuration implements ConfigurationInterface
                                     ->arrayPrototype()
                                         ->children()
                                             ->integerNode('min_viewport')->end()
-                                            ->integerNode('max_container')
+                                            ->scalarNode('max_container')
                                                 ->defaultNull() // null = 100vw
                                             ->end()
                                         ->end()

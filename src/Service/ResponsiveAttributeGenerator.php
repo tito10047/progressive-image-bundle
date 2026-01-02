@@ -48,11 +48,13 @@ class ResponsiveAttributeGenerator {
 
 			$url = $this->generateUrl($path, $assignment, $pixelWidth, $originalWidth, $processedWidths);
 
-			if ($preload) {
-				$this->preloadCollector->add($url, 'image', 'high', "{$pixelWidth}w", $size);
+			if ($url) {
+				if ($preload) {
+					$this->preloadCollector->add($url, 'image', 'high', "{$pixelWidth}w", $size);
+				}
+
+				$srcsetParts[] = $url . " {$pixelWidth}w";
 			}
-			
-			$srcsetParts[]=$url." {$pixelWidth}w";
 		}
 
 		return [

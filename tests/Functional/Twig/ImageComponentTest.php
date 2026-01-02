@@ -160,21 +160,20 @@ class ImageComponentTest extends PGITestCase {
 		$this->_bootKernel([
 			"progressive_image" => [
 				'responsive_strategy' => [
-					'breakpoints' => [
-						'mobile' => 320,
-						'tablet' => 768,
-						'desktop' => 1024,
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport' => 1024,
+								'max_container' => 1200,
+							],
+							'mobile' => [
+								'min_viewport' => 0,
+								'max_container' => null,
+							],
+						],
 					],
-					'fallback_widths' => ['mobile', 'desktop'],
-        			'fallback_sizes' => '(max-width: 1024px) 100vw, 1024px',
-					'presets' => [
-						'hero' => [
-							'widths' => ['mobile', 'desktop'],
-							'sizes' => '(max-width: 768px) 100vw, 50vw',
-						]
-					],
-					'generator' => 'progressive_image.responsive_generator.liip_imagine'
-				]
+				],
 			]
 		]);
 
@@ -184,30 +183,17 @@ class ImageComponentTest extends PGITestCase {
 			name: "pgi:Image",
 			data: [
 				"src" => "/test.png",
-				"preset" => "hero",
+				"grid" => "mobile-12 desktop-1",
 			]
 		);
 
 		$this->assertStringContainsString('srcset="', $html);
-		$this->assertStringContainsString('320w', $html);
-		$this->assertStringContainsString('1024w', $html);
-		$this->assertStringNotContainsString('768w', $html);
-		$this->assertStringContainsString('sizes="(max-width: 768px) 100vw, 50vw"', $html);
-
-		// test fallback
-		$html = $this->renderTwigComponent(
-			name: "pgi:Image",
-			data: [
-				"src" => "/test.png",
-				"preset" => "category",
-			]
-		);
-
-		$this->assertStringContainsString('srcset="', $html);
-		$this->assertStringContainsString('320w', $html);
-		$this->assertStringContainsString('1024w', $html);
-		$this->assertStringNotContainsString('768w', $html);
-		$this->assertStringContainsString('sizes="(max-width: 1024px) 100vw, 1024px"', $html);
+		// original image is 100x100
+		// mobile: 12/12 * 1920 = 1920px -> too big
+		// desktop: 1/12 * 1200 = 100px -> OK
+		$this->assertStringNotContainsString('1920w', $html);
+		$this->assertStringContainsString('100w', $html);
+		$this->assertStringContainsString('sizes="(min-width: 1024px) 100px, 100vw"', $html);
 	}
 
 	public function testPreloadHeaderWithSrcset(): void {
@@ -224,13 +210,19 @@ class ImageComponentTest extends PGITestCase {
 			"progressive_image" => [
 				'path_decorators' => ['progressive_image.decorator.liip_imagine'],
 				'responsive_strategy' => [
-					'breakpoints' => [
-						'mobile' => 320,
-						'desktop' => 1024,
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport' => 1024,
+								'max_container' => 1200,
+							],
+							'mobile' => [
+								'min_viewport' => 0,
+								'max_container' => null,
+							],
+						],
 					],
-					'fallback_widths' => ['mobile', 'desktop'],
-					'fallback_sizes' => '(max-width: 1024px) 100vw, 1024px',
-					'generator' => 'progressive_image.responsive_generator.liip_imagine'
 				]
 			]
 		]);
@@ -241,6 +233,7 @@ class ImageComponentTest extends PGITestCase {
 			name: "pgi:Image",
 			data: [
 				"src" => "/test.png",
+				"grid" => "mobile-12 desktop-1",
 				"preload" => true,
 				"priority" => "high",
 			]
@@ -266,14 +259,13 @@ class ImageComponentTest extends PGITestCase {
 		$this->assertStringContainsString('rel=preload', $linkHeader);
 		$this->assertStringContainsString('as=image', $linkHeader);
 		$this->assertStringContainsString('imagesrcset="', $linkHeader);
-		$this->assertStringContainsString('320w', $linkHeader);
-		$this->assertStringContainsString('1024w', $linkHeader);
-		$this->assertStringContainsString('imagesizes="(max-width: 1024px) 100vw, 1024px"', $linkHeader);
+		$this->assertStringContainsString('100w', $linkHeader);
+		$this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px"', $linkHeader);
 
 		$content = $response->getContent();
 		$this->assertStringContainsString('<link rel="preload"', $content);
 		$this->assertStringContainsString('imagesrcset="', $content);
-		$this->assertStringContainsString('imagesizes="(max-width: 1024px) 100vw, 1024px"', $content);
+		$this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px"', $content);
 	}
 
 	private function _bootKernel(array $extraOptions = []): void {

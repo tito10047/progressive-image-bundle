@@ -757,7 +757,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             gutter?: int, // Default: 24
  *             layouts?: array<string, array{ // Default: []
  *                 min_viewport?: int,
- *                 max_container?: int, // Default: null
+ *                 max_container?: scalar|null, // Default: null
  *             }>,
  *         },
  *     },

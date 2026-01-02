@@ -12,7 +12,7 @@
 Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
 
 ```twig
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" pointInterest="50x50" grid="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
+<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" pointInterest="50x50" sizes="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
 ```
 
 ![Progressive Image Preview](docs/preview.gif)
@@ -142,14 +142,14 @@ progressive_image:
 ```
 
 ### 2. Simple Grid-based Usage
-In your Twig templates, use the `grid` attribute to define how many columns the image should occupy at each breakpoint.
+In your Twig templates, use the `sizes` attribute to define how many columns the image should occupy at each breakpoint.
 
 ```twig
 {# Image takes 12 columns on mobile (fluid) and 4 columns on desktop #}
-<twig:pgi:Image src="hero.jpg" grid="sm-12 xl-4" />
+<twig:pgi:Image src="hero.jpg" sizes="sm-12 xl-4" />
 
 {# You can also specify aspect ratios per breakpoint #}
-<twig:pgi:Image src="hero.jpg" grid="sm-12@1-1 xl-4@16-9" />
+<twig:pgi:Image src="hero.jpg" sizes="sm-12@1-1 xl-4@16-9" />
 ```
 
 The bundle automatically:
@@ -173,10 +173,10 @@ progressive_image:
 In Twig:
 ```twig
 {# Use global ratio #}
-<twig:pgi:Image src="hero.jpg" grid="md-6" ratio="landscape" />
+<twig:pgi:Image src="hero.jpg" sizes="md-6" ratio="landscape" />
 
 {# Or override per breakpoint #}
-<twig:pgi:Image src="hero.jpg" grid="sm-12@square md-6@landscape" />
+<twig:pgi:Image src="hero.jpg" sizes="sm-12@square md-6@landscape" />
 ```
 
 ### 4. Intelligence: Built-in Upscale Protection
@@ -201,7 +201,7 @@ progressive_image:
     #     - "progressive_image.decorator.liip_imagine"
 ```
 
-When using `grid`, the bundle will automatically request the correct sizes from LiipImagine, using the original image's aspect ratio or the one specified in the `grid` parameter. It uses a signed URL to safely generate any required thumbnail size.
+When using `sizes`, the bundle will automatically request the correct sizes from LiipImagine, using the original image's aspect ratio or the one specified in the `sizes` parameter. It uses a signed URL to safely generate any required thumbnail size.
 
 #### Point of Interest (PoI)
 
@@ -213,7 +213,7 @@ The value is a string in the format `XxY`, where X and Y are percentages (0-100)
 <twig:pgi:Image 
     src="hero.jpg" 
     pointInterest="75x25" 
-    grid="sm-12@1-1 xl-4@16-9" 
+    sizes="sm-12@1-1 xl-4@16-9" 
 />
 ```
 

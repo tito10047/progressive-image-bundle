@@ -183,7 +183,7 @@ class ImageComponentTest extends PGITestCase {
 			name: "pgi:Image",
 			data: [
 				"src" => "/test.png",
-				"grid" => "mobile-12 desktop-1",
+				"sizes" => "mobile-12 desktop-1",
 			]
 		);
 
@@ -233,7 +233,7 @@ class ImageComponentTest extends PGITestCase {
 			name: "pgi:Image",
 			data: [
 				"src" => "/test.png",
-				"grid" => "mobile-12 desktop-1",
+				"sizes" => "mobile-12 desktop-1",
 				"preload" => true,
 				"priority" => "high",
 			]

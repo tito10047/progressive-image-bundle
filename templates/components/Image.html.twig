@@ -25,7 +25,7 @@
 			{{ attributes.only('fetchpriority') }}
 			{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
 			{{ this.srcSet|raw }}
-			{{ this.sizes|raw }}
+			{{ this.responsiveSizes|raw }}
 	>
 	{% if this.hash is null %}
 		<div

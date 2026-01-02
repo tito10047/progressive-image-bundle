@@ -28,9 +28,9 @@ class Image {
 	private ?int           $decoratedWidth;
 	private ?int           $decoratedHeight;
 	public bool            $preload = false;
-	public string          $priority = 'high';
-	public ?string         $grid = null;
-	public ?string         $ratio = null;
+	public string  $priority = 'high';
+	public ?string $sizes    = null;
+	public ?string $ratio    = null;
 	private array          $breakpoinsts = [];
 	/**
 	 * @var array{sizes: string, srcset: string}|null
@@ -74,7 +74,7 @@ class Image {
 				$this->decoratedHeight = $size["height"];
 			}
 		}
-		$this->breakpoinsts = $this->grid ? BreakpointAssignment::parseSegments($this->grid, $this->ratio) : [];
+		$this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
 		if ($this->breakpoinsts) {
 			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->decoratedWidth ?? 0, $this->preload, $this->pointInterest);
 		}elseif ($this->preload){
@@ -89,7 +89,7 @@ class Image {
 		return "srcset=\"{$this->responsiveAttributes['srcset']}\"";
 	}
 
-	public function getSizes():string {
+	public function getResponsiveSizes():string {
 		if (!$this->responsiveAttributes){
 			return "";
 		}

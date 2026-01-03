@@ -1,0 +1,30 @@
+name: PHPStan
+on:
+    pull_request:
+        branches: [ main ]
+    push:
+        branches:
+            - '**'
+concurrency:
+    group: phpstan-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+jobs:
+    phpstan:
+        name: "Static Analysis"
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            -   name: "Install PHP"
+                uses: "shivammathur/setup-php@v2"
+                with:
+                    php-version: "8.3"
+                    ini-values: memory_limit=-1
+                    extensions: imagick
+
+            -   name: "Install dependencies"
+                run: composer update --no-interaction --no-progress
+
+            -   name: "Run PHPStan"
+                run: vendor/bin/phpstan analyse

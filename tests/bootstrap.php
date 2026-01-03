@@ -23,18 +23,18 @@ require dirname(__DIR__).'/vendor/autoload.php';
 ErrorHandler::register(null, false);
 
 (new Dotenv())->bootEnv(dirname(__DIR__).'/tests/.env');
-//$kernel = new Kernel('test', 'AssetMapper/config');
-//(new Symfony\Component\Filesystem\Filesystem())->remove($kernel->getCacheDir());
+// $kernel = new Kernel('test', 'AssetMapper/config');
+// (new Symfony\Component\Filesystem\Filesystem())->remove($kernel->getCacheDir());
 //
-//$application = new Application($kernel);
-//$application->setAutoExit(false);
-//$application->setCatchExceptions(false);
+// $application = new Application($kernel);
+// $application->setAutoExit(false);
+// $application->setCatchExceptions(false);
 //
-//$runCommand = function (string $name, array $options = []) use ($application) {
+// $runCommand = function (string $name, array $options = []) use ($application) {
 //    $input = new ArrayInput(array_merge(['command' => $name], $options));
 //    $input->setInteractive(false);
 //    $application->run($input);
-//};
+// };
 //
 //
-//$kernel->shutdown();
+// $kernel->shutdown();

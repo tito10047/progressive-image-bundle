@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Decorators;
 
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
@@ -38,5 +39,4 @@ class LiipImagineDecoratorTest extends TestCase
 
         $this->assertSame($expectedUrl, $result);
     }
-
 }

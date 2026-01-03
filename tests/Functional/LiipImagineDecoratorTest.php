@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional;
 
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
@@ -31,11 +32,11 @@ class LiipImagineDecoratorTest extends PGITestCase
             ->willReturn('http://localhost/media/cache/resolve/preview_big/images/test.jpg');
 
         self::bootKernel([
-            "progressive_image"=>[
-				'path_decorators' => [
-					'progressive_image.decorator.liip_imagine'
-				],
-			]
+            'progressive_image' => [
+                'path_decorators' => [
+                    'progressive_image.decorator.liip_imagine',
+                ],
+            ],
         ]);
 
         // Manuálne nahradíme službu mockom, keďže testujeme integráciu dekorátora
@@ -46,8 +47,8 @@ class LiipImagineDecoratorTest extends PGITestCase
             data: [
                 'src' => 'images/test.jpg',
                 'context' => [
-                    'filter' => 'preview_big'
-                ]
+                    'filter' => 'preview_big',
+                ],
             ]
         );
 

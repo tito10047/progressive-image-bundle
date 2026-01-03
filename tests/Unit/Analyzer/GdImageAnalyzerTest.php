@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Analyzer;
 
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ class GdImageAnalyzerTest extends TestCase
     {
         $loader = $this->createMock(LoaderInterface::class);
         $path = 'tests/Fixtures/test.png';
-        
+
         $stream = fopen($path, 'rb');
         $loader->expects($this->once())
             ->method('load')
@@ -35,7 +36,7 @@ class GdImageAnalyzerTest extends TestCase
         $this->assertSame(100, $metadata->width);
         $this->assertSame(100, $metadata->height);
         $this->assertIsString($metadata->originalHash);
-        
+
         fclose($stream);
     }
 }

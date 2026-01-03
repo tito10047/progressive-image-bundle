@@ -8,19 +8,21 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Twig;
 
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 
 final class TransparentCacheExtension extends AbstractExtension
 {
     public function __construct(
         private readonly ?TagAwareCacheInterface $cache,
-        private readonly ?int $ttl
-    ) {}
+        private readonly ?int $ttl,
+    ) {
+    }
 
     public function getFilters(): array
     {
@@ -42,6 +44,7 @@ final class TransparentCacheExtension extends AbstractExtension
             if ($tag) {
                 $item->tag($tag);
             }
+
             return $content;
         });
 

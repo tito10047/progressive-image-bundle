@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -25,9 +26,10 @@ final class Configuration implements ConfigurationInterface
                 ->ifArray()
                 ->then(function ($v) {
                     if (isset($v['resolver']) && !isset($v['resolvers'][$v['resolver']]) && !in_array($v['resolver'], ['chain', 'filesystem', 'asset_mapper'])) {
-                        // Možnosť automaticky vytvoriť default resolver ak je to potrebné, 
+                        // Možnosť automaticky vytvoriť default resolver ak je to potrebné,
                         // alebo nechať na validáciu neskôr.
                     }
+
                     return $v;
                 })
             ->end()
@@ -152,7 +154,8 @@ final class Configuration implements ConfigurationInterface
                 ->end()
             ->end()
         ->end()
-    ;
+        ;
+
         return $treeBuilder;
     }
 }

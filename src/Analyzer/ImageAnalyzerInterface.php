@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Analyzer;
 
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
@@ -20,10 +21,11 @@ use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
  */
 interface ImageAnalyzerInterface
 {
-	/**
-	 * Analyzuje obrázok a vráti objekt s metadátami (rozmery, hash, atď.)
-	 * @throws PathResolutionException Ak cesta neexistuje
-	 * @throws UnsupportedImageTypeException Ak formát nie je podporovaný
-	 */
-	public function analyze(LoaderInterface $loader, string $path): ImageMetadata;
+    /**
+     * Analyzuje obrázok a vráti objekt s metadátami (rozmery, hash, atď.).
+     *
+     * @throws PathResolutionException       Ak cesta neexistuje
+     * @throws UnsupportedImageTypeException Ak formát nie je podporovaný
+     */
+    public function analyze(LoaderInterface $loader, string $path): ImageMetadata;
 }

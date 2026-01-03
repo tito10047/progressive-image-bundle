@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Analyzer;
 
 use kornrunner\Blurhash\Blurhash;
@@ -15,49 +16,50 @@ use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Exception\ImageProcessingException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 
-final class ImagickAnalyzer implements ImageAnalyzerInterface {
+final class ImagickAnalyzer implements ImageAnalyzerInterface
+{
+    public function __construct(
+        private readonly int $componentsX = 4,
+        private readonly int $componentsY = 3,
+    ) {
+    }
 
-	public function __construct(
-		private readonly int $componentsX = 4,
-		private readonly int $componentsY = 3
-	) {
-	}
+    public function analyze(LoaderInterface $loader, string $path): ImageMetadata
+    {
+        $image = new \Imagick();
 
-	public function analyze(LoaderInterface $loader, string $path): ImageMetadata {
+        try {
+            // 3. Načítanie priamo z handle
+            $image->readImageFile($loader->load($path));
+            $image->thumbnailImage(64, 64, true);
 
-		$image = new \Imagick();
+            $width = $image->getImageWidth();
+            $height = $image->getImageHeight();
+            $pixels = $image->exportImagePixels(0, 0, $width, $height, 'RGB', \Imagick::PIXEL_CHAR);
 
-		try {
-			// 3. Načítanie priamo z handle
-			$image->readImageFile($loader->load($path));
-			$image->thumbnailImage(64, 64, true);
+            $formattedPixels = [];
+            for ($y = 0; $y < $height; ++$y) {
+                $row = [];
+                for ($x = 0; $x < $width; ++$x) {
+                    $offset = ($y * $width + $x) * 3;
+                    $row[] = [
+                        $pixels[$offset],
+                        $pixels[$offset + 1],
+                        $pixels[$offset + 2],
+                    ];
+                }
+                $formattedPixels[] = $row;
+            }
+        } catch (\ImagickException $e) {
+            throw new ImageProcessingException('Imagick nedokázal načítať dáta zo streamu: '.$e->getMessage());
+        }
 
-			$width  = $image->getImageWidth();
-			$height = $image->getImageHeight();
-			$pixels = $image->exportImagePixels(0, 0, $width, $height, 'RGB', \Imagick::PIXEL_CHAR);
+        $hash = Blurhash::encode($formattedPixels, $this->componentsX, $this->componentsY);
 
-			$formattedPixels = [];
-			for ($y = 0; $y < $height; $y++) {
-				$row = [];
-				for ($x = 0; $x < $width; $x++) {
-					$offset = ($y * $width + $x) * 3;
-					$row[]  = [
-						$pixels[$offset],
-						$pixels[$offset + 1],
-						$pixels[$offset + 2],
-					];
-				}
-				$formattedPixels[] = $row;
-			}
-		} catch (\ImagickException $e) {
-			throw new ImageProcessingException("Imagick nedokázal načítať dáta zo streamu: " . $e->getMessage());
-		}
-
-		$hash = Blurhash::encode($formattedPixels, $this->componentsX, $this->componentsY);
-		return new ImageMetadata(
-			$hash,
-			$width,
-			$height
-		);
-	}
+        return new ImageMetadata(
+            $hash,
+            $width,
+            $height
+        );
+    }
 }

@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
@@ -19,19 +20,21 @@ class FrameworkGridTest extends PGITestCase
 {
     use InteractsWithTwigComponents;
 
-    private string     $tempDir;
+    private string $tempDir;
     private Filesystem $fs;
 
-    protected function setUp(): void {
+    protected function setUp(): void
+    {
         if (!class_exists(CacheManager::class)) {
             $this->markTestSkipped('LiipImagineBundle is not installed.');
         }
-        $this->fs      = new Filesystem();
-        $this->tempDir = sys_get_temp_dir() . '/progressive_image_test_framework_' . uniqid();
+        $this->fs = new Filesystem();
+        $this->tempDir = sys_get_temp_dir().'/progressive_image_test_framework_'.uniqid();
         $this->fs->mkdir($this->tempDir);
     }
 
-    protected function tearDown(): void {
+    protected function tearDown(): void
+    {
         if (isset($this->fs)) {
             $this->fs->remove($this->tempDir);
         }
@@ -45,17 +48,17 @@ class FrameworkGridTest extends PGITestCase
                 'responsive_strategy' => [
                     'grid' => [
                         'framework' => 'bootstrap',
-                        'columns' => 100
+                        'columns' => 100,
                     ],
                 ],
             ],
         ]);
 
         $html = $this->renderTwigComponent(
-            name: "pgi:Image",
+            name: 'pgi:Image',
             data: [
-                "src" => "/test.png",
-                "sizes" => "xs-1 md-2 xxl-1",
+                'src' => '/test.png',
+                'sizes' => 'xs-1 md-2 xxl-1',
             ]
         );
 
@@ -74,18 +77,18 @@ class FrameworkGridTest extends PGITestCase
                         'framework' => 'bootstrap',
                         'columns' => 12,
                         'layouts' => [
-                            'md' => ['max_container' => 600]
-                        ]
+                            'md' => ['max_container' => 600],
+                        ],
                     ],
                 ],
             ],
         ]);
 
         $html = $this->renderTwigComponent(
-            name: "pgi:Image",
+            name: 'pgi:Image',
             data: [
-                "src" => "/test.png",
-                "sizes" => "md-1", // 1/12 * 600 = 50px
+                'src' => '/test.png',
+                'sizes' => 'md-1', // 1/12 * 600 = 50px
             ]
         );
 
@@ -100,17 +103,17 @@ class FrameworkGridTest extends PGITestCase
                 'responsive_strategy' => [
                     'grid' => [
                         'framework' => 'tailwind',
-                        'columns' => 40
+                        'columns' => 40,
                     ],
                 ],
             ],
         ]);
 
         $html = $this->renderTwigComponent(
-            name: "pgi:Image",
+            name: 'pgi:Image',
             data: [
-                "src" => "/test.png",
-                "sizes" => "default-1 md-2 2xl-1",
+                'src' => '/test.png',
+                'sizes' => 'default-1 md-2 2xl-1',
             ]
         );
 
@@ -121,19 +124,19 @@ class FrameworkGridTest extends PGITestCase
 
     protected function _bootKernel(array $extraOptions): void
     {
-        $imagePath = $this->tempDir . '/test.png';
-        $this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);
+        $imagePath = $this->tempDir.'/test.png';
+        $this->fs->copy(__DIR__.'/../../Fixtures/test.png', $imagePath);
 
         $options = array_merge_recursive([
-            "progressive_image" => [
+            'progressive_image' => [
                 'resolvers' => [
                     'test' => [
-                        'type'  => 'filesystem',
-                        'roots' => [realpath($this->tempDir)]
-                    ]
+                        'type' => 'filesystem',
+                        'roots' => [realpath($this->tempDir)],
+                    ],
                 ],
-                'resolver'  => 'test'
-            ]
+                'resolver' => 'test',
+            ],
         ], $extraOptions);
 
         static::bootKernel($options);

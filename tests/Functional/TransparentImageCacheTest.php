@@ -8,13 +8,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional;
 
-use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
-use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
-use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
+use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
+use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 
 class TransparentImageCacheTest extends PGITestCase
 {
@@ -22,20 +23,18 @@ class TransparentImageCacheTest extends PGITestCase
 
     public function testImageComponentIsCached(): void
     {
-
         self::bootKernel();
 
-		/** @var TagAwareAdapter $cache */
-		$cache = self::getContainer()->get('progressive_image.image_cache_service');
-		$this->assertInstanceOf(TagAwareAdapter::class, $cache);
-
+        /** @var TagAwareAdapter $cache */
+        $cache = self::getContainer()->get('progressive_image.image_cache_service');
+        $this->assertInstanceOf(TagAwareAdapter::class, $cache);
 
         // 1. Prvé renderovanie - malo by sa uložiť do keše
         $rendered1 = $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [
                 'src' => 'images/test.jpg',
-                'alt' => 'Test Alt'
+                'alt' => 'Test Alt',
             ]
         );
 
@@ -73,7 +72,7 @@ class TransparentImageCacheTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => 'images/test.jpg',
-                'alt' => 'Test Alt'
+                'alt' => 'Test Alt',
             ]
         );
 
@@ -86,11 +85,11 @@ class TransparentImageCacheTest extends PGITestCase
             'progressive_image' => [
                 'image_cache_enabled' => true,
                 'image_cache_service' => 'my_custom_cache_pool',
-            ]
+            ],
         ]);
 
         $container = self::getContainer();
-        
+
         // Získame subscribera aby sme videli čo má injektované
         /** @var TransparentImageCacheSubscriber $subscriber */
         $subscriber = $container->get(TransparentImageCacheSubscriber::class);
@@ -98,7 +97,7 @@ class TransparentImageCacheTest extends PGITestCase
         $property = $reflection->getProperty('cache');
         $property->setAccessible(true);
         $injectedCache = $property->getValue($subscriber);
-        
+
         $this->assertInstanceOf(\Symfony\Contracts\Cache\TagAwareCacheInterface::class, $injectedCache);
 
         // Renderujeme komponent
@@ -106,9 +105,8 @@ class TransparentImageCacheTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => 'images/test.jpg',
-                'alt' => 'Custom Cache Test'
+                'alt' => 'Custom Cache Test',
             ]
         );
-
     }
 }

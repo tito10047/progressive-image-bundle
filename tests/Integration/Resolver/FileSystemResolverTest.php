@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration\Resolver;
 
 use PHPUnit\Framework\TestCase;
@@ -20,17 +21,17 @@ class FileSystemResolverTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tempDir = sys_get_temp_dir() . '/progressive_image_bundle_test';
+        $this->tempDir = sys_get_temp_dir().'/progressive_image_bundle_test';
         if (!is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0777, true);
         }
-        touch($this->tempDir . '/test.jpg');
+        touch($this->tempDir.'/test.jpg');
     }
 
     protected function tearDown(): void
     {
-        if (file_exists($this->tempDir . '/test.jpg')) {
-            unlink($this->tempDir . '/test.jpg');
+        if (file_exists($this->tempDir.'/test.jpg')) {
+            unlink($this->tempDir.'/test.jpg');
         }
         if (is_dir($this->tempDir)) {
             rmdir($this->tempDir);
@@ -42,7 +43,7 @@ class FileSystemResolverTest extends TestCase
         $resolver = new FileSystemResolver([$this->tempDir]);
         $result = $resolver->resolve('test.jpg');
 
-        $this->assertSame(realpath($this->tempDir . '/test.jpg'), $result);
+        $this->assertSame(realpath($this->tempDir.'/test.jpg'), $result);
     }
 
     public function testResolveNotFoundThrowsException(): void
@@ -58,6 +59,6 @@ class FileSystemResolverTest extends TestCase
         $resolver = new FileSystemResolver(['test_root' => $this->tempDir]);
         $result = $resolver->resolve('@test_root:test.jpg');
 
-        $this->assertSame(realpath($this->tempDir . '/test.jpg'), $result);
+        $this->assertSame(realpath($this->tempDir.'/test.jpg'), $result);
     }
 }

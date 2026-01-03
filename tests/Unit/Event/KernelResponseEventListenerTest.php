@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Event;
 
 use PHPUnit\Framework\TestCase;
@@ -75,7 +76,7 @@ class KernelResponseEventListenerTest extends TestCase
         $this->assertStringContainsString('<link rel="preload" href="/image1.jpg" as="image" fetchpriority="high">', $content);
         $this->assertStringContainsString('<link rel="preload" href="/image2.jpg" as="image" fetchpriority="low">', $content);
         $this->assertStringContainsString('</head>', $content);
-        
+
         // Ensure it's injected before </head>
         $this->assertStringContainsString('<link rel="preload" href="/image1.jpg" as="image" fetchpriority="high"><link rel="preload" href="/image2.jpg" as="image" fetchpriority="low"></head>', $content);
     }
@@ -101,7 +102,7 @@ class KernelResponseEventListenerTest extends TestCase
 
         // Link header should still be set
         $this->assertTrue($response->headers->has('Link'));
-        
+
         // Content remains unchanged because </head> is missing
         $this->assertSame($initialContent, $response->getContent());
     }

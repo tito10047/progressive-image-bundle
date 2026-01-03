@@ -22,45 +22,45 @@ use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorIn
 
 final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
 {
-	public function __construct(
-		private readonly CacheManager $cacheManager,
-		private readonly UrlGeneratorInterface $router,
-		private readonly UriSigner $uriSigner,
-		private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
-		private readonly FilterConfiguration $filterConfiguration,
-		private readonly ?TagAwareCacheInterface $cache,
-		private readonly ?string $filter = null,
-	) {
-	}
+    public function __construct(
+        private readonly CacheManager $cacheManager,
+        private readonly UrlGeneratorInterface $router,
+        private readonly UriSigner $uriSigner,
+        private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
+        private readonly FilterConfiguration $filterConfiguration,
+        private readonly ?TagAwareCacheInterface $cache,
+        private readonly ?string $filter = null,
+    ) {
+    }
 
-	public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null): string
-	{
-		$targetH = $targetH ?? $targetW;
-		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter, $pointInterest);
-		$filterName = $result['filterName'];
-		$config = $result['config'];
+    public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null): string
+    {
+        $targetH = $targetH ?? $targetW;
+        $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter, $pointInterest);
+        $filterName = $result['filterName'];
+        $config = $result['config'];
 
-		// Register runtime filter so LiipImagine can find it
-		try {
-			$this->filterConfiguration->get($filterName);
-		} catch (NonExistingFilterException) {
-			$this->filterConfiguration->set($filterName, $config);
-		}
+        // Register runtime filter so LiipImagine can find it
+        try {
+            $this->filterConfiguration->get($filterName);
+        } catch (NonExistingFilterException) {
+            $this->filterConfiguration->set($filterName, $config);
+        }
 
-		if ($this->cacheManager->isStored($path, $filterName)) {
-			return $this->cacheManager->getBrowserPath($path, $filterName);
-		}
+        if ($this->cacheManager->isStored($path, $filterName)) {
+            return $this->cacheManager->getBrowserPath($path, $filterName);
+        }
 
-		$this->cache?->invalidateTags(['pgi_tag_' . md5($path)]);
+        $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
 
-		$url = $this->router->generate('progressive_image_filter', [
-			'path' => $path,
-			'width' => $targetW,
-			'height' => $targetH,
-			'filter' => $this->filter,
-			'pointInterest' => $pointInterest,
-		], UrlGeneratorInterface::ABSOLUTE_URL);
+        $url = $this->router->generate('progressive_image_filter', [
+            'path' => $path,
+            'width' => $targetW,
+            'height' => $targetH,
+            'filter' => $this->filter,
+            'pointInterest' => $pointInterest,
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
 
-		return $this->uriSigner->sign($url);
-	}
+        return $this->uriSigner->sign($url);
+    }
 }

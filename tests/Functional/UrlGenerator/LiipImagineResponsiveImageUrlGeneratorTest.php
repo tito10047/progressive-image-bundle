@@ -25,9 +25,9 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
     protected function setUp(): void
     {
         $this->fs = new Filesystem();
-        $this->tempDir = sys_get_temp_dir() . '/progressive_image_test_generator_' . uniqid();
+        $this->tempDir = sys_get_temp_dir().'/progressive_image_test_generator_'.uniqid();
         $this->fs->mkdir($this->tempDir);
-        $this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $this->tempDir . '/test.png');
+        $this->fs->copy(__DIR__.'/../../Fixtures/test.png', $this->tempDir.'/test.png');
     }
 
     protected function tearDown(): void
@@ -35,7 +35,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
         if (isset($this->tempDir) && $this->fs->exists($this->tempDir)) {
             $this->fs->remove($this->tempDir);
         }
-        $publicCache = __DIR__ . '/../../../public/media/cache';
+        $publicCache = __DIR__.'/../../../public/media/cache';
         if ($this->fs->exists($publicCache)) {
             $this->fs->remove($publicCache);
         }
@@ -49,15 +49,15 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
         }
 
         $client = static::createClient([
-            "liip_imagine" => [
-                "loaders" => [
-                    "default" => [
-                        "filesystem" => [
-                            "data_root" => $this->tempDir
-                        ]
-                    ]
-                ]
-            ]
+            'liip_imagine' => [
+                'loaders' => [
+                    'default' => [
+                        'filesystem' => [
+                            'data_root' => $this->tempDir,
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         $container = $client->getContainer();
@@ -80,14 +80,14 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
         // Verify that the generated URL actually works and redirects to the image
         $client->request('GET', $url);
         $this->assertResponseRedirects();
-        
+
         $redirectUrl = $client->getResponse()->headers->get('Location');
         $this->assertStringContainsString('/media/cache/150x150/', $redirectUrl);
         $this->assertStringNotContainsString('resolve', $redirectUrl);
 
         $projectDir = $container->getParameter('kernel.project_dir');
         $relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
-        $absoluteFilePath = $projectDir . '/public' . $relativeFilePath;
+        $absoluteFilePath = $projectDir.'/public'.$relativeFilePath;
 
         $this->assertFileExists($absoluteFilePath);
     }
@@ -99,15 +99,15 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
         }
 
         $client = static::createClient([
-            "liip_imagine" => [
-                "loaders" => [
-                    "default" => [
-                        "filesystem" => [
-                            "data_root" => $this->tempDir
-                        ]
-                    ]
-                ]
-            ]
+            'liip_imagine' => [
+                'loaders' => [
+                    'default' => [
+                        'filesystem' => [
+                            'data_root' => $this->tempDir,
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         $container = $client->getContainer();
@@ -125,28 +125,28 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends PGIWebTestCase
 
         // Pre-generate using the controller (similar to LiipImagineControllerTest)
         $url = sprintf('/progressive-image?path=%s&width=%d&height=%d', $path, $width, $height);
-        $signedUrl = $signer->sign('http://localhost' . $url);
+        $signedUrl = $signer->sign('http://localhost'.$url);
 
         $client->request('GET', $signedUrl);
         $this->assertResponseRedirects();
-        
+
         $redirectUrl = $client->getResponse()->headers->get('Location');
         $this->assertStringContainsString('/media/cache/200x200/', $redirectUrl);
         $this->assertStringNotContainsString('resolve', $redirectUrl);
 
         // Verify it is now stored
-        $this->assertTrue($cacheManager->isStored($path, $filterName), "Image should be stored in cache after controller request");
+        $this->assertTrue($cacheManager->isStored($path, $filterName), 'Image should be stored in cache after controller request');
 
         // Now call generateUrl - it should return the direct path to the cached image
         $cachedUrl = $generator->generateUrl($path, $width, $height);
 
         $this->assertStringNotContainsString('/progressive-image', $cachedUrl);
         $this->assertStringContainsString('/media/cache/200x200/', $cachedUrl);
-        
+
         // Ensure the file exists on disk
         $projectDir = $container->getParameter('kernel.project_dir');
         $relativeFilePath = parse_url($cachedUrl, PHP_URL_PATH);
-        $absoluteFilePath = $projectDir . '/public' . $relativeFilePath;
+        $absoluteFilePath = $projectDir.'/public'.$relativeFilePath;
         $this->assertFileExists($absoluteFilePath);
     }
 }

@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\DTO;
 
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -16,9 +17,8 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 
 class BreakpointAssignmentTest extends TestCase
 {
-
-	#[DataProvider('provideBreakpointStrings')]
-	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio): void
+    #[DataProvider('provideBreakpointStrings')]
+    public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio): void
     {
         $assignment = BreakpointAssignment::fromSegment($input, $ratio);
 
@@ -61,7 +61,7 @@ class BreakpointAssignmentTest extends TestCase
         $results = BreakpointAssignment::parseSegments($input, null);
 
         $this->assertCount(2, $results);
-        
+
         $this->assertSame('lg', $results[0]->breakpoint);
         $this->assertSame(4, $results[0]->columns);
         $this->assertSame('landscape', $results[0]->ratio);
@@ -71,8 +71,8 @@ class BreakpointAssignmentTest extends TestCase
         $this->assertSame('square', $results[1]->ratio);
     }
 
-	#[DataProvider('provideMultipleSegments')]
-	public function testParseStrongWithDifferentInputs(string $input, ?string $ratio, int $expectedCount): void
+    #[DataProvider('provideMultipleSegments')]
+    public function testParseStrongWithDifferentInputs(string $input, ?string $ratio, int $expectedCount): void
     {
         $results = BreakpointAssignment::parseSegments($input, $ratio);
         $this->assertCount($expectedCount, $results);

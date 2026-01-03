@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
@@ -18,28 +19,29 @@ use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 class ImageOriginalBreakpointTest extends PGITestCase
 {
     use InteractsWithTwigComponents;
-	private string     $tempDir;
-	private Filesystem $fs;
+    private string $tempDir;
+    private Filesystem $fs;
 
-	protected function setUp(): void {
-		$this->fs      = new Filesystem();
-		$this->tempDir = sys_get_temp_dir() . '/progressive_image_test_' . uniqid();
-		$this->fs->mkdir($this->tempDir);
-	}
+    protected function setUp(): void
+    {
+        $this->fs = new Filesystem();
+        $this->tempDir = sys_get_temp_dir().'/progressive_image_test_'.uniqid();
+        $this->fs->mkdir($this->tempDir);
+    }
 
-	public function testRenderWithOriginalBreakpoint(): void
+    public function testRenderWithOriginalBreakpoint(): void
     {
         if (!class_exists(CacheManager::class)) {
             $this->markTestSkipped('LiipImagineBundle is not installed.');
         }
         $cacheManager = $this->createMock(CacheManager::class);
         $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function($path, $filter) {
-                return 'http://localhost/media/cache/resolve/' . $filter . $path;
+            ->willReturnCallback(function ($path, $filter) {
+                return 'http://localhost/media/cache/resolve/'.$filter.$path;
             });
 
         $this->_bootKernel([
-            "progressive_image" => [
+            'progressive_image' => [
                 'responsive_strategy' => [
                     'grid' => [
                         'columns' => 12,
@@ -54,17 +56,17 @@ class ImageOriginalBreakpointTest extends PGITestCase
                             ],
                         ],
                     ],
-                ]
-            ]
+                ],
+            ],
         ]);
 
         self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
 
         $html = $this->renderTwigComponent(
-            name: "pgi:Image",
+            name: 'pgi:Image',
             data: [
-                "src" => "/test.png",
-                "sizes" => "mobile-12 desktop-1",
+                'src' => '/test.png',
+                'sizes' => 'mobile-12 desktop-1',
             ]
         );
 
@@ -73,22 +75,23 @@ class ImageOriginalBreakpointTest extends PGITestCase
         $this->assertStringNotContainsString('1920w', $html);
     }
 
-	private function _bootKernel(array $extraOptions = []): void {
-		$imagePath = $this->tempDir . '/test.png';
-		$this->fs->copy(__DIR__ . '/../../Fixtures/test.png', $imagePath);
+    private function _bootKernel(array $extraOptions = []): void
+    {
+        $imagePath = $this->tempDir.'/test.png';
+        $this->fs->copy(__DIR__.'/../../Fixtures/test.png', $imagePath);
 
-		$options = array_merge_recursive([
-			"progressive_image" => [
-				'resolvers' => [
-					'test' => [
-						'type'  => 'filesystem',
-						'roots' => [realpath($this->tempDir)]
-					]
-				],
-				'resolver'  => 'test'
-			]
-		], $extraOptions);
+        $options = array_merge_recursive([
+            'progressive_image' => [
+                'resolvers' => [
+                    'test' => [
+                        'type' => 'filesystem',
+                        'roots' => [realpath($this->tempDir)],
+                    ],
+                ],
+                'resolver' => 'test',
+            ],
+        ], $extraOptions);
 
-		self::bootKernel($options);
-	}
+        self::bootKernel($options);
+    }
 }

@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImageAnalyzerInterface;
@@ -73,6 +73,7 @@ class MetadataReaderTest extends TestCase
             ->method('get')
             ->willReturnCallback(function ($key, $callback) {
                 $item = $this->createMock(\Symfony\Contracts\Cache\ItemInterface::class);
+
                 return $callback($item);
             });
 
@@ -108,6 +109,7 @@ class MetadataReaderTest extends TestCase
             ->method('get')
             ->willReturnCallback(function ($key, $callback) {
                 $item = $this->createMock(\Symfony\Contracts\Cache\ItemInterface::class);
+
                 return $callback($item);
             });
 

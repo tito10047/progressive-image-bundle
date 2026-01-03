@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
@@ -22,9 +23,9 @@ class ConfigurationTest extends TestCase
         $config = $processor->processConfiguration(new Configuration(), [
             'progressive_image' => [
                 'resolvers' => [
-                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']]
-                ]
-            ]
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
         ]);
 
         $this->assertEquals('custom', $config['responsive_strategy']['grid']['framework']);
@@ -39,14 +40,14 @@ class ConfigurationTest extends TestCase
         $config = $processor->processConfiguration(new Configuration(), [
             'progressive_image' => [
                 'resolvers' => [
-                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']]
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
                 ],
                 'responsive_strategy' => [
                     'grid' => [
-                        'framework' => 'bootstrap'
-                    ]
-                ]
-            ]
+                        'framework' => 'bootstrap',
+                    ],
+                ],
+            ],
         ]);
 
         $grid = $config['responsive_strategy']['grid'];
@@ -67,14 +68,14 @@ class ConfigurationTest extends TestCase
         $config = $processor->processConfiguration(new Configuration(), [
             'progressive_image' => [
                 'resolvers' => [
-                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']]
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
                 ],
                 'responsive_strategy' => [
                     'grid' => [
-                        'framework' => 'tailwind'
-                    ]
-                ]
-            ]
+                        'framework' => 'tailwind',
+                    ],
+                ],
+            ],
         ]);
 
         $grid = $config['responsive_strategy']['grid'];
@@ -95,7 +96,7 @@ class ConfigurationTest extends TestCase
         $config = $processor->processConfiguration(new Configuration(), [
             'progressive_image' => [
                 'resolvers' => [
-                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']]
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
                 ],
                 'responsive_strategy' => [
                     'grid' => [
@@ -103,25 +104,25 @@ class ConfigurationTest extends TestCase
                         'columns' => 16,
                         'layouts' => [
                             'md' => ['max_container' => 800],
-                            'custom' => ['min_viewport' => 2000, 'max_container' => 1800]
-                        ]
-                    ]
-                ]
-            ]
+                            'custom' => ['min_viewport' => 2000, 'max_container' => 1800],
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         $grid = $config['responsive_strategy']['grid'];
         $this->assertEquals('bootstrap', $grid['framework']);
         $this->assertEquals(16, $grid['columns']);
         $this->assertEquals(24, $grid['gutter']);
-        
+
         // Overridden md
         $this->assertEquals(768, $grid['layouts']['md']['min_viewport']);
         $this->assertEquals(800, $grid['layouts']['md']['max_container']);
-        
+
         // Preserved xxl
         $this->assertEquals(1400, $grid['layouts']['xxl']['min_viewport']);
-        
+
         // Added custom
         $this->assertEquals(2000, $grid['layouts']['custom']['min_viewport']);
     }

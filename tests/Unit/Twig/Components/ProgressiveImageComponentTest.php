@@ -8,12 +8,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Twig\Components;
 
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
-use Tito10047\ProgressiveImageBundle\SrcsetGenerator\SrcsetGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
@@ -24,7 +24,7 @@ class ProgressiveImageComponentTest extends TestCase
     {
         $metadataReader = $this->createMock(MetadataReaderInterface::class);
         $metadata = new ImageMetadata('hash', 800, 600);
-        
+
         $metadataReader->expects($this->once())
             ->method('getMetadata')
             ->with('test.jpg')
@@ -35,9 +35,9 @@ class ProgressiveImageComponentTest extends TestCase
             ->method('decorate')
             ->with('test.jpg')
             ->willReturn('decorated-test.jpg');
-		$collector = $this->createMock(PreloadCollector::class);
+        $collector = $this->createMock(PreloadCollector::class);
 
-        $component = new Image($metadataReader, [$decorator],null,$collector);
+        $component = new Image($metadataReader, [$decorator], null, $collector);
         $component->src = 'test.jpg';
         $component->postMount();
 
@@ -53,9 +53,9 @@ class ProgressiveImageComponentTest extends TestCase
         $metadataReader->expects($this->once())
             ->method('getMetadata')
             ->willReturn(null);
-		$collector = $this->createMock(PreloadCollector::class);
+        $collector = $this->createMock(PreloadCollector::class);
 
-        $component = new Image($metadataReader, [],null,$collector);
+        $component = new Image($metadataReader, [], null, $collector);
         $component->src = 'test.jpg';
         $component->postMount();
 
@@ -64,5 +64,4 @@ class ProgressiveImageComponentTest extends TestCase
         $this->assertNull($component->getHeight());
         $this->assertSame('test.jpg', $component->getDecoratedSrc());
     }
-
 }

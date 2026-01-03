@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Service;
 
 use Psr\Cache\InvalidArgumentException;
@@ -21,51 +22,54 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\PathResolverInterface;
 
-final class MetadataReader implements MetadataReaderInterface {
+final class MetadataReader implements MetadataReaderInterface
+{
+    public function __construct(
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly CacheInterface $cache,
+        private readonly ImageAnalyzerInterface $analyzer,
+        private readonly LoaderInterface $loader,
+        private readonly PathResolverInterface $pathResolver,
+        private readonly ?int $ttl,
+        private readonly ?string $fallbackPath,
+    ) {
+    }
 
-	public function __construct(
-		private readonly EventDispatcherInterface $dispatcher,
-		private readonly CacheInterface           $cache,
-		private readonly ImageAnalyzerInterface   $analyzer,
-		private readonly LoaderInterface          $loader,
-		private readonly PathResolverInterface    $pathResolver,
-		private readonly ?int                     $ttl,
-		private readonly ?string                  $fallbackPath,
-	) {
-	}
+    /**
+     * @throws InvalidArgumentException
+     * @throws PathResolutionException
+     */
+    public function getMetadata(string $src): ?ImageMetadata
+    {
+        return $this->cache->get(md5($src), function (ItemInterface $item) use ($src) {
+            if ($this->ttl) {
+                $item->expiresAfter($this->ttl);
+            }
+            try {
+                $path = $this->pathResolver->resolve($src);
+            } catch (PathResolutionException $e) {
+                $this->dispatchEvent($src);
 
-	/**
-	 * @throws InvalidArgumentException
-	 * @throws PathResolutionException
-	 */
-	public function getMetadata(string $src): ?ImageMetadata {
-		return $this->cache->get(md5($src), function (ItemInterface $item) use ($src) {
-			if ($this->ttl){
-				$item->expiresAfter($this->ttl);
-			}
-			try {
-				$path = $this->pathResolver->resolve($src);
-			}catch (PathResolutionException $e){
-				$this->dispatchEvent($src);
+                if (!$this->fallbackPath) {
+                    throw $e;
+                }
+                try {
+                    $path = $this->pathResolver->resolve($this->fallbackPath);
+                } catch (PathResolutionException $e) {
+                    $this->dispatchEvent($this->fallbackPath);
+                    throw $e;
+                }
+            }
 
-				if (!$this->fallbackPath){
-					throw $e;
-				}
-				try {
-					$path = $this->pathResolver->resolve($this->fallbackPath);
-				}catch (PathResolutionException $e){
-					$this->dispatchEvent($this->fallbackPath);
-					throw $e;
-				}
-			}
-			return $this->analyzer->analyze($this->loader, $path);
-		});
-	}
+            return $this->analyzer->analyze($this->loader, $path);
+        });
+    }
 
-	function dispatchEvent(string $src): void {
-		$this->dispatcher->dispatch(
-			new ImageNotFoundEvent($src, get_class($this->loader)),
-			ImageNotFoundEvent::NAME
-		);
-	}
+    public function dispatchEvent(string $src): void
+    {
+        $this->dispatcher->dispatch(
+            new ImageNotFoundEvent($src, get_class($this->loader)),
+            ImageNotFoundEvent::NAME
+        );
+    }
 }

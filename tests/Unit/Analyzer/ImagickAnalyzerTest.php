@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Analyzer;
 
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ class ImagickAnalyzerTest extends TestCase
     {
         $loader = $this->createMock(LoaderInterface::class);
         $path = 'tests/Fixtures/test.png';
-        
+
         $stream = fopen($path, 'rb');
         $loader->expects($this->once())
             ->method('load')
@@ -42,7 +43,7 @@ class ImagickAnalyzerTest extends TestCase
         $this->assertGreaterThanOrEqual(60, $metadata->width);
         $this->assertGreaterThanOrEqual(60, $metadata->height);
         $this->assertIsString($metadata->originalHash);
-        
+
         fclose($stream);
     }
 }

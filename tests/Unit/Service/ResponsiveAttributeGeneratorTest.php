@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
@@ -80,24 +81,24 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         // Test format "3/4"
         $assignments1 = [new BreakpointAssignment('md', 6, '3/4')];
-        
+
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
             ->with($path, 360, 480)
             ->willReturn('url');
-        
+
         $this->generator->generate($path, $assignments1, $originalWidth, false);
 
         // Test format "16-9"
         $assignments2 = [new BreakpointAssignment('md', 6, '16-9')];
         $this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
         $this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
-        
+
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
-            ->with($path, 360, (int)round(360 / (16/9)))
+            ->with($path, 360, (int) round(360 / (16 / 9)))
             ->willReturn('url');
-            
+
         $this->generator->generate($path, $assignments2, $originalWidth, false);
     }
 

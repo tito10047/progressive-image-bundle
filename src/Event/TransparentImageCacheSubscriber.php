@@ -8,69 +8,70 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\UX\TwigComponent\Event\PreCreateForRenderEvent;
 use Symfony\UX\TwigComponent\Event\PreRenderEvent;
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class TransparentImageCacheSubscriber implements EventSubscriberInterface
 {
-	public function __construct(
-		private readonly ?TagAwareCacheInterface $cache,
-		private readonly bool           $enabled,
-		private readonly ?int $ttl
-	) {
-	}
+    public function __construct(
+        private readonly ?TagAwareCacheInterface $cache,
+        private readonly bool $enabled,
+        private readonly ?int $ttl,
+    ) {
+    }
 
-	public static function getSubscribedEvents(): array
-	{
-		return [
-			PreCreateForRenderEvent::class => ['onPreCreate', 10],
-			PreRenderEvent::class => ['onPreRender', 10],
-		];
-	}
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            PreCreateForRenderEvent::class => ['onPreCreate', 10],
+            PreRenderEvent::class => ['onPreRender', 10],
+        ];
+    }
 
-	public function onPreCreate(PreCreateForRenderEvent $event): void
-	{
-		if (!$this->enabled || !$this->cache || $event->getName() !== 'pgi:Image') {
-			return;
-		}
+    public function onPreCreate(PreCreateForRenderEvent $event): void
+    {
+        if (!$this->enabled || !$this->cache || 'pgi:Image' !== $event->getName()) {
+            return;
+        }
 
-		$key = $this->generateKey($event->getInputProps());
-		$cachedHtml = $this->cache->get($key, fn() => null);
+        $key = $this->generateKey($event->getInputProps());
+        $cachedHtml = $this->cache->get($key, fn () => null);
 
-		if ($cachedHtml) {
-			$event->setRenderedString($cachedHtml);
-		}
-	}
+        if ($cachedHtml) {
+            $event->setRenderedString($cachedHtml);
+        }
+    }
 
-	public function onPreRender(PreRenderEvent $event): void
-	{
-		if (!$this->enabled || $event->getMetadata()->getName() !== 'pgi:Image') {
-			return;
-		}
+    public function onPreRender(PreRenderEvent $event): void
+    {
+        if (!$this->enabled || 'pgi:Image' !== $event->getMetadata()->getName()) {
+            return;
+        }
 
-		// Ak sa dostaneme sem, znamená to, že v keši nič nebolo (inak by PreCreateForRenderEvent zastavil renderovanie)
-		$variables = $event->getVariables();
-		$key = $this->generateKey($variables);
+        // Ak sa dostaneme sem, znamená to, že v keši nič nebolo (inak by PreCreateForRenderEvent zastavil renderovanie)
+        $variables = $event->getVariables();
+        $key = $this->generateKey($variables);
 
-		// Obalíme pôvodnú šablónu do wrappera, ktorý výsledok uloží do keše
-		$variables['pgi_original_template'] = $event->getTemplate();
-		$variables['pgi_cache_key'] = $key;
-		$variables['pgi_cache_tag'] = isset($variables['src']) ? 'pgi_tag_' . md5($variables['src']) : null;
+        // Obalíme pôvodnú šablónu do wrappera, ktorý výsledok uloží do keše
+        $variables['pgi_original_template'] = $event->getTemplate();
+        $variables['pgi_cache_key'] = $key;
+        $variables['pgi_cache_tag'] = isset($variables['src']) ? 'pgi_tag_'.md5($variables['src']) : null;
 
-		$event->setVariables($variables);
-		$event->setTemplate('@ProgressiveImage/cache_wrapper.html.twig');
-	}
+        $event->setVariables($variables);
+        $event->setTemplate('@ProgressiveImage/cache_wrapper.html.twig');
+    }
 
-	private function generateKey(array $vars): string
-	{
-		// Odstránime interné pgi premenné ak tam sú, aby neovplyvňovali kľúč
-		unset($vars['pgi_original_template'], $vars['pgi_cache_key']);
+    private function generateKey(array $vars): string
+    {
+        // Odstránime interné pgi premenné ak tam sú, aby neovplyvňovali kľúč
+        unset($vars['pgi_original_template'], $vars['pgi_cache_key']);
 
-		// Kľúč musí obsahovať všetko, čo mení HTML výstup
-		return 'pgi_comp_' . md5(serialize($vars));
-	}
+        // Kľúč musí obsahovať všetko, čo mení HTML výstup
+        return 'pgi_comp_'.md5(serialize($vars));
+    }
 }

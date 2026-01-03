@@ -8,9 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\UrlGenerator;
 
-interface ResponsiveImageUrlGeneratorInterface {
-
-	public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null):string;
+interface ResponsiveImageUrlGeneratorInterface
+{
+    public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null): string;
 }

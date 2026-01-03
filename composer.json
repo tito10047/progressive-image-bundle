@@ -32,6 +32,7 @@
     },
     "require-dev": {
         "ext-imagick": "*",
+        "friendsofphp/php-cs-fixer": "^3.92",
         "liip/imagine-bundle": "^2.16",
         "symfony/asset-mapper": "^6.4|^7.4|^8.0",
         "symfony/dotenv": "^7.4",
@@ -53,7 +54,9 @@
     "scripts" : {
         "test": [
             "phpunit"
-        ]
+        ],
+        "fix-cs": "php-cs-fixer fix",
+        "check-cs": "php-cs-fixer fix --dry-run --diff"
     },
     "autoload": {
         "psr-4": {

@@ -8,13 +8,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Loader;
 
-interface LoaderInterface {
-
-	/**
-	 * @return resource
-	 */
-	public function load(string $path);
-
+interface LoaderInterface
+{
+    /**
+     * @return resource
+     */
+    public function load(string $path);
 }

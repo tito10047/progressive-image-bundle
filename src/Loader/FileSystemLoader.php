@@ -8,30 +8,35 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Tito10047\ProgressiveImageBundle\Loader;
 
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 
-final class FileSystemLoader implements LoaderInterface {
+final class FileSystemLoader implements LoaderInterface
+{
+    /**
+     * @var false|resource
+     */
+    private $file;
 
-	/**
-	 * @var false|resource
-	 */
-	private $file;
+    public function load(string $path)
+    {
+        if (!file_exists($path) || !is_file($path)) {
+            throw new PathResolutionException("Path $path does not exist or is not a file.");
+        }
 
-	public function load(string $path) {
-		if (!file_exists($path) || !is_file($path)) {
-			throw new PathResolutionException("Path $path does not exist or is not a file.");
-		}
-		return $this->file = fopen($path, 'r');
-	}
+        return $this->file = fopen($path, 'r');
+    }
 
-	public function __destruct() {
-		if (!$this->file || !is_resource($this->file)){
-			$this->file = null;
-			return;
-		}
-		fclose($this->file);
-		$this->file = null;
-	}
+    public function __destruct()
+    {
+        if (!$this->file || !is_resource($this->file)) {
+            $this->file = null;
+
+            return;
+        }
+        fclose($this->file);
+        $this->file = null;
+    }
 }

@@ -12,7 +12,6 @@
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional;
 
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
-use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 
@@ -62,7 +61,7 @@ class TransparentImageCacheTtlTest extends PGITestCase
         }
 
         $item = $cache->getItem($cacheKey);
-        
+
         // ArrayAdapter ukladá expirácie v internom poli $expiries
         $reflectionPool = new \ReflectionClass($innerPool);
         if ($reflectionPool->hasProperty('expiries')) {

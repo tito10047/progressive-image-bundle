@@ -18,7 +18,7 @@ final class FileSystemLoader implements LoaderInterface
     /**
      * @var resource|false|null
      */
-    private $file = null;
+    private $file;
 
     public function load(string $path)
     {

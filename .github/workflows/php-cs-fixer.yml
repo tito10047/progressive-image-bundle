@@ -1,0 +1,21 @@
+name: PHP CS Fixer
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  php-cs-fixer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: php-cs-fixer
+
+      - name: Check CS
+        run: php-cs-fixer fix --dry-run --diff

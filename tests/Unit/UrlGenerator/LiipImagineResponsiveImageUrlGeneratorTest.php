@@ -10,6 +10,7 @@ use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
 
@@ -20,6 +21,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 	private UriSigner $uriSigner;
 	private LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator;
 	private FilterConfiguration $filterConfiguration;
+	private TagAwareCacheInterface $cache;
 	private LiipImagineResponsiveImageUrlGenerator $generator;
 
 	protected function setUp(): void
@@ -32,6 +34,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 		$this->uriSigner = $this->createMock(UriSigner::class);
 		$this->runtimeConfigGenerator = $this->createMock(LiipImagineRuntimeConfigGenerator::class);
 		$this->filterConfiguration = $this->createMock(FilterConfiguration::class);
+		$this->cache = $this->createMock(TagAwareCacheInterface::class);
 
 		$this->generator = new LiipImagineResponsiveImageUrlGenerator(
 			$this->cacheManager,
@@ -39,6 +42,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 			$this->uriSigner,
 			$this->runtimeConfigGenerator,
 			$this->filterConfiguration,
+			$this->cache,
 			'my_filter'
 		);
 	}
@@ -86,6 +90,10 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 			->method('isStored')
 			->with($path, 'my_filter_100x100')
 			->willReturn(false);
+
+		$this->cache->expects($this->once())
+			->method('invalidateTags')
+			->with(['pgi_tag_' . md5($path)]);
 
 		$this->filterConfiguration->expects($this->once())
 			->method('get')

@@ -1,7 +1,5 @@
 <?php
 
-use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
-use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
 use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\HttpFoundation\UriSigner;
@@ -17,8 +15,6 @@ use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
@@ -61,16 +57,6 @@ return static function (ContainerConfigurator $container): void {
 			->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
 		;
 
-		$services->set(LiipImagineResponsiveImageUrlGenerator::class)
-			->arg('$cacheManager', service('liip_imagine.cache.manager'))
-			->arg('$router', service('router'))
-			->arg('$uriSigner', service('uri_signer'))
-			->arg('$runtimeConfigGenerator', service(LiipImagineRuntimeConfigGenerator::class))
-			->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
-			->public()
-		;
-
-        $services->alias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class);
 
 		$services->set('uri_signer', UriSigner::class)
 			->args([
@@ -103,16 +89,4 @@ return static function (ContainerConfigurator $container): void {
 		->tag('kernel.event_listener', ['event' => 'kernel.response'])
 	;
 
-    $services->set(TransparentCacheExtension::class)
-        ->arg('$cache', service('progressive_image.image_cache_service'))
-        ->arg('$ttl', new Parameter('progressive_image.ttl'))
-        ->tag('twig.extension')
-    ;
-
-    $services->set(TransparentImageCacheSubscriber::class)
-        ->arg('$cache', service('progressive_image.image_cache_service'))
-        ->arg('$enabled', new Parameter('progressive_image.image_cache_enabled'))
-        ->arg('$ttl', new Parameter('progressive_image.ttl'))
-        ->tag('kernel.event_subscriber')
-    ;
 };

@@ -26,7 +26,7 @@ class LiipImagineDecoratorTest extends PGITestCase
             "progressive_image"=>[
 				'path_decorators' => [
 					'progressive_image.decorator.liip_imagine'
-				]
+				],
 			]
         ]);
 

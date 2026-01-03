@@ -22,7 +22,7 @@ class ProgressiveImageTestingKernel extends Kernel {
 	}
 
 	public function __construct(
-		private readonly array $options = []
+		private array $options = []
 	) {
 		parent::__construct('test', true);
 	}
@@ -54,6 +54,16 @@ class ProgressiveImageTestingKernel extends Kernel {
 					'log' => true,
 				],
 				'http_method_override' => false,
+				'cache' => [
+					'app' => 'cache.adapter.array',
+					'pools' => [
+						'my_custom_cache_pool' => [
+							'adapter' => 'cache.adapter.array',
+							'public' => true,
+							"tags"=>true
+						],
+					],
+				],
 			]);
 
 //            $container->setAlias('test.service_container', 'service_container')->setPublic(true);
@@ -88,7 +98,16 @@ class ProgressiveImageTestingKernel extends Kernel {
 					'App\Twig\Components\\'=>"%kernel.project_dir%/tests/Functional/Fixtures/templates/components/"
 				],
 			]);
+			if (!array_key_exists('progressive_image', $this->options)){
+				$this->options['progressive_image'] = [];
+			}
 			foreach($this->options as $bundle=>$options) {
+				if ($bundle=='progressive_image'){
+					$options+= [
+						'image_cache_enabled' => true,
+						'image_cache_service' => 'my_custom_cache_pool',
+					];
+				}
 				$container->loadFromExtension($bundle, $options);
 			}
 

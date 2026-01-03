@@ -5,15 +5,16 @@ namespace Tito10047\ProgressiveImageBundle\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\UX\TwigComponent\Event\PreCreateForRenderEvent;
 use Symfony\UX\TwigComponent\Event\PreRenderEvent;
-use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 class TransparentImageCacheSubscriber implements EventSubscriberInterface
 {
 	public function __construct(
-		private readonly CacheInterface $cache,
+		private readonly ?TagAwareCacheInterface $cache,
 		private readonly bool           $enabled,
 		private readonly ?int $ttl
-	) {}
+	) {
+	}
 
 	public static function getSubscribedEvents(): array
 	{
@@ -25,7 +26,7 @@ class TransparentImageCacheSubscriber implements EventSubscriberInterface
 
 	public function onPreCreate(PreCreateForRenderEvent $event): void
 	{
-		if (!$this->enabled || $event->getName() !== 'pgi:Image') {
+		if (!$this->enabled || !$this->cache || $event->getName() !== 'pgi:Image') {
 			return;
 		}
 
@@ -44,12 +45,13 @@ class TransparentImageCacheSubscriber implements EventSubscriberInterface
 		}
 
 		// Ak sa dostaneme sem, znamená to, že v keši nič nebolo (inak by PreCreateForRenderEvent zastavil renderovanie)
-		$key = $this->generateKey($event->getVariables());
+		$variables = $event->getVariables();
+		$key = $this->generateKey($variables);
 
 		// Obalíme pôvodnú šablónu do wrappera, ktorý výsledok uloží do keše
-		$variables = $event->getVariables();
 		$variables['pgi_original_template'] = $event->getTemplate();
 		$variables['pgi_cache_key'] = $key;
+		$variables['pgi_cache_tag'] = isset($variables['src']) ? 'pgi_tag_' . md5($variables['src']) : null;
 
 		$event->setVariables($variables);
 		$event->setTemplate('@ProgressiveImage/cache_wrapper.html.twig');

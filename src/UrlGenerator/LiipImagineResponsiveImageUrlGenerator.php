@@ -9,6 +9,7 @@ use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
 
 class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
@@ -19,6 +20,7 @@ class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGenera
 		private readonly UriSigner $uriSigner,
 		private readonly LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator,
 		private readonly FilterConfiguration $filterConfiguration,
+		private readonly ?TagAwareCacheInterface $cache,
 		private readonly ?string $filter = null,
 	) {
 	}
@@ -40,6 +42,8 @@ class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGenera
 		if ($this->cacheManager->isStored($path, $filterName)) {
 			return $this->cacheManager->getBrowserPath($path, $filterName);
 		}
+
+		$this->cache?->invalidateTags(['pgi_tag_' . md5($path)]);
 
 		$url = $this->router->generate('progressive_image_filter', [
 			'path' => $path,

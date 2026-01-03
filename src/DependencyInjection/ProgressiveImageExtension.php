@@ -2,22 +2,26 @@
 
 namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 
+use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
+use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
+use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
+use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -124,6 +128,12 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 		$imageCacheEnabled = $configs['image_cache_enabled'] ?? false;
 		$ttl = $configs['ttl'] ?? null;
 
+		if (!$imageCacheEnabled) {
+			$imageCacheServiceReference = null;
+		} else {
+			$imageCacheServiceReference = new Reference('progressive_image.image_cache_service');
+		}
+
 		$definition = $container->getDefinition(MetadataReader::class);
 		$definition->setArgument('$analyzer', new Reference($analyzerId))
 			->setArgument('$loader', new Reference($loaderId))
@@ -136,6 +146,32 @@ class ProgressiveImageExtension extends Extension implements PrependExtensionInt
 		$container->setParameter('progressive_image.ttl', $ttl);
 		$container->setAlias('progressive_image.image_cache_service', $imageCacheServiceId);
 
+
+		$container->register(TransparentCacheExtension::class)
+			->setArgument('$ttl', new Parameter('progressive_image.ttl'))
+			->setArgument('$cache', $imageCacheServiceReference)
+			->addTag('twig.extension')
+		;
+
+		$container->register(TransparentImageCacheSubscriber::class)
+			->setArgument('$enabled', new Parameter('progressive_image.image_cache_enabled'))
+			->setArgument('$ttl', new Parameter('progressive_image.ttl'))
+			->setArgument('$cache', $imageCacheServiceReference)
+			->addTag('kernel.event_subscriber')
+		;
+
+		if (class_exists(LiipImagineBundle::class)) {
+			$container->register(LiipImagineResponsiveImageUrlGenerator::class)
+				->setArgument('$cacheManager', new Reference('liip_imagine.cache.manager'))
+				->setArgument('$router', new Reference('router'))
+				->setArgument('$uriSigner', new Reference('uri_signer'))
+				->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
+				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
+				->setArgument('$cache', $imageCacheServiceReference)
+				->setPublic(true);
+
+			$container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class);
+		}
 		$responsiveConfig = $configs['responsive_strategy'] ?? [];
 		$generatorId = $responsiveConfig['generator'] ?? null;
 

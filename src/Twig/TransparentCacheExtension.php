@@ -31,15 +31,16 @@ final class TransparentCacheExtension extends AbstractExtension
         ];
     }
 
-    public function saveToCache(string $content, string $key, ?string $tag = null): string
+    public function saveToCache(string $content, string $key, ?string $tag = null, ?int $ttl = null): string
     {
         if (!$this->cache) {
             return $content;
         }
 
-        $this->cache->get($key, function (ItemInterface $item) use ($content, $tag) {
-            if ($this->ttl) {
-                $item->expiresAfter($this->ttl);
+        $this->cache->get($key, function (ItemInterface $item) use ($content, $tag, $ttl) {
+            $effectiveTtl = $ttl ?? $this->ttl;
+            if ($effectiveTtl) {
+                $item->expiresAfter($effectiveTtl);
             }
             if ($tag) {
                 $item->tag($tag);

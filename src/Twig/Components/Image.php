@@ -38,6 +38,7 @@ final class Image
     private ?int $decoratedWidth;
     private ?int $decoratedHeight;
     public bool $preload = false;
+    public ?int $ttl = null;
     public string $priority = 'high';
     public ?string $sizes = null;
     public ?string $ratio = null;

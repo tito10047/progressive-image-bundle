@@ -159,6 +159,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(TransparentImageCacheSubscriber::class)
             ->setArgument('$enabled', new Parameter('progressive_image.image_cache_enabled'))
             ->setArgument('$cache', $imageCacheServiceReference)
+            ->setArgument('$ttl', new Parameter('progressive_image.ttl'))
             ->addTag('kernel.event_subscriber')
         ;
 

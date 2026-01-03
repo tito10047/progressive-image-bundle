@@ -12,6 +12,7 @@
 namespace Tito10047\ProgressiveImageBundle\Event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\UX\TwigComponent\Event\PreCreateForRenderEvent;
 use Symfony\UX\TwigComponent\Event\PreRenderEvent;
@@ -21,6 +22,7 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly ?TagAwareCacheInterface $cache,
         private readonly bool $enabled,
+        private readonly ?int $ttl = null,
     ) {
     }
 
@@ -40,7 +42,14 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
 
         $key = $this->generateKey($event->getInputProps());
         /** @var string|null $cachedHtml */
-        $cachedHtml = $this->cache->get($key, fn () => null);
+        $cachedHtml = $this->cache->get($key, function (ItemInterface $item) use ($event) {
+            $ttl = $event->getInputProps()['ttl'] ?? $this->ttl;
+            if ($ttl) {
+                $item->expiresAfter($ttl);
+            }
+
+            return null;
+        });
 
         if (null !== $cachedHtml) {
             $event->setRenderedString($cachedHtml);
@@ -60,6 +69,7 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
         // Obalíme pôvodnú šablónu do wrappera, ktorý výsledok uloží do keše
         $variables['pgi_original_template'] = $event->getTemplate();
         $variables['pgi_cache_key'] = $key;
+        $variables['pgi_cache_ttl'] = $variables['ttl'] ?? $this->ttl;
         $variables['pgi_cache_tag'] = isset($variables['src']) ? 'pgi_tag_'.md5($variables['src']) : null;
 
         $event->setVariables($variables);

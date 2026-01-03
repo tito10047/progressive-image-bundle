@@ -7,7 +7,7 @@ namespace Tito10047\ProgressiveImageBundle\Service;
 use Liip\ImagineBundle\Exception\Imagine\Filter\NonExistingFilterException;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 
-class LiipImagineRuntimeConfigGenerator
+final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfigGeneratorInterface
 {
 	public function __construct(
 		private readonly FilterConfiguration $filterConfiguration,

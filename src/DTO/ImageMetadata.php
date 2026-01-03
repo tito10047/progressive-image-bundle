@@ -2,7 +2,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
-class ImageMetadata
+final class ImageMetadata
 {
 	public function __construct(
 		public readonly string $originalHash,

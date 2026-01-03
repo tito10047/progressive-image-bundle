@@ -6,7 +6,7 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
-class CheckCacheInterfacePass implements CompilerPassInterface
+final class CheckCacheInterfacePass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {

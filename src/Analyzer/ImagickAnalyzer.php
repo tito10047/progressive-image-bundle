@@ -7,7 +7,7 @@ use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Exception\ImageProcessingException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 
-class ImagickAnalyzer implements ImageAnalyzerInterface {
+final class ImagickAnalyzer implements ImageAnalyzerInterface {
 
 	public function __construct(
 		private readonly int $componentsX = 4,

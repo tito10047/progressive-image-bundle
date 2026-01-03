@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tito10047\ProgressiveImageBundle\Controller;
 
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
-use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
+use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
+use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Liip\ImagineBundle\Config\Controller\ControllerConfig;
 use Liip\ImagineBundle\Exception\Binary\Loader\NotLoadableException;
 use Liip\ImagineBundle\Exception\Imagine\Filter\NonExistingFilterException;
@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class LiipImagineController
+final class LiipImagineController
 {
 	public function __construct(
 		private readonly UriSigner  $signer,
@@ -29,8 +29,8 @@ class LiipImagineController
 		private readonly DataManager $dataManager,
 		private readonly FilterConfiguration $filterConfiguration,
 		private readonly ControllerConfig $controllerConfig,
-		private readonly LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator,
-		private readonly MetadataReader $metadataReader,
+		private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
+		private readonly MetadataReaderInterface $metadataReader,
 	) {
 	}
 

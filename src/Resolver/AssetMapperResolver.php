@@ -5,7 +5,7 @@ namespace Tito10047\ProgressiveImageBundle\Resolver;
 use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 
-class AssetMapperResolver implements PathResolverInterface
+final class AssetMapperResolver implements PathResolverInterface
 {
     public function __construct(
         private readonly AssetMapperInterface $assetMapper,

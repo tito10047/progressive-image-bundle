@@ -7,7 +7,7 @@ use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\PathResolverInterface;
 
-class LiipImagineDecorator implements PathDecoratorInterface {
+final class LiipImagineDecorator implements PathDecoratorInterface {
 
 	public function __construct(
 		private readonly CacheManager $cache,

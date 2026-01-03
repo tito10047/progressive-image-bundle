@@ -2,6 +2,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Exception;
 
-class ImageProcessingException extends \Exception{
+final class ImageProcessingException extends \Exception{
 
 }

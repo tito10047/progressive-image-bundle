@@ -13,7 +13,7 @@ namespace Tito10047\ProgressiveImageBundle\Resolver;
 
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 
-class FileSystemResolver implements PathResolverInterface
+final class FileSystemResolver implements PathResolverInterface
 {
     /**
      * @var string[]

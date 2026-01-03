@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
+use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
 
 class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
@@ -19,7 +19,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 	private CacheManager $cacheManager;
 	private UrlGeneratorInterface $router;
 	private UriSigner $uriSigner;
-	private LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator;
+	private LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator;
 	private FilterConfiguration $filterConfiguration;
 	private TagAwareCacheInterface $cache;
 	private LiipImagineResponsiveImageUrlGenerator $generator;
@@ -32,7 +32,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 		$this->cacheManager = $this->createMock(CacheManager::class);
 		$this->router = $this->createMock(UrlGeneratorInterface::class);
 		$this->uriSigner = $this->createMock(UriSigner::class);
-		$this->runtimeConfigGenerator = $this->createMock(LiipImagineRuntimeConfigGenerator::class);
+		$this->runtimeConfigGenerator = $this->createMock(LiipImagineRuntimeConfigGeneratorInterface::class);
 		$this->filterConfiguration = $this->createMock(FilterConfiguration::class);
 		$this->cache = $this->createMock(TagAwareCacheInterface::class);
 

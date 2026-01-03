@@ -4,7 +4,7 @@ namespace Tito10047\ProgressiveImageBundle\Loader;
 
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 
-class FileSystemLoader implements LoaderInterface {
+final class FileSystemLoader implements LoaderInterface {
 
 	/**
 	 * @var false|resource

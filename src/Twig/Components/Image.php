@@ -12,10 +12,10 @@ use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
-use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
+use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 
 #[AsTwigComponent]
-class Image {
+final class Image {
 
 
 	public ?string         $src = null;
@@ -49,7 +49,7 @@ class Image {
 	 *  }>
 	 */
 	public function __construct(
-		private readonly MetadataReader $analyzer,
+		private readonly MetadataReaderInterface $analyzer,
 		private readonly iterable       $pathDecorator,
 		private readonly ?ResponsiveAttributeGenerator $responsiveAttributeGenerator,
 		private readonly PreloadCollector            $preloadCollector,

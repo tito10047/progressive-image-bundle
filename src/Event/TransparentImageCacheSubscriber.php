@@ -7,7 +7,7 @@ use Symfony\UX\TwigComponent\Event\PreCreateForRenderEvent;
 use Symfony\UX\TwigComponent\Event\PreRenderEvent;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
-class TransparentImageCacheSubscriber implements EventSubscriberInterface
+final class TransparentImageCacheSubscriber implements EventSubscriberInterface
 {
 	public function __construct(
 		private readonly ?TagAwareCacheInterface $cache,

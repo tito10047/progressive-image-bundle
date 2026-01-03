@@ -5,7 +5,7 @@ namespace Tito10047\ProgressiveImageBundle\Service;
 use Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
-class ResponsiveAttributeGenerator {
+final class ResponsiveAttributeGenerator {
 
 	/**
 	 * @param $gridConfig  array{

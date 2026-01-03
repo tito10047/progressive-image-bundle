@@ -5,7 +5,7 @@ namespace Tito10047\ProgressiveImageBundle\Event;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
-class KernelResponseEventListener {
+final class KernelResponseEventListener {
 
 	public function __construct(
 		private readonly PreloadCollector $preloadCollector,

@@ -13,7 +13,7 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\PathResolverInterface;
 
-class MetadataReader {
+final class MetadataReader implements MetadataReaderInterface {
 
 	public function __construct(
 		private readonly EventDispatcherInterface $dispatcher,

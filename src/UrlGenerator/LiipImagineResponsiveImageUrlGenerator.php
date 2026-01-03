@@ -10,15 +10,15 @@ use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
+use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
 
-class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
+final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
 {
 	public function __construct(
 		private readonly CacheManager $cacheManager,
 		private readonly UrlGeneratorInterface $router,
 		private readonly UriSigner $uriSigner,
-		private readonly LiipImagineRuntimeConfigGenerator $runtimeConfigGenerator,
+		private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
 		private readonly FilterConfiguration $filterConfiguration,
 		private readonly ?TagAwareCacheInterface $cache,
 		private readonly ?string $filter = null,

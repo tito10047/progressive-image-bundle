@@ -4,7 +4,7 @@ namespace Tito10047\ProgressiveImageBundle\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
 
-class ImageNotFoundEvent extends Event
+final class ImageNotFoundEvent extends Event
 {
 	public const NAME = 'progressive_image.not_found';
 

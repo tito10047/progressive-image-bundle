@@ -7,7 +7,7 @@ use Twig\TwigFilter;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-class TransparentCacheExtension extends AbstractExtension
+final class TransparentCacheExtension extends AbstractExtension
 {
     public function __construct(
         private readonly ?TagAwareCacheInterface $cache,

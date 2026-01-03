@@ -25,7 +25,7 @@ use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlG
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-class ProgressiveImageExtension extends Extension implements PrependExtensionInterface {
+final class ProgressiveImageExtension extends Extension implements PrependExtensionInterface {
 
     public function getAlias(): string
     {

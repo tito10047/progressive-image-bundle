@@ -7,7 +7,7 @@ use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\Exception\ImageProcessingException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 
-class GdImageAnalyzer implements ImageAnalyzerInterface {
+final class GdImageAnalyzer implements ImageAnalyzerInterface {
 
 	public function __construct(
 		private readonly int $componentsX = 4,

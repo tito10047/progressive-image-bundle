@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 /**
  * @link https://symfony.com/doc/current/bundles/best_practices.html
  */
-class ProgressiveImageBundle extends AbstractBundle
+final class ProgressiveImageBundle extends AbstractBundle
 {
 	public const STIMULUS_CONTROLLER = 'tito10047--progressive-image-bundle--progressive-image';
 

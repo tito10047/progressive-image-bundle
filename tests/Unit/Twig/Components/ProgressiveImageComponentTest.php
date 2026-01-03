@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
 use Tito10047\ProgressiveImageBundle\SrcsetGenerator\SrcsetGeneratorInterface;
-use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
+use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 
@@ -14,7 +14,7 @@ class ProgressiveImageComponentTest extends TestCase
 {
     public function testComponentProperties(): void
     {
-        $metadataReader = $this->createMock(MetadataReader::class);
+        $metadataReader = $this->createMock(MetadataReaderInterface::class);
         $metadata = new ImageMetadata('hash', 800, 600);
         
         $metadataReader->expects($this->once())
@@ -41,7 +41,7 @@ class ProgressiveImageComponentTest extends TestCase
 
     public function testComponentWithNoMetadata(): void
     {
-        $metadataReader = $this->createMock(MetadataReader::class);
+        $metadataReader = $this->createMock(MetadataReaderInterface::class);
         $metadataReader->expects($this->once())
             ->method('getMetadata')
             ->willReturn(null);

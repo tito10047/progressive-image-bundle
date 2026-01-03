@@ -21,7 +21,7 @@ final class KernelResponseEventListener
     ) {
     }
 
-    public function __invoke(ResponseEvent $event)
+    public function __invoke(ResponseEvent $event): void
     {
         $response = $event->getResponse();
 

@@ -56,10 +56,8 @@ final class LiipImagineController
         $origHeight = null;
         if ($pointInterest) {
             $metadata = $this->metadataReader->getMetadata($path);
-            if ($metadata) {
-                $origWidth = $metadata->width;
-                $origHeight = $metadata->height;
-            }
+            $origWidth = $metadata->width;
+            $origHeight = $metadata->height;
         }
 
         $result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight);
@@ -92,10 +90,5 @@ final class LiipImagineController
         } catch (\RuntimeException $exception) {
             throw new \RuntimeException(\sprintf('Unable to create image for path "%s" and filter "%s". Message was "%s"', $path, $filter, $exception->getMessage()), 0, $exception);
         }
-    }
-
-    private function isWebpSupported(Request $request): bool
-    {
-        return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
     }
 }

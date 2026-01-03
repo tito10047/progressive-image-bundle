@@ -23,6 +23,9 @@ final class LiipImagineDecorator implements PathDecoratorInterface
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     public function decorate(string $path, array $context = []): string
     {
         $filter = $context['filter'] ?? null;
@@ -39,6 +42,14 @@ final class LiipImagineDecorator implements PathDecoratorInterface
         return $this->cache->getBrowserPath($path, $filter, $config, $resolver, $referenceType);
     }
 
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array{
+     *     width: int,
+     *     height: int
+     * }|null
+     */
     public function getSize(string $path, array $context = []): ?array
     {
         $filter = $context['filter'] ?? null;

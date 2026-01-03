@@ -158,7 +158,6 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 
         $container->register(TransparentImageCacheSubscriber::class)
             ->setArgument('$enabled', new Parameter('progressive_image.image_cache_enabled'))
-            ->setArgument('$ttl', new Parameter('progressive_image.ttl'))
             ->setArgument('$cache', $imageCacheServiceReference)
             ->addTag('kernel.event_subscriber')
         ;
@@ -197,6 +196,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setPublic(true);
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function configureResolvers(array $config, ContainerBuilder $container): void
     {
         $resolvers = $config['resolvers'] ?? [];

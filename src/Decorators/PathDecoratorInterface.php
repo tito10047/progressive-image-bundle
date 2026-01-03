@@ -13,9 +13,14 @@ namespace Tito10047\ProgressiveImageBundle\Decorators;
 
 interface PathDecoratorInterface
 {
+    /**
+     * @param array<string, mixed> $context
+     */
     public function decorate(string $path, array $context = []): string;
 
     /**
+     * @param array<string, mixed> $context
+     *
      * @return array{
      *     width: int,
      *     height: int

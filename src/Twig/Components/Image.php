@@ -29,6 +29,9 @@ final class Image
     public ?string $filter = null;
     public ?string $alt = null;
     public ?string $pointInterest = null;
+    /**
+     * @var array<string, mixed>
+     */
     public array $context = [];
     private ?ImageMetadata $metadata;
     private string $decoratedSrc;
@@ -38,6 +41,9 @@ final class Image
     public string $priority = 'high';
     public ?string $sizes = null;
     public ?string $ratio = null;
+    /**
+     * @var BreakpointAssignment[]
+     */
     private array $breakpoinsts = [];
     /**
      * @var array{sizes: string, srcset: string}|null
@@ -120,7 +126,7 @@ final class Image
         return $this->decoratedSrc ?? $this->src;
     }
 
-    public function getController(): ?string
+    public function getController(): string
     {
         return ProgressiveImageBundle::STIMULUS_CONTROLLER;
     }

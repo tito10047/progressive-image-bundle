@@ -14,6 +14,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Twig\Components;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
+use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
@@ -52,7 +53,7 @@ class ProgressiveImageComponentTest extends TestCase
         $metadataReader = $this->createMock(MetadataReaderInterface::class);
         $metadataReader->expects($this->once())
             ->method('getMetadata')
-            ->willReturn(null);
+            ->willThrowException(new PathResolutionException('Not found'));
         $collector = $this->createMock(PreloadCollector::class);
 
         $component = new Image($metadataReader, [], null, $collector);

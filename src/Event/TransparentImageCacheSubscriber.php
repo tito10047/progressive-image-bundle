@@ -21,7 +21,6 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly ?TagAwareCacheInterface $cache,
         private readonly bool $enabled,
-        private readonly ?int $ttl,
     ) {
     }
 
@@ -40,9 +39,10 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
         }
 
         $key = $this->generateKey($event->getInputProps());
+        /** @var string|null $cachedHtml */
         $cachedHtml = $this->cache->get($key, fn () => null);
 
-        if ($cachedHtml) {
+        if (null !== $cachedHtml) {
             $event->setRenderedString($cachedHtml);
         }
     }
@@ -66,6 +66,9 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
         $event->setTemplate('@ProgressiveImage/cache_wrapper.html.twig');
     }
 
+    /**
+     * @param array<string, mixed> $vars
+     */
     private function generateKey(array $vars): string
     {
         // Odstránime interné pgi premenné ak tam sú, aby neovplyvňovali kľúč

@@ -16,9 +16,9 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 final class FileSystemLoader implements LoaderInterface
 {
     /**
-     * @var false|resource
+     * @var resource|false|null
      */
-    private $file;
+    private $file = null;
 
     public function load(string $path)
     {

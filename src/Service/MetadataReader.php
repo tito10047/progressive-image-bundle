@@ -39,7 +39,7 @@ final class MetadataReader implements MetadataReaderInterface
      * @throws InvalidArgumentException
      * @throws PathResolutionException
      */
-    public function getMetadata(string $src): ?ImageMetadata
+    public function getMetadata(string $src): ImageMetadata
     {
         return $this->cache->get(md5($src), function (ItemInterface $item) use ($src) {
             if ($this->ttl) {

@@ -1,0 +1,262 @@
+Note: Using configuration file /home/jozefm@no.dsidata.sk/phpProjects/contrib/progressive-image-bundle/phpstan.neon.
+  0/33 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%[1G[2K 33/33 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Controller/LiipImagineController.php                                   
+ ------ ----------------------------------------------------------------------- 
+  97     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::is  
+         WebpSupported() is unused.                                             
+         🪪  method.unused                                                      
+         at src/Controller/LiipImagineController.php:97                         
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Decorators/LiipImagineDecorator.php                                    
+ ------ ----------------------------------------------------------------------- 
+  26     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator::dec  
+         orate() has parameter $context with no value type specified in         
+         iterable type array.                                                   
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Decorators/LiipImagineDecorator.php:26                          
+  42     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator::get  
+         Size() has parameter $context with no value type specified in          
+         iterable type array.                                                   
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Decorators/LiipImagineDecorator.php:42                          
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Decorators/PathDecoratorInterface.php                                  
+ ------ ----------------------------------------------------------------------- 
+  16     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface::d  
+         ecorate() has parameter $context with no value type specified in       
+         iterable type array.                                                   
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Decorators/PathDecoratorInterface.php:16                        
+  24     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface::g  
+         etSize() has parameter $context with no value type specified in        
+         iterable type array.                                                   
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Decorators/PathDecoratorInterface.php:24                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   DependencyInjection/ProgressiveImageExtension.php                      
+ ------ ----------------------------------------------------------------------- 
+  200    Method                                                                 
+         Tito10047\ProgressiveImageBundle\DependencyInjection\ProgressiveImage  
+         Extension::configureResolvers() has parameter $config with no value    
+         type specified in iterable type array.                                 
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/DependencyInjection/ProgressiveImageExtension.php:200           
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Event/KernelResponseEventListener.php                                  
+ ------ ----------------------------------------------------------------------- 
+  24     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener::_  
+         _invoke() has no return type specified.                                
+         🪪  missingType.return                                                 
+         at src/Event/KernelResponseEventListener.php:24                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Event/TransparentImageCacheSubscriber.php                              
+ ------ ----------------------------------------------------------------------- 
+  24     Property                                                               
+         Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscribe  
+         r::$ttl is never read, only written.                                   
+         🪪  property.onlyWritten                                               
+         💡  See:                                                               
+         https://phpstan.org/developing-extensions/always-read-written-propert  
+         ies                                                                    
+         at src/Event/TransparentImageCacheSubscriber.php:24                    
+  45     If condition is always false.                                          
+         🪪  if.alwaysFalse                                                     
+         💡  Because the type is coming from a PHPDoc, you can turn off this    
+         check by setting treatPhpDocTypesAsCertain: false in your phpstan.neo  
+         n.                                                                     
+         at src/Event/TransparentImageCacheSubscriber.php:45                    
+  69     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscribe  
+         r::generateKey() has parameter $vars with no value type specified in   
+         iterable type array.                                                   
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Event/TransparentImageCacheSubscriber.php:69                    
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------- 
+  Line   Loader/FileSystemLoader.php                                      
+ ------ ----------------------------------------------------------------- 
+  35     Property                                                         
+         Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader::$file  
+         (resource|false) does not accept null.                           
+         🪪  assign.propertyType                                          
+         at src/Loader/FileSystemLoader.php:35                            
+  40     Property                                                         
+         Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader::$file  
+         (resource|false) does not accept null.                           
+         🪪  assign.propertyType                                          
+         at src/Loader/FileSystemLoader.php:40                            
+ ------ ----------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   ProgressiveImageBundle.php                                             
+ ------ ----------------------------------------------------------------------- 
+  35     Method                                                                 
+         Tito10047\ProgressiveImageBundle\ProgressiveImageBundle::getContainer  
+         Extension() never returns null so it can be removed from the return    
+         type.                                                                  
+         🪪  return.unusedType                                                  
+         at src/ProgressiveImageBundle.php:35                                   
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Service/MetadataReader.php                                             
+ ------ ----------------------------------------------------------------------- 
+  42     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Service\MetadataReader::getMetadata(  
+         ) never returns null so it can be removed from the return type.        
+         🪪  return.unusedType                                                  
+         at src/Service/MetadataReader.php:42                                   
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Service/PreloadCollector.php                                           
+ ------ ----------------------------------------------------------------------- 
+  20     Property                                                               
+         Tito10047\ProgressiveImageBundle\Service\PreloadCollector::$urls type  
+         has no value type specified in iterable type array.                    
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Service/PreloadCollector.php:20                                 
+  57     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Service\PreloadCollector::getUrls()   
+         return type has no value type specified in iterable type array.        
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Service/PreloadCollector.php:57                                 
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Service/ResponsiveAttributeGenerator.php                               
+ ------ ----------------------------------------------------------------------- 
+  14     Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:14                     
+  29     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator  
+         ::__construct() has parameter $gridConfig with no value type           
+         specified in iterable type array.                                      
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Service/ResponsiveAttributeGenerator.php:29                     
+  29     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator  
+         ::__construct() has parameter $ratioConfig with no value type          
+         specified in iterable type array.                                      
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Service/ResponsiveAttributeGenerator.php:29                     
+  40     Method                                                                 
+         Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator  
+         ::generate() has parameter $assignments with no value type specified   
+         in iterable type array.                                                
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Service/ResponsiveAttributeGenerator.php:40                     
+  89     Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:89                     
+  89     Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:89                     
+  103    Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:103                    
+  128    PHPDoc tag @return with type array<string> is incompatible with nativ  
+         e type string|null.                                                    
+         🪪  return.phpDocType                                                  
+         at src/Service/ResponsiveAttributeGenerator.php:128                    
+  130    Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:130                    
+  150    Class Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment        
+         referenced with incorrect case:                                        
+         Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment.             
+         🪪  class.nameCase                                                     
+         at src/Service/ResponsiveAttributeGenerator.php:150                    
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Twig/Components/Image.php                                              
+ ------ ----------------------------------------------------------------------- 
+  32     Property                                                               
+         Tito10047\ProgressiveImageBundle\Twig\Components\Image::$context type  
+         has no value type specified in iterable type array.                    
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Twig/Components/Image.php:32                                    
+  41     Property                                                               
+         Tito10047\ProgressiveImageBundle\Twig\Components\Image::$breakpoinsts  
+         type has no value type specified in iterable type array.               
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+         at src/Twig/Components/Image.php:41                                    
+  123    Method                                                                 
+         Tito10047\ProgressiveImageBundle\Twig\Components\Image::getController  
+         () never returns null so it can be removed from the return type.       
+         🪪  return.unusedType                                                  
+         at src/Twig/Components/Image.php:123                                   
+ ------ ----------------------------------------------------------------------- 
+
+ [ERROR] Found 29 errors                                                        
+

@@ -32,7 +32,7 @@ final class ProgressiveImageBundle extends AbstractBundle
         $container->addCompilerPass(new CheckCacheInterfacePass());
     }
 
-    public function getContainerExtension(): ?ExtensionInterface
+    public function getContainerExtension(): ExtensionInterface
     {
         return new ProgressiveImageExtension();
     }

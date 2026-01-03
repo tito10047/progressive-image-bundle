@@ -11,20 +11,20 @@
 
 namespace Tito10047\ProgressiveImageBundle\Service;
 
-use Tito10047\ProgressiveImageBundle\Dto\BreakpointAssignment;
+use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
 final class ResponsiveAttributeGenerator
 {
     /**
-     * @param $gridConfig  array{
-     *                     layouts: array<string, array{
-     *                     min_viewport: int,
-     *                     max_container: int|null
-     *                     }>,
-     *                     columns: int
-     *                     }
-     * @param $ratioConfig array<string, string>
+     * @param array{
+     *      layouts: array<string, array{
+     *      min_viewport: int,
+     *      max_container: int|null
+     *      }>,
+     *      columns: int
+     *      } $gridConfig
+     * @param array<string, string> $ratioConfig
      */
     public function __construct(
         private array $gridConfig,
@@ -35,6 +35,8 @@ final class ResponsiveAttributeGenerator
     }
 
     /**
+     * @param BreakpointAssignment[] $assignments
+     *
      * @return array{sizes: string, srcset: string}
      */
     public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null): array
@@ -122,8 +124,6 @@ final class ResponsiveAttributeGenerator
 
     /**
      * @param array<int, bool> $processedWidths
-     *
-     * @return string[]
      */
     private function generateUrl(
         string $path,

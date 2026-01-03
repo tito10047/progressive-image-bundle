@@ -17,6 +17,9 @@ use Symfony\Component\WebLink\Link;
 
 class PreloadCollector
 {
+    /**
+     * @var array<string, array{as: string, priority: string, imagesrcset: string|null, imagesizes: string|null}>
+     */
     private array $urls = [];
 
     public function __construct(
@@ -54,6 +57,9 @@ class PreloadCollector
         $request->attributes->set('_links', $linkProvider->withLink($link));
     }
 
+    /**
+     * @return array<string, array{as: string, priority: string, imagesrcset: string|null, imagesizes: string|null}>
+     */
     public function getUrls(): array
     {
         return $this->urls;

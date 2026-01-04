@@ -1,14 +1,14 @@
 /* Progressive Image Container - Tailwind CSS Breakpoints */
 .progressive-image-container {
 	display: block;
-	width: var(--img-width-xxl,
+	width: var(--img-width-2xl,
 	var(--img-width-xl,
 			var(--img-width-lg,
 					var(--img-width-md,
 							var(--img-width-sm,
 									var(--img-width))))));
 
-	aspect-ratio: var(--img-aspect-xxl,
+	aspect-ratio: var(--img-aspect-2xl,
 	var(--img-aspect-xl,
 			var(--img-aspect-lg,
 					var(--img-aspect-md,
@@ -74,14 +74,14 @@
 /* 2xl: 1536px */
 @media (min-width: 1536px) {
 	.progressive-image-container {
-		width: var(--img-width-xxl,
+		width: var(--img-width-2xl,
 		var(--img-width-xl,
 				var(--img-width-lg,
 						var(--img-width-md,
 								var(--img-width-sm,
 										var(--img-width))))));
 
-		aspect-ratio: var(--img-aspect-xxl,
+		aspect-ratio: var(--img-aspect-2xl,
 		var(--img-aspect-xl,
 				var(--img-aspect-lg,
 						var(--img-aspect-md,

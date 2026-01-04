@@ -1,0 +1,14 @@
+progressive_image:
+    driver: "imagick"
+    responsive_strategy:
+        grid:
+            framework: tailwind
+        ratios:
+            landscape: "16/9"
+    image_cache_enabled: false
+    image_cache_service: "progresive_image.cache"
+
+    image_configs:
+        quality: 75
+        post_processors:
+            cwebp: { q: 75, m: 6 }

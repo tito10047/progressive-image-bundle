@@ -7,7 +7,11 @@ on:
 
 jobs:
     test-install:
+        name: "Test ${{ matrix.test_type }}"
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                test_type: [ basic, responsive ]
         
         steps:
             -   name: Checkout bundle code
@@ -53,7 +57,7 @@ jobs:
 
             -   name: Copy E2E Test Files
                 run: |
-                    cp -R my-bundle/tests_ete/basic/* dummy-project/
+                    cp -R my-bundle/tests_ete/${{ matrix.test_type }}/* dummy-project/
 
             -   name: Run PHP Built-in Server
                 run: |
@@ -84,5 +88,5 @@ jobs:
                 if: failure()
                 uses: actions/upload-artifact@v4
                 with:
-                    name: test-response-html
+                    name: test-response-html-${{ matrix.test_type }}
                     path: response.html

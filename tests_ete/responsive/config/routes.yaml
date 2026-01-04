@@ -1,0 +1,6 @@
+progressive_image:
+    resource: "@ProgressiveImageBundle/config/routes.php"
+
+app_test:
+    path: /test-bundle
+    controller: App\Controller\TestController::index

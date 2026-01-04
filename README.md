@@ -1,288 +1,110 @@
-# Progressive Image Bundle
+# 🖼️ Progressive Image Bundle
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/symfony.yml?branch=main)](https://github.com/tito10047/progressive-image-bundle/actions)
-[![PHP-CS-Fixer](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/php-cs-fixer.yml?branch=main&label=code%20style)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/php-cs-fixer.yml)
-[![PHPStan](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/phpstan.yml?branch=main&label=phpstan)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/phpstan.yml)
-[![Latest Stable Version](https://img.shields.io/packagist/v/tito10047/progressive-image-bundle.svg)](https://packagist.org/packages/tito10047/progressive-image-bundle)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892bf.svg)](https://php.net)
-[![Symfony Version](https://img.shields.io/badge/Symfony-%3E%3D%206.4-black?logo=symfony)](https://symfony.com/)
-[![Symfony Style](https://img.shields.io/badge/code%20style-symfony-black?logo=symfony)](https://symfony.com/)
-[![Coverage Status](https://coveralls.io/repos/github/tito10047/progressive-image-bundle/badge.svg?branch=main)](https://coveralls.io/github/tito10047/progressive-image-bundle?branch=main)
+### High-performance, Zero-config, Fully Responsive Images for Symfony.
 
+This bundle handles everything you need for modern image management. From **fully responsive images** with Tailwind-like selectors, to **blur placeholders**, to *
+*automatic generation of all required sizes** on local or network storage.
 
-### High-performance progressive image loading for Symfony.
-Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
+---
+
+## ✨ Key Features
+
+- 🚀 **Zero Configuration:** Install and use. Most features work out of the box.
+- 🎨 **Blur & Error Placeholders:** Users see a beautiful Blurhash placeholder while loading. If an image is not found, the bundle automatically displays a stylish error
+  placeholder.
+- 📱 **Tailwind-like Selectors:** Define responsiveness naturally directly in your template using familiar breakpoints.
+- ⚙️ **Automatic Generation:** The bundle automatically generates all necessary image sizes on disk (local or network), saving time and resources.
+- 🎯 **Zero CLS (Cumulative Layout Shift):** Automatically reserves space for the image, preventing content jumping during load.
+- ⚡ **Smart Preload:** Automatically injects `<link rel="preload">` for critical images (hero images), significantly improving LCP scores.
+
+---
+
+## 🎨 Usage
+
+Simply use the Twig component. The bundle takes care of the rest.
 
 ```twig
-<twig:pgi:Image
-    src="my_image.png" 
-    alt="Náhľadový obrázok otázky" 
-    sizes="xl:[257]@square lg:[233]@square md:[262]@square sm:[250]@square md:[250]@square"
-    />
+{# Basic usage - everything is automatic #}
+<twig:pgi:Image src="images/hero.jpg" alt="Beautiful landscape" />
+
+{# With Tailwind-like selectors for perfect responsiveness #}
+<twig:pgi:Image 
+    src="images/hero.jpg" 
+    sizes="sm:12 md:6@landscape lg:4@square"
+    alt="Responsive image" 
+/>
 ```
 
-![Progressive Image Preview](docs/preview.gif)
+### 📱 Selector Examples (Breakpoint Assignment)
 
-## 🚀 Key Features
+The bundle supports flexible size assignment based on breakpoints you know from Tailwind or Bootstrap:
 
-### Core Features
--   **Smart Responsive Strategy:** Breakpoint-First approach with built-in **Upscale Protection**. Never serve blurry upscaled images again.
--   **Point of Interest (PoI) Cropping:** Define a focal point (e.g., `75x25`) to ensure the most important part of the image is always visible when cropped for different aspect ratios.
--   **Smart Preload Injection:** Automatically injects `<link rel="preload">` tags or HTTP headers for hero images, boosting LCP scores by eliminating "indirect discovery".
--   **Zero CLS (Cumulative Layout Shift):** Automatically extracts and injects image dimensions to reserve space, ensuring a stable layout during loading.
--   **Transparent HTML Caching:** Optional caching of the rendered component HTML to avoid repeated Blurhash generation and metadata extraction, significantly improving response times for heavy pages.
+| Selector              | Meaning                                          |
+|:----------------------|:-------------------------------------------------|
+| `6`                   | 6 grid columns on all breakpoints                |
+| `md:6`                | 6 grid columns from `md` breakpoint              |
+| `lg:4@landscape`      | 4 columns from `lg` with 16:9 aspect ratio       |
+| `xs:12@square`        | 12 columns on `xs` with 1:1 aspect ratio         |
+| `xxl:[430x370]`       | Explicit dimensions for a specific breakpoint    |
+| `xl:[100%]@landscape` | 100% container width with landscape aspect ratio |
 
-### Other Features
--   **Smart Metadata Extraction:** Uses PHP Streams to read only the necessary bytes for dimensions and hashes—no more loading 20MB images into RAM.
--   **Modern Frontend Stack:** Built on **Symfony UX Twig Components** and **Stimulus** for a seamless, reactive developer experience.
--   **Cloud-Ready Architecture:** Flexible `LoaderInterface` supports local files, network drives, and S3 (via custom loaders).
--   **Advanced Path Resolution:** Resolve images via Filesystem, AssetMapper, or a custom Chain resolver.
--   **Developer Experience (DX):** Simple `<twig:pgi:Image>` component with full support for custom attributes, filters, and decorators (e.g., LiipImagine).
+---
+
+## 🚀 Advanced Features
+
+### Point of Interest (PoI) Cropping
+
+Define a focal point (e.g., `75x25`) so the most important object remains in frame regardless of the crop.
+
+### Smart Upscaling Protection
+
+The bundle never generates an image larger than the original. If you need 1200px but the original is only 1000px, the bundle uses the original and prevents blurring.
+
+### Stream-based Metadata
+
+To retrieve dimensions and Blurhash, the bundle doesn't load the entire image into RAM (no 20MB files in memory). It uses PHP streams to read only the necessary header
+bytes.
+
+---
 
 ## 📦 Installation
-
-Install the bundle via Composer:
 
 ```console
 composer require tito10047/progressive-image-bundle
 ```
 
-If you are not using Symfony Flex, register the bundle manually:
+---
 
-```php
-// config/bundles.php
-return [
-    // ...
-    Tito10047\ProgressiveImageBundle\ProgressiveImageBundle::class => ['all' => true],
-];
-```
-
-## ⚙️ Configuration
-This configuration is optional,
-create `config/packages/progressive_image.yaml` to configure your resolvers and loaders.
-
-### Import Routing
-
-To enable dynamic image filtering with LiipImagine, you need to import the bundle's routing in your `config/routes.yaml`:
-
-```yaml
-progressive_image:
-    resource: "@ProgressiveImageBundle/config/routes.php"
-```
-
-### Bundle Configuration
-```yaml
-framework:
-    cache:
-        pools:
-            progresive_image.cache:
-                adapter: cache.adapter.filesystem
-                tags: true
-progressive_image:
-    driver: "imagick"
-    responsive_strategy:
-        grid:
-            framework: tailwind
-        ratios:
-            landscape: "16/9"
-            portrait: "3/4"
-            square: "1/1"
-    path_decorators:
-        - "progressive_image.decorator.liip_imagine"
-    image_cache_enabled: true
-    image_cache_service: "progresive_image.cache"
-
-    resolvers:
-        public_files:
-            type: "filesystem"
-            roots: ['%kernel.project_dir%/public']
-            allowUnresolvable: true
-
-        assets:
-            type: "asset_mapper"
-        chain:
-            type: "chain"
-            resolvers:
-                - 'public_files'
-                - 'assets'
-when@dev:
-    progressive_image:
-        resolver: chain
-```
-
-## 🎨 Usage
-
-Simply use the provided Twig component in your templates. The component automatically handles the placeholder generation and Stimulus controller initialization.
-
-```twig
-{# Simple usage #}
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" />
-
-{# Optimize LCP by preloading the image #}
-<twig:pgi:Image src="images/hero.jpg" preload />
-
-{# With custom attributes and LiipImagine filter #}
-<twig:pgi:Image 
-    :context="{ 'filter': 'my_liip_filter' }"
-    src="uploads/portrait.png" 
-    alt="User Profile"
-    class="rounded-full shadow-lg"
-    style="border: 2px solid #fff;"
-/>
-```
-
-## 🚀 Smart Responsive Strategy
-Stop managing magic pixel numbers. This bundle introduces a Breakpoint-First approach with built-in Upscale Protection.
-
-### 1. Define your Grid
-Configure your project's grid in a central configuration. You can use built-in frameworks like `bootstrap` or `tailwind`, or define your own.
+## ⚙️ Optional Configuration
 
 ```yaml
 # config/packages/progressive_image.yaml
 progressive_image:
     responsive_strategy:
         grid:
-            framework: bootstrap # automatically sets 12 columns and standard breakpoints
-            # OR custom:
-            # framework: custom
-            # columns: 12
-            # layouts:
-            #     xl: { min_viewport: 1200, max_container: 1140 }
-            #     md: { min_viewport: 768, max_container: 720 }
-            #     sm: { min_viewport: 0, max_container: null } # null means fluid (100vw)
-```
-
-### 2. Simple Grid-based Usage
-In your Twig templates, use the `sizes` attribute to define how many columns the image should occupy at each breakpoint.
-
-```twig
-{# Image takes 12 columns on mobile (fluid) and 4 columns on desktop #}
-<twig:pgi:Image src="hero.jpg" sizes="mobile:12 desktop:4" />
-
-{# You can also specify aspect ratios per breakpoint #}
-<twig:pgi:Image src="hero.jpg" sizes="mobile:12@1-1 desktop:4@16-9" />
-
-{# Explicit dimensions in square brackets [width] or [widthxheight] #}
-<twig:pgi:Image src="hero.jpg" sizes="xxl:[430x370] xl:[430]@square" />
-```
-
-The bundle automatically:
-1. Calculates the exact pixel width based on your grid configuration.
-2. Generates the `srcset` with optimized image sizes.
-3. Generates the `sizes` attribute (e.g., `(min-width: 1200px) 380px, 100vw`).
-4. **Protects against upscaling**: If the original image is smaller than the calculated size, it won't generate a blurry version.
-
-### 3. Aspect Ratios
-You can define global aspect ratios or use them directly in the `grid` parameter.
-
-```yaml
-progressive_image:
-    responsive_strategy:
+            framework: tailwind # or bootstrap
         ratios:
             landscape: "16/9"
             portrait: "3/4"
             square: "1/1"
-```
-
-In Twig:
-```twig
-{# Use global ratio #}
-<twig:pgi:Image src="hero.jpg" sizes="md-6" ratio="landscape" />
-
-{# Or override per breakpoint #}
-<twig:pgi:Image src="hero.jpg" sizes="sm-12@square md-6@landscape" />
-```
-
-### 4. Intelligence: Built-in Upscale Protection
-
-The bundle never generates an image larger than the original source. For example, if your grid calculates a required width of 1200px but the original image is only 1000px:
-- The bundle filters out any variants larger than 1000px.
-- It ensures the browser never tries to download a 1200px upscaled (and thus blurry) version.
-
-**Result:** No blurry upscaled images, saved CPU cycles, and reduced storage waste.
-
-### LiipImagine Integration
-
-If you use [LiipImagineBundle](https://github.com/liip/LiipImagineBundle), this bundle integrates seamlessly to generate thumbnails on-the-fly.
-
-By default, the bundle uses `LiipImagineResponsiveImageUrlGenerator` when LiipImagine is detected, which generates dynamic thumbnails based on the required dimensions.
-
-```yaml
-# config/packages/progressive_image.yaml
-progressive_image:
-    # This is often automatically configured if LiipImagine is present
-    # path_decorators:
-    #     - "progressive_image.decorator.liip_imagine"
-```
-
-When using `sizes`, the bundle will automatically request the correct sizes from LiipImagine, using the original image's aspect ratio or the one specified in the `sizes` parameter. It uses a signed URL to safely generate any required thumbnail size.
-
-#### Point of Interest (PoI)
-
-You can specify a focal point for cropping using the `pointInterest` attribute. This is especially useful when the same image is cropped into different aspect ratios (e.g., landscape for desktop, square for mobile).
-
-The value is a string in the format `XxY`, where X and Y are percentages (0-100) of the image width and height. For example, `50x50` is the center, `0x0` is the top-left corner, and `100x100` is the bottom-right corner.
-
-```twig
-<twig:pgi:Image 
-    src="hero.jpg" 
-    pointInterest="75x25" 
-    sizes="sm-12@1-1 xl-4@16-9" 
-/>
-```
-
-The bundle will automatically calculate the crop coordinates to keep the specified point as close to the center of the cropped image as possible, while ensuring the crop stays within the original image boundaries.
-
-
-## ⚡ Smart Preload Injection (LCP Optimization)
-
-One of the biggest challenges for Core Web Vitals (LCP) is the "Indirect Discovery" of images. If your hero image is hidden behind a component or managed by JavaScript, the browser's preload scanner won't find it fast enough.
-
-This bundle solves this by implementing a **Dependency Discovery Pattern**:
-1. **Collection:** While Twig renders your components, the bundle automatically collects the URLs of images marked with the `preload` attribute.
-2. **Injection:** A Kernel Response Listener intercepts the final response and injects `<link rel="preload">` tags directly into the HTML `<head>` (or as HTTP Link headers) before it's sent to the user.
-
-**Key Benefits:**
-- **Zero-Config:** Just add the `preload` attribute, and the bundle handles the complex logic of moving links to the head.
-- **Native Performance:** Supports both HTML injection and HTTP/2 Link Headers for even faster delivery.
-- **Smart Logic:** Only preloads if `preload` attribute is present on the component.
-
-## ⚡ Transparent HTML Caching
-
-While this bundle is highly optimized for performance, generating Blurhashes and extracting metadata still takes some CPU cycles. On pages with dozens of images, this can add up.
-
-Transparent HTML caching allows you to store the final rendered HTML of the `<twig:pgi:Image>` component in your cache (e.g., Redis or APCu).
-
-### How it works:
-1. When enabled, the bundle checks the cache before rendering the component.
-2. If a cached version exists, it returns it immediately, skipping all PHP logic (metadata extraction, Blurhash generation, path resolution).
-3. If not, it renders the component normally and stores the result in the cache for future requests.
-
-The cache key is automatically generated based on all input properties passed to the component, ensuring that different images or filters never collide.
-
-### Configuration:
-```yaml
-progressive_image:
     image_cache_enabled: true
-    image_cache_service: 'cache.app' # Use any PSR-6 or PSR-16 cache service
-    ttl: 86400 # Cache for 24 hours
 ```
 
-## 🏗️ Architecture
-
-### Stream-based Approach
-Unlike traditional tools that load the entire image into memory to get dimensions, this bundle uses **PHP Streams**. By interacting with the `LoaderInterface`, we can peek at the image headers to extract metadata (Width, Height, MIME type, and Blurhash). 
-
-This is particularly critical when handling:
-- **Large Files:** Avoid `Memory Limit Exceeded` errors on 50MB+ source files.
-- **S3 / Network Drives:** Only download the minimal required bytes over the wire instead of the full file, significantly reducing latency and bandwidth costs.
-
-### Extensibility
-- **Loaders:** Implement `LoaderInterface` to fetch images from any source (GCS, Azure Blob, External APIs).
-- **Resolvers:** Implement `PathResolverInterface` to customize how logical paths are mapped to physical locations.
-- **Decorators:** Modify the final image URL (e.g., adding CDN prefixes or image manipulation parameters).
+---
 
 ## 📄 License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
+MIT License. See [LICENSE](LICENSE) for more information.
+
+---
+
+## 📚 Documentation
+
+For detailed guides, configuration, and advanced features, check out our full documentation:
+
+- [**Introduction**](docs/index.md)
+- [**Installation**](docs/installation.md)
+- [**Configuration**](docs/configuration.md)
+- [**Usage (Twig component)**](docs/usage.md)
+- [**Responsive Strategy**](docs/responsive-strategy.md)
+- [**Advanced Features**](docs/advanced.md)

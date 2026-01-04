@@ -17,6 +17,10 @@ use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 
 final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfigGeneratorInterface
 {
+
+	/**
+	 * @param array<string, mixed> $imageConfigs
+	 */
     public function __construct(
         private readonly FilterConfiguration $filterConfiguration,
 		private readonly array $imageConfigs = [],

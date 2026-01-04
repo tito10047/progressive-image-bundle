@@ -160,10 +160,6 @@ final class ResponsiveAttributeGenerator
     ): ?string {
         $ratio = $this->resolveRatio($assignment);
 
-		if ($basePixelWidth > $originalWidth && $originalWidth > 0) {
-			$basePixelWidth = $originalWidth;
-		}
-
 		if (isset($processedWidths[$basePixelWidth])) {
             return null;
         }

@@ -43,12 +43,12 @@ final class Configuration implements ConfigurationInterface
                                 ->values(['filesystem', 'asset_mapper', 'chain'])
                                 ->isRequired()
                             ->end()
-                            // pre filesystem resolver
+			// for filesystem resolver
                             ->arrayNode('roots')
                                 ->scalarPrototype()->end()
                             ->end()
                             ->booleanNode('allowUnresolvable')->defaultFalse()->end()
-                            // pre chain resolver
+			// for chain resolver
                             ->arrayNode('resolvers')
                                 ->scalarPrototype()->end()
                             ->end()
@@ -72,7 +72,7 @@ final class Configuration implements ConfigurationInterface
                     ->defaultValue('gd')
                 ->end()
                 ->scalarNode('loader')->defaultNull()->end()
-                ->scalarNode('resolver')->defaultNull()->end()
+			->scalarNode('resolver')->defaultValue('default')->end()
                 ->scalarNode('cache')->defaultNull()->end()
                 ->scalarNode('image_cache_service')->defaultValue('cache.app')->end()
                 ->arrayNode('hash_resolution')

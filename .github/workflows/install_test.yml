@@ -1,0 +1,64 @@
+name: "Installation Test"
+
+on:
+    push:
+        branches: [ main ]
+    pull_request: ~
+
+jobs:
+    test-install:
+        runs-on: ubuntu-latest
+        
+        steps:
+            -   name: Checkout bundle code
+                uses: actions/checkout@v4
+                with:
+                    path: my-bundle # Stiahne tvoj bundle do tohto priečinka
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.2'
+                    extensions: mbstring, xml, ctype, iconv, twig, gd, imagick
+                    tools: composer
+
+            -   name: Create Dummy Symfony Project
+                run: |
+                    composer create-project symfony/skeleton dummy-project
+                    cd dummy-project
+                    composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
+
+            -   name: Install Dependencies
+                run: |
+                    cd dummy-project
+                    composer require tito10047/progressive-image-bundle:*
+                    composer require liip/imagine-bundle
+
+            -   name: Copy E2E Test Files
+                run: |
+                    cp -R my-bundle/tests_ete/basic/* dummy-project/
+
+            -   name: Run PHP Built-in Server
+                run: |
+                    cd dummy-project
+                    php -S 127.0.0.1:8000 -t public &
+                    sleep 5
+
+            -   name: Test URL
+                run: |
+                    RESPONSE=$(curl -s http://127.0.0.1:8000/test-bundle)
+                    echo "Response content: $RESPONSE"
+                    
+                    if [[ "$RESPONSE" == *"test_800x800.png"* ]]; then
+                      echo "Image found in response."
+                    else
+                      echo "Image NOT found in response!"
+                      exit 1
+                    fi
+                    
+                    if [[ "$RESPONSE" == *"progressive-image"* ]]; then
+                      echo "Component rendered."
+                    else
+                      echo "Component NOT rendered!"
+                      exit 1
+                    fi

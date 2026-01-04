@@ -12,7 +12,7 @@
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
 /**
- * Reprezentuje jednu inštrukciu, napr. "lg-4@landscape".
+ * Represents a single instruction, e.g. "lg-4@landscape".
  */
 final readonly class BreakpointAssignment
 {
@@ -24,7 +24,7 @@ final readonly class BreakpointAssignment
     }
 
     /**
-     * Pomocná metóda na vytvorenie z reťazca.
+	 * Helper method to create from a string.
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {

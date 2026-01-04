@@ -137,7 +137,7 @@ class LiipImagineControllerTest extends PGIWebTestCase
         $path = 'test.png';
         $width = 50;
         $height = 50;
-        $poi = '0x0'; // Horný ľavý roh
+		$poi = '0x0'; // Upper left corner
 
         $url = sprintf('/progressive-image?path=%s&width=%d&height=%d&pointInterest=%s', $path, $width, $height, $poi);
         $signedUrl = $signer->sign('http://localhost'.$url);
@@ -167,7 +167,7 @@ class LiipImagineControllerTest extends PGIWebTestCase
             $this->markTestSkipped('LiipImagineBundle is not installed.');
         }
 
-        // 1. Vytvoríme čierny obrázok 100x100 s jedným bielym pixelom na 75, 25
+		// 1. Create a black 100x100 image with one white pixel at 75, 25
         $origW = 100;
         $origH = 100;
         $poiX_percent = 75;
@@ -227,21 +227,21 @@ class LiipImagineControllerTest extends PGIWebTestCase
 
         $this->assertFileExists($absoluteFilePath);
 
-        // 2. Skontrolujeme, či je biely pixel v strede výsledného obrázka 50x50
-        // Stred 50x50 je 25, 25
+		// 2. Check if the white pixel is in the center of the resulting 50x50 image
+		// Center of 50x50 is 25, 25
         $resultImg = imagecreatefrompng($absoluteFilePath);
         $rgb = imagecolorat($resultImg, 25, 25);
         $r = ($rgb >> 16) & 0xFF;
         $g = ($rgb >> 8) & 0xFF;
         $b = $rgb & 0xFF;
 
-        $this->assertEquals(255, $r, 'Pixel v strede by mal byť biely (R)');
-        $this->assertEquals(255, $g, 'Pixel v strede by mal byť biely (G)');
-        $this->assertEquals(255, $b, 'Pixel v strede by mal byť biely (B)');
+		$this->assertEquals(255, $r, 'Middle pixel should be white (R)');
+		$this->assertEquals(255, $g, 'Middle pixel should be white (G)');
+		$this->assertEquals(255, $b, 'Middle pixel should be white (B)');
 
-        // Skontrolujeme aj nejaký iný pixel, či je čierny
+		// Check some other pixel if it is black
         $rgbBlack = imagecolorat($resultImg, 0, 0);
-        $this->assertEquals(0, $rgbBlack & 0xFF, 'Pixel v rohu by mal byť čierny');
+		$this->assertEquals(0, $rgbBlack & 0xFF, 'Corner pixel should be black');
 
         imagedestroy($resultImg);
     }

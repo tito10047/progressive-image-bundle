@@ -108,14 +108,14 @@ final class ResponsiveAttributeGenerator
         $maxContainer = $layout['max_container'];
 
         if ($maxContainer) {
-            // Fixný kontajner (napr. 1320px) -> šírka v px
+			// Fixed container (e.g. 1320px) -> width in px
             $pixelWidth = ($assignment->columns / $totalCols) * $maxContainer;
             $sizeValue = round($pixelWidth).'px';
         } else {
-            // Fluid (null) -> šírka vo vw
+			// Fluid (null) -> width in vw
             $vwWidth = ($assignment->columns / $totalCols) * 100;
             $sizeValue = round($vwWidth).'vw';
-            // Pre výpočet URL odhadneme px šírku z nejakej rozumnej max-šírky (napr. 1920)
+			// For URL calculation we estimate px width from some reasonable max-width (e.g. 1920)
             $pixelWidth = ($vwWidth / 100) * 1920;
         }
 
@@ -154,7 +154,7 @@ final class ResponsiveAttributeGenerator
             return null;
         }
 
-        // Ak je to kľúč v ratioConfig, použijeme ten
+		// If it's a key in ratioConfig, use that
         if (isset($this->ratioConfig[$ratioString])) {
 			$ratioString = $this->ratioConfig[$ratioString];
 		}
@@ -163,12 +163,12 @@ final class ResponsiveAttributeGenerator
 			return (float) $ratioString;
         }
 
-		// Inak skúsime parsovať formát "16/9" alebo "3-4"
+		// Otherwise try to parse format "16/9" or "3-4"
         if (preg_match('/^(\d+)[\/-](\d+)$/', $ratioString, $matches)) {
 			return (float) $matches[1] / (float) $matches[2];
 		}
 
-		// Alebo formát "400x500"
+		// Or format "400x500"
 		if (preg_match('/^(\d+)x(\d+)$/', $ratioString, $matches)) {
             return (float) $matches[1] / (float) $matches[2];
         }

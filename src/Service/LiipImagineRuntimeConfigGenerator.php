@@ -69,15 +69,15 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
      */
     private function calculateCropStart(int $poiX, int $poiY, int $targetWidth, int $targetHeight, int $origWidth, int $origHeight): array
     {
-        // 1. Vypočítame stred orezu na originálnom obrázku podľa percentuálneho bodu záujmu
+		// 1. Calculate the center of the crop on the original image based on the percentage point of interest
         $centerX = (int) ($poiX / 100 * $origWidth);
         $centerY = (int) ($poiY / 100 * $origHeight);
 
-        // 2. Vypočítame začiatok orezu tak, aby stred bol na bode záujmu
+		// 2. Calculate the start of the crop so that the center is at the point of interest
         $startX = $centerX - (int) ($targetWidth / 2);
         $startY = $centerY - (int) ($targetHeight / 2);
 
-        // 3. Zabezpečíme, aby orez nevychádzal mimo originálny obrázok
+		// 3. Ensure that the crop does not go outside the original image
         $startX = max(0, min($startX, $origWidth - $targetWidth));
         $startY = max(0, min($startY, $origHeight - $targetHeight));
 

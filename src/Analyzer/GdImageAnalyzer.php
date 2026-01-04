@@ -30,18 +30,18 @@ final class GdImageAnalyzer implements ImageAnalyzerInterface
         $data = stream_get_contents($stream);
 
         if (false === $data) {
-            throw new ImageProcessingException('Nepodarilo sa načítať dáta z loadera pre cestu: '.$path);
+			throw new ImageProcessingException('Failed to load data from loader for path: ' . $path);
         }
 
         $image = @imagecreatefromstring($data);
         if (false === $image) {
-            throw new ImageProcessingException('GD nedokázal načítať obrázok z dát pre cestu: '.$path);
+			throw new ImageProcessingException('GD could not load image from data for path: ' . $path);
         }
 
         $width = imagesx($image);
         $height = imagesy($image);
 
-        // Zmenšenie na max 64x64 pre Blurhash (zachovanie pomeru strán)
+		// Downscale to max 64x64 for Blurhash (preserving aspect ratio)
         $targetWidth = 64;
         $targetHeight = 64;
 

@@ -31,9 +31,9 @@ class TransparentImageCacheTtlTest extends PGITestCase
         /** @var TagAwareAdapter $cache */
         $cache = self::getContainer()->get('progressive_image.image_cache_service');
 
-        // Mockujeme cache aby sme zachytili volanie expiresAfter
-        // Alebo použijeme Reflection na kontrolu Item v ArrayAdapteri (ak je použitý)
-        // V PGITestCase sa zdá byť použitý ArrayAdapter (viď TransparentImageCacheTest)
+		// We mock the cache to capture the expiresAfter call
+		// Or we use Reflection to check the Item in the ArrayAdapter (if used)
+		// In PGITestCase, ArrayAdapter seems to be used (see TransparentImageCacheTest)
 
         $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -62,7 +62,7 @@ class TransparentImageCacheTtlTest extends PGITestCase
 
         $item = $cache->getItem($cacheKey);
 
-        // ArrayAdapter ukladá expirácie v internom poli $expiries
+		// ArrayAdapter stores expiries in the internal $expiries property
         $reflectionPool = new \ReflectionClass($innerPool);
         if ($reflectionPool->hasProperty('expiries')) {
             $expiriesProp = $reflectionPool->getProperty('expiries');
@@ -70,7 +70,7 @@ class TransparentImageCacheTtlTest extends PGITestCase
             $expiries = $expiriesProp->getValue($innerPool);
             $expiry = $expiries[$cacheKey] ?? null;
         } else {
-            // Skúsime pôvodný prístup cez Item, ak by to bol iný adaptér
+			// Try the original approach via Item, if it were a different adapter
             $reflection = new \ReflectionClass($item);
             $expiryProperty = $reflection->hasProperty('expiry') ? $reflection->getProperty('expiry') : null;
             if ($expiryProperty) {
@@ -81,7 +81,7 @@ class TransparentImageCacheTtlTest extends PGITestCase
             }
         }
 
-        // Expiry by mal byť cca current time + 123
+		// Expiry should be approximately current time + 123
         $this->assertNotNull($expiry, 'Expiry should not be null');
         $this->assertGreaterThan(time() + 120, $expiry);
         $this->assertLessThanOrEqual(time() + 124, $expiry);

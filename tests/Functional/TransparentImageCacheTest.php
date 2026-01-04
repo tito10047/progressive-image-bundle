@@ -29,7 +29,7 @@ class TransparentImageCacheTest extends PGITestCase
         $cache = self::getContainer()->get('progressive_image.image_cache_service');
         $this->assertInstanceOf(TagAwareAdapter::class, $cache);
 
-        // 1. Prvé renderovanie - malo by sa uložiť do keše
+		// 1. First rendering - should be stored in the cache
         $rendered1 = $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [
@@ -41,7 +41,7 @@ class TransparentImageCacheTest extends PGITestCase
         $this->assertStringContainsString('progressive-image-container', (string) $rendered1);
         $this->assertStringContainsString('alt="Test Alt"', (string) $rendered1);
 
-        // Získame hodnoty z keše. Ak je to TagAwareAdapter, musíme ísť hlbšie.
+		// Get values from the cache. If it's a TagAwareAdapter, we need to go deeper.
         $innerPool = $cache;
         if ($cache instanceof TagAwareAdapter) {
             $reflection = new \ReflectionClass($cache);
@@ -62,8 +62,8 @@ class TransparentImageCacheTest extends PGITestCase
         }
         $this->assertNotNull($cacheKey, 'Cache key starting with pgi_comp_ should exist');
 
-        // 2. Druhé renderovanie - malo by sa vrátiť z keše
-        // Zmeníme obsah v keši, aby sme overili, že sa naozaj vracia z keše
+		// 2. Second rendering - should be returned from the cache
+		// Change the content in the cache to verify that it's really returning from the cache
         $item = $cache->getItem($cacheKey);
         $item->set('CACHED_CONTENT');
         $cache->save($item);
@@ -90,7 +90,7 @@ class TransparentImageCacheTest extends PGITestCase
 
         $container = self::getContainer();
 
-        // Získame subscribera aby sme videli čo má injektované
+		// Get the subscriber to see what it has injected
         /** @var TransparentImageCacheSubscriber $subscriber */
         $subscriber = $container->get(TransparentImageCacheSubscriber::class);
         $reflection = new \ReflectionClass($subscriber);

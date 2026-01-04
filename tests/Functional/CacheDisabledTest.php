@@ -20,8 +20,8 @@ class CacheDisabledTest extends PGITestCase
 
     public function testKernelBootsWithCacheDisabledAndNonTagAwareCache(): void
     {
-        // Tu používame 'cache.app' (ktorá v testovacom kerneli je 'cache.adapter.array' bez tagov,
-        // ak ju explicitne neprekonfigurujeme na taggable)
+		// Here we use 'cache.app' (which in the test kernel is 'cache.adapter.array' without tags,
+		// if we don't explicitly reconfigure it to be taggable)
         self::bootKernel([
             'progressive_image' => [
                 'image_cache_enabled' => false,
@@ -31,7 +31,7 @@ class CacheDisabledTest extends PGITestCase
 
         $this->assertTrue(self::$booted);
 
-        // Overíme, že komponent sa dá vyrenderovať
+		// Verify that the component can be rendered
         $rendered = $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [

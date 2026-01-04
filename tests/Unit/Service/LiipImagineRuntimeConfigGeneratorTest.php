@@ -74,9 +74,9 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
         $this->filterConfiguration->expects($this->never())
             ->method('get');
 
-        // PoI 50x50 na 1000x1000 obrázku, cieľ 200x100
-        // stred je 500x500
-        // start by mal byť 500 - (200/2) = 400, 500 - (100/2) = 450
+		// PoI 50x50 on 1000x1000 image, target 200x100
+		// center is 500x500
+		// start should be 500 - (200/2) = 400, 500 - (100/2) = 450
         $result = $this->generator->generate(200, 100, null, '50x50', 1000, 1000);
 
         $this->assertEquals('200x100_50x50', $result['filterName']);
@@ -96,17 +96,17 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
     public function testGenerateWithPointInterestAtEdges(): void
     {
-        // PoI 0x0 (ľavý horný roh) na 1000x1000, cieľ 200x100
-        // stred je 0x0
-        // start by mal byť 0 - 100 = -100, 0 - 50 = -50 -> orezané na 0x0
+		// PoI 0x0 (upper left corner) on 1000x1000, target 200x100
+		// center is 0x0
+		// start should be 0 - 100 = -100, 0 - 50 = -50 -> cropped to 0x0
         $result = $this->generator->generate(200, 100, null, '0x0', 1000, 1000);
 
         $this->assertEquals([0, 0], $result['config']['filters']['crop']['start']);
 
-        // PoI 100x100 (pravý dolný roh)
-        // stred je 1000x1000
-        // start by mal byť 1000 - 100 = 900, 1000 - 50 = 950
-        // ale max start je orig - target: 1000 - 200 = 800, 1000 - 100 = 900
+		// PoI 100x100 (lower right corner)
+		// center is 1000x1000
+		// start should be 1000 - 100 = 900, 1000 - 50 = 950
+		// but max start is orig - target: 1000 - 200 = 800, 1000 - 100 = 900
         $result = $this->generator->generate(200, 100, null, '100x100', 1000, 1000);
 
         $this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);

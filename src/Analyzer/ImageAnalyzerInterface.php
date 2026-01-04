@@ -17,15 +17,15 @@ use Tito10047\ProgressiveImageBundle\Exception\UnsupportedImageTypeException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 
 /**
- * Zodpovedá za extrakciu technických informácií z obrázka.
+ * Responsible for extracting technical information from an image.
  */
 interface ImageAnalyzerInterface
 {
     /**
-     * Analyzuje obrázok a vráti objekt s metadátami (rozmery, hash, atď.).
+	 * Analyzes an image and returns a metadata object (dimensions, hash, etc.).
      *
-     * @throws PathResolutionException       Ak cesta neexistuje
-     * @throws UnsupportedImageTypeException Ak formát nie je podporovaný
+	 * @throws PathResolutionException       If the path does not exist
+	 * @throws UnsupportedImageTypeException If the format is not supported
      */
     public function analyze(LoaderInterface $loader, string $path): ImageMetadata;
 }

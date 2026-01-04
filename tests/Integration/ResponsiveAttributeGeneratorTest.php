@@ -37,11 +37,11 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase {
 		/** @var ResponsiveAttributeGenerator $generator */
 		$generator = $container->get(ResponsiveAttributeGenerator::class);
 
-		// Mockujeme URL generátor, aby sme videli aké výšky sa počítajú
+		// We mock the URL generator to see what heights are calculated
 		$urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
 
-		// Použijeme reflexiu na nastavenie mocku, ak je to potrebné, alebo ho skúsime podhodiť cez kontajner
-		// Ale v tomto integračnom teste môžeme overiť výsledky priamo ak vieme ako funguje výpočet v ResponsiveAttributeGenerator
+		// We use reflection to set the mock if necessary, or try to push it via the container
+		// But in this integration test we can verify the results directly if we know how the calculation works in ResponsiveAttributeGenerator
 
 		$assignments = [
 			new BreakpointAssignment('md', 12, 'landscape'),
@@ -49,18 +49,18 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase {
 			new BreakpointAssignment('xs', 12, 'square'),
 		];
 
-		// ResponsiveAttributeGenerator v generate() volá calculateDimensions a potom generateUrl
-		// generateUrl volá resolveRatio a počíta targetH = (int) round($basePixelWidth / $ratio)
+		// ResponsiveAttributeGenerator in generate() calls calculateDimensions and then generateUrl
+		// generateUrl calls resolveRatio and calculates targetH = (int) round($basePixelWidth / $ratio)
 
-		// Predpokladáme bootstrap defaulty (md: 768px -> max_container 720px)
+		// Assuming bootstrap defaults (md: 768px -> max_container 720px)
 		// landscape: 16/9 = 1.777...
-		// md-12 -> 720px šírka. 720 / (16/9) = 720 * 9 / 16 = 45 * 9 = 405px
+		// md-12 -> 720px width. 720 / (16/9) = 720 * 9 / 16 = 45 * 9 = 405px
 
 		// portrait: 3/4 = 0.75
-		// sm-12 -> 540px šírka. 540 / (3/4) = 540 * 4 / 3 = 180 * 4 = 720px
+		// sm-12 -> 540px width. 540 / (3/4) = 540 * 4 / 3 = 180 * 4 = 720px
 
 		// square (400x500): 400/500 = 0.8
-		// xs-12 -> fluid, max-width odhad 1920px. 1920 / 0.8 = 2400px (ak je to xs, tak min_viewport 0)
+		// xs-12 -> fluid, max-width estimate 1920px. 1920 / 0.8 = 2400px (if it's xs, then min_viewport 0)
 
 		$result = $generator->generate('test.jpg', $assignments, 2000, false);
 

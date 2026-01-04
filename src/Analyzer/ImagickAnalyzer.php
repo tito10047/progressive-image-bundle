@@ -29,7 +29,7 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
         $image = new \Imagick();
 
         try {
-            // 3. Načítanie priamo z handle
+			// 3. Loading directly from handle
             $image->readImageFile($loader->load($path));
             $image->thumbnailImage(64, 64, true);
 
@@ -51,7 +51,7 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
                 $formattedPixels[] = $row;
             }
         } catch (\ImagickException $e) {
-            throw new ImageProcessingException('Imagick nedokázal načítať dáta zo streamu: '.$e->getMessage());
+			throw new ImageProcessingException('Imagick could not load data from stream: ' . $e->getMessage());
         }
 
         $hash = Blurhash::encode($formattedPixels, $this->componentsX, $this->componentsY);

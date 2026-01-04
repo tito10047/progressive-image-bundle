@@ -26,8 +26,8 @@ final class Configuration implements ConfigurationInterface
                 ->ifArray()
                 ->then(function ($v) {
                     if (isset($v['resolver']) && !isset($v['resolvers'][$v['resolver']]) && !in_array($v['resolver'], ['chain', 'filesystem', 'asset_mapper'])) {
-                        // Možnosť automaticky vytvoriť default resolver ak je to potrebné,
-                        // alebo nechať na validáciu neskôr.
+						// Possibility to automatically create a default resolver if necessary,
+						// or leave for validation later.
                     }
 
                     return $v;

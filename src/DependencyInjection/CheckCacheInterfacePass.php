@@ -43,28 +43,28 @@ final class CheckCacheInterfacePass implements CompilerPassInterface
             $definition = $container->getDefinition($cacheServiceId);
         }
 
-        // Ak ide o cache pool definovaný cez FrameworkBundle, Symfony ho v build čase
-        // premení na definíciu, ktorej class je napr. Symfony\Component\Cache\Adapter\ArrayAdapter.
-        // Ak má povolené tagy, Symfony ho obalí do TagAwareAdapter.
+		// If it's a cache pool defined via FrameworkBundle, Symfony turns it at build time
+		// into a definition whose class is e.g. Symfony\Component\Cache\Adapter\ArrayAdapter.
+		// If it has tags enabled, Symfony wraps it in TagAwareAdapter.
 
         $class = $container->getParameterBag()->resolveValue($definition->getClass());
 
-        // Ak je trieda prázdna, môže to byť factory. V tom prípade skúsime pozrieť na factory
+		// If class is empty, it might be a factory. In that case we try to look at the factory
         if (!$class && $definition->getFactory()) {
-            // Tu je ťažké určiť návratový typ factory v compile čase bez vykonania kódu
+			// Here it's difficult to determine the factory return type at compile time without executing code
         }
 
         if ($class && !is_subclass_of($class, TagAwareCacheInterface::class) && TagAwareCacheInterface::class !== $class) {
-            throw new \LogicException(sprintf('Služba cache "%1$s" (trieda: %2$s) musí implementovať TagAwareCacheInterface, aby mohla byť použitá v ProgressiveImageBundle. Skontrolujte, či máte v konfigurácii framework.cache povolené "tags: true" pre tento pool a následne ho nastavte v konfigurácii bundle: progressive_image: { image_cache_service: "%1$s" }. Príklad konfigurácie poolu: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId, $class));
+			throw new \LogicException(sprintf('Cache service "%1$s" (class: %2$s) must implement TagAwareCacheInterface to be used in ProgressiveImageBundle. Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId, $class));
         }
 
-        // Špeciálna kontrola pre Symfony cache pooly, ktoré nemajú nastavený class hneď,
-        // ale vieme o nich zistiť, či sú taggable.
+		// Special check for Symfony cache pools that don't have a class set immediately,
+		// but we can find out if they are taggable.
         if (!$class || 'Symfony\Component\Cache\Adapter\ArrayAdapter' === $class || 'Symfony\Component\Cache\Adapter\FilesystemAdapter' === $class) {
             if (!$definition->hasTag('cache.taggable')) {
-                // Ak nemá tag cache.taggable a zároveň trieda nie je TagAware, vyhodíme chybu.
-                // Symfony TagAwareAdapter má triedu nastavenú na TagAwareAdapter.
-                throw new \LogicException(sprintf('Služba cache "%1$s" nie je "tag aware". Skontrolujte, či máte v konfigurácii framework.cache povolené "tags: true" pre tento pool a následne ho nastavte v konfigurácii bundle: progressive_image: { image_cache_service: "%1$s" }. Príklad konfigurácie poolu: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId));
+				// If it doesn't have the cache.taggable tag and the class is not TagAware, we throw an error.
+				// Symfony TagAwareAdapter has the class set to TagAwareAdapter.
+				throw new \LogicException(sprintf('Cache service "%1$s" is not "tag aware". Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId));
             }
         }
     }

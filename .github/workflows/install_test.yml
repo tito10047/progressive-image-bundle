@@ -31,7 +31,9 @@ jobs:
             -   name: Install Dependencies
                 run: |
                     cd dummy-project
-                    composer require tito10047/progressive-image-bundle:*
+                    composer config minimum-stability dev
+                    composer config prefer-stable true
+                    composer require tito10047/progressive-image-bundle:dev-main
                     composer require liip/imagine-bundle
 
             -   name: Copy E2E Test Files

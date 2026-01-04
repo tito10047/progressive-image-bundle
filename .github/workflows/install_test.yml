@@ -64,7 +64,8 @@ jobs:
 
             -   name: Test URL
                 run: |
-                    RESPONSE=$(curl -s http://127.0.0.1:8000/test-bundle)
+                    curl -s http://127.0.0.1:8000/test-bundle > response.html
+                    RESPONSE=$(cat response.html)
                     echo "Response content: $RESPONSE"
                     
                     if [[ "$RESPONSE" == *"test_800x800.png"* ]]; then
@@ -80,3 +81,10 @@ jobs:
                       echo "Component NOT rendered!"
                       exit 1
                     fi
+
+            -   name: Upload HTML Response on Failure
+                if: failure()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: test-response-html
+                    path: response.html

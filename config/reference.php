@@ -763,6 +763,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *                 max_container?: scalar|null, // Default: null
  *             }>,
  *         },
+ *         ratios?: array<string, scalar|null>,
  *     },
  *     path_decorators?: list<scalar|null>,
  * }

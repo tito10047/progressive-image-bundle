@@ -156,11 +156,20 @@ final class ResponsiveAttributeGenerator
 
         // Ak je to kľúč v ratioConfig, použijeme ten
         if (isset($this->ratioConfig[$ratioString])) {
-            return (float) $this->ratioConfig[$ratioString];
+			$ratioString = $this->ratioConfig[$ratioString];
+		}
+
+		if (is_numeric($ratioString)) {
+			return (float) $ratioString;
         }
 
-        // Inak skúsime parsovať formát "3/4" alebo "3-4"
+		// Inak skúsime parsovať formát "16/9" alebo "3-4"
         if (preg_match('/^(\d+)[\/-](\d+)$/', $ratioString, $matches)) {
+			return (float) $matches[1] / (float) $matches[2];
+		}
+
+		// Alebo formát "400x500"
+		if (preg_match('/^(\d+)x(\d+)$/', $ratioString, $matches)) {
             return (float) $matches[1] / (float) $matches[2];
         }
 

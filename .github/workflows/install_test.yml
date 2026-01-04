@@ -28,14 +28,27 @@ jobs:
                     cd dummy-project
                     composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
 
+            -   name: Get Composer Cache Directory
+                id: composer-cache
+                run: |
+                    echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            -   name: Cache Composer dependencies
+                uses: actions/cache@v4
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: |
+                        ${{ runner.os }}-composer-
+
             -   name: Install Dependencies
                 run: |
                     cd dummy-project
-                    composer require webapp
+                    composer require webapp --no-scripts
                     composer config minimum-stability dev
                     composer config prefer-stable true
-                    composer require tito10047/progressive-image-bundle:dev-main
-                    composer require liip/imagine-bundle
+                    composer require tito10047/progressive-image-bundle:dev-main --no-scripts
+                    composer require liip/imagine-bundle --no-scripts
 
             -   name: Copy E2E Test Files
                 run: |

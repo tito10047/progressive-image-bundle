@@ -31,35 +31,58 @@ final readonly class BreakpointAssignment
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {
-		if (preg_match('/^(?:([a-z0-9_]+):)?\[(\d+)?(%)?(?:x(\d+))?\](?:@([a-z0-9_\/-]+))?$/i', $segment, $matches)) {
-			$widthPercent = ($matches[3] ?? '') === '%' ? $matches[2] . '%' : null;
-			$width        = $widthPercent === null && ($matches[2] ?? '') !== '' ? (int) $matches[2] : null;
-			$height       = ($matches[4] ?? '') !== '' ? (int) $matches[4] : null;
-			$r            = ($matches[5] ?? '') !== '' ? $matches[5] : ($ratio ?? null);
-			if (null !== $height && null === $r && null !== $width) {
-				$r = $width . 'x' . $height;
+		$originalSegment = $segment;
+		$breakpoint      = 'default';
+		if (preg_match('/^([a-z0-9_]+):(.*)$/i', $segment, $matches)) {
+			$breakpoint = $matches[1];
+			$segment    = $matches[2];
+		}
+
+		$segmentRatio = $ratio;
+		if (str_contains($segment, '@')) {
+			$atPos        = strrpos($segment, '@');
+			$segmentRatio = substr($segment, $atPos + 1);
+			$segment      = substr($segment, 0, $atPos);
+			if (str_starts_with($segmentRatio, '[') && str_ends_with($segmentRatio, ']')) {
+				$segmentRatio = substr($segmentRatio, 1, -1);
 			}
-
-			return new self(
-				'' !== $matches[1] ? $matches[1] : 'default',
-				0,
-				$r,
-				$width,
-				$height,
-				$widthPercent
-			);
 		}
 
-		if (preg_match('/^(?:([a-z0-9_]+):)?([0-9]+)(?:@([a-z0-9_\/-]+))?$/i', $segment, $matches)) {
-			return new self(
-				'' !== $matches[1] ? $matches[1] : 'default',
-				(int) $matches[2],
-				($matches[3] ?? '') !== '' ? $matches[3] : ($ratio ?? null)
-			);
+		$width        = null;
+		$height       = null;
+		$widthPercent = null;
+		$columns      = 0;
+
+		if (str_starts_with($segment, '[') && str_ends_with($segment, ']')) {
+			$dimensions = substr($segment, 1, -1);
+			if (str_contains($dimensions, 'x')) {
+				[$widthStr, $heightStr] = explode('x', $dimensions, 2);
+				$width  = (int) $widthStr;
+				$height = (int) $heightStr;
+			} elseif (str_ends_with($dimensions, '%')) {
+				$widthPercent = $dimensions;
+			} elseif ($dimensions !== '') {
+				$width = (int) $dimensions;
+			}
+		} elseif (is_numeric($segment)) {
+			$columns = (int) $segment;
+		} else {
+			throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $originalSegment));
 		}
 
-		throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $segment));
-    }
+		if (null !== $height && null === $segmentRatio && null !== $width) {
+			$segmentRatio = $width . 'x' . $height;
+		}
+
+		return new self(
+			$breakpoint,
+			$columns,
+			$segmentRatio,
+			$width,
+			$height,
+			$widthPercent
+		);
+	}
 
     /**
      * @return array<BreakpointAssignment>

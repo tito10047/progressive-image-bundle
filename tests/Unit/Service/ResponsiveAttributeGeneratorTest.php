@@ -193,4 +193,48 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$this->assertStringContainsString('url-1056 1056w', $result['srcset']);
 		$this->assertEquals('80%', $result['variables']['--img-width-xxl']);
 	}
+
+	public function testGenerateWithNewRatioFormats(): void {
+		$path          = 'test.jpg';
+		$originalWidth = 2000;
+
+		// Test decimal ratio: sm:[100%]@[0.65]
+		// sm max_container is 540. 100% of 540 = 540.
+		// ratio 0.65 -> 540 / 0.65 = 830.76... -> 831
+		$assignments1 = [BreakpointAssignment::fromSegment('sm:[100%]@[0.65]', null)];
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 540, 831)
+			->willReturn('url-decimal');
+
+		$result1 = $this->generator->generate($path, $assignments1, $originalWidth, false);
+		$this->assertEquals('0.65', $result1['variables']['--img-aspect-sm']);
+
+		// Test fraction ratio: [100%]@[10/9]
+		// default/xs max_container is null -> 100% of 1920 = 1920.
+		// ratio 10/9 = 1.111... -> 1920 / 1.111... = 1728
+		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
+		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$assignments2       = [BreakpointAssignment::fromSegment('[100%]@[10/9]', null)];
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 1920, 1728)
+			->willReturn('url-fraction');
+
+		$result2 = $this->generator->generate($path, $assignments2, $originalWidth, false);
+		$this->assertEquals('1.1111111111111', substr($result2['variables']['--img-aspect'], 0, 15));
+
+		// Test dimensions ratio: [100%]@[1500x700]
+		// ratio 1500/700 = 2.1428... -> 1920 / 2.1428... = 896
+		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
+		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$assignments3       = [BreakpointAssignment::fromSegment('[100%]@[1500x700]', null)];
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 1920, 896)
+			->willReturn('url-dimensions');
+
+		$result3 = $this->generator->generate($path, $assignments3, $originalWidth, false);
+		$this->assertEqualsWithDelta(2.142857, (float) $result3['variables']['--img-aspect'], 0.00001);
+	}
 }

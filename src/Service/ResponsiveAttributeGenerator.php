@@ -37,7 +37,7 @@ final class ResponsiveAttributeGenerator
     /**
      * @param BreakpointAssignment[] $assignments
      *
-     * @return array{sizes: string, srcset: string}
+	 * @return array{sizes: string, srcset: string, variables: array<string, string>}
      */
     public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null): array
     {
@@ -45,10 +45,20 @@ final class ResponsiveAttributeGenerator
 
         $sizesParts = [];
         $srcsetParts = [];
+		$variables = [];
         $processedWidths = [];
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
+			if (!$layout && $assignment->breakpoint === 'default') {
+				foreach ($this->gridConfig['layouts'] as $l) {
+					if (($l['min_viewport'] ?? null) === 0) {
+						$layout = $l;
+						break;
+					}
+				}
+			}
+
             if (!$layout) {
                 continue;
             }
@@ -68,11 +78,19 @@ final class ResponsiveAttributeGenerator
 
                 $srcsetParts[] = $url." {$actualPixelWidth}w";
             }
+
+			$ratio                              = $this->resolveRatio($assignment);
+			$suffix                             = $layout['min_viewport'] === 0 ? '' : '-' . $assignment->breakpoint;
+			$variables['--img-width' . $suffix] = $sizeValue;
+			if ($ratio) {
+				$variables['--img-aspect' . $suffix] = (string) $ratio;
+			}
         }
 
         return [
             'sizes' => implode(', ', $sizesParts),
             'srcset' => implode(', ', $srcsetParts),
+			'variables' => $variables,
         ];
     }
 
@@ -104,6 +122,13 @@ final class ResponsiveAttributeGenerator
      */
     private function calculateDimensions(BreakpointAssignment $assignment, array $layout): array
     {
+		if ($assignment->width !== null) {
+			$pixelWidth = (float) $assignment->width;
+			$sizeValue  = $assignment->width . 'px';
+
+			return [$pixelWidth, $sizeValue];
+		}
+
         $totalCols = $this->gridConfig['columns'];
         $maxContainer = $layout['max_container'];
 
@@ -135,7 +160,11 @@ final class ResponsiveAttributeGenerator
     ): ?string {
         $ratio = $this->resolveRatio($assignment);
 
-        if ($basePixelWidth > $originalWidth || isset($processedWidths[$basePixelWidth])) {
+		if ($basePixelWidth > $originalWidth && $originalWidth > 0) {
+			$basePixelWidth = $originalWidth;
+		}
+
+		if (isset($processedWidths[$basePixelWidth])) {
             return null;
         }
 

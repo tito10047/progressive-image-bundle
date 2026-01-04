@@ -2,7 +2,16 @@ import { Controller } from '@hotwired/stimulus';
 import { decode } from 'blurhash';
 export default class extends Controller {
 	static targets = ["highRes", "placeholder", "errorOverlay"];
-    static values = { hash: String };
+	static values = {hash: String, framework: String};
+
+	initialize() {
+		if (this.frameworkValue === 'tailwind') {
+			import("../styles/progressive-image-tailwind.css")
+		}
+		if (this.frameworkValue === 'bootstrap') {
+			import("../styles/progressive-image-bootstrap.css")
+		}
+	}
 
 	connect() {
         this.renderBlurhash();

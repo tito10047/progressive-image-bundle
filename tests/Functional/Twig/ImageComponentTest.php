@@ -198,17 +198,82 @@ class ImageComponentTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'mobile-12 desktop-1',
+				'sizes' => 'mobile:12 desktop:1',
             ]
         );
 
         $this->assertStringContainsString('srcset="', $html);
         // original image is 100x100
-        // mobile: 12/12 * 1920 = 1920px -> too big
+		// mobile: 12/12 * 1920 = 1920px -> reduced to 100px
         // desktop: 1/12 * 1200 = 100px -> OK
         $this->assertStringNotContainsString('1920w', $html);
         $this->assertStringContainsString('100w', $html);
         $this->assertStringContainsString('sizes="(min-width: 1024px) 100px, 100vw"', $html);
+
+		$this->assertStringContainsString('--img-width: 100vw', $html);
+		$this->assertStringContainsString('--img-width-desktop: 100px', $html);
+	}
+
+	public function testRenderWithMultipleBreakpoints(): void {
+		$this->_bootKernel([
+			'progressive_image' => [
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'sm' => ['min_viewport' => 576, 'max_container' => 540],
+							'md' => ['min_viewport' => 768, 'max_container' => 720],
+							'xs' => ['min_viewport' => 0, 'max_container' => null],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'   => '/test.png',
+				'sizes' => 'xs:12 sm:6 md:4',
+				'ratio' => '16/9',
+			]
+		);
+
+		$this->assertStringContainsString('--img-width: 100vw', $html);
+		$this->assertStringContainsString('--img-aspect: 1.777', $html);
+		$this->assertStringContainsString('--img-width-sm: 270px', $html);
+		$this->assertStringContainsString('--img-aspect-sm: 1.777', $html);
+		$this->assertStringContainsString('--img-width-md: 240px', $html);
+		$this->assertStringContainsString('--img-aspect-md: 1.777', $html);
+	}
+
+	public function testRenderWithOmittedBreakpoint(): void {
+		$this->_bootKernel([
+			'progressive_image' => [
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'md' => ['min_viewport' => 768, 'max_container' => 720],
+							'xs' => ['min_viewport' => 0, 'max_container' => null],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'   => '/test.png',
+				'sizes' => '12@16/9 md:4',
+			]
+		);
+
+		$this->assertStringContainsString('--img-width: 100vw', $html);
+		$this->assertStringContainsString('--img-aspect: 1.777', $html);
+		$this->assertStringContainsString('--img-width-md: 240px', $html);
+		$this->assertStringContainsString('sizes="(min-width: 768px) 240px, 100vw"', $html);
     }
 
     public function testPreloadHeaderWithSrcset(): void
@@ -249,7 +314,7 @@ class ImageComponentTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'mobile-12 desktop-1',
+				'sizes' => 'mobile:12 desktop:1',
                 'preload' => true,
                 'priority' => 'high',
             ]
@@ -283,6 +348,27 @@ class ImageComponentTest extends PGITestCase
         $this->assertStringContainsString('imagesrcset="', $content);
         $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px"', $content);
     }
+
+	public function testRenderFrameworkAttribute(): void {
+		$this->_bootKernel([
+			'progressive_image' => [
+				'responsive_strategy' => [
+					'grid' => [
+						'framework' => 'bootstrap',
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src' => '/test.png',
+			]
+		);
+
+		$this->assertStringContainsString('-framework-value="bootstrap"', $html);
+	}
 
     private function _bootKernel(array $extraOptions = []): void
     {

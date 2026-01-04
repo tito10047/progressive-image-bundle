@@ -54,13 +54,13 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase {
 
 		// Assuming bootstrap defaults (md: 768px -> max_container 720px)
 		// landscape: 16/9 = 1.777...
-		// md-12 -> 720px width. 720 / (16/9) = 720 * 9 / 16 = 45 * 9 = 405px
+		// md:12 -> 720px width. 720 / (16/9) = 720 * 9 / 16 = 45 * 9 = 405px
 
 		// portrait: 3/4 = 0.75
-		// sm-12 -> 540px width. 540 / (3/4) = 540 * 4 / 3 = 180 * 4 = 720px
+		// sm:12 -> 540px width. 540 / (3/4) = 540 * 4 / 3 = 180 * 4 = 720px
 
 		// square (400x500): 400/500 = 0.8
-		// xs-12 -> fluid, max-width estimate 1920px. 1920 / 0.8 = 2400px (if it's xs, then min_viewport 0)
+		// xs:12 -> fluid, max-width estimate 1920px. 1920 / 0.8 = 2400px (if it's xs, then min_viewport 0)
 
 		$result = $generator->generate('test.jpg', $assignments, 2000, false);
 

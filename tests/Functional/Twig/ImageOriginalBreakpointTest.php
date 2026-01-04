@@ -66,7 +66,7 @@ class ImageOriginalBreakpointTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'mobile-12 desktop-1',
+				'sizes' => 'mobile:12 desktop:1',
             ]
         );
 

@@ -58,7 +58,7 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'xs-1 md-2 xxl-1',
+				'sizes' => 'xs:1 md:2 xxl:1',
             ]
         );
 
@@ -88,7 +88,7 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'md-1', // 1/12 * 600 = 50px
+				'sizes' => 'md:1', // 1/12 * 600 = 50px
             ]
         );
 
@@ -113,7 +113,7 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-                'sizes' => 'default-1 md-2 2xl-1',
+				'sizes' => 'default:1 md:2 2xl:1',
             ]
         );
 

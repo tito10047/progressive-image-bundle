@@ -18,26 +18,33 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 class BreakpointAssignmentTest extends TestCase
 {
     #[DataProvider('provideBreakpointStrings')]
-    public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio): void
+	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null): void
     {
         $assignment = BreakpointAssignment::fromSegment($input, $ratio);
 
         $this->assertSame($expectedBreakpoint, $assignment->breakpoint);
         $this->assertSame($expectedColumns, $assignment->columns);
         $this->assertSame($expectedRatio, $assignment->ratio);
+		$this->assertSame($expectedWidth, $assignment->width);
+		$this->assertSame($expectedHeight, $assignment->height);
     }
 
     public static function provideBreakpointStrings(): array
     {
         return [
-            'full format' => ['lg-4@landscape', null, 'lg', 4, 'landscape'],
-            'without ratio' => ['lg-4', null, 'lg', 4, null],
-            'different breakpoint' => ['xs-12', null, 'xs', 12, null],
-            'different breakpoint with ratio' => ['xs-12@square', null, 'xs', 12, 'square'],
-            'ratio with numbers' => ['md-6@3-2', null, 'md', 6, '3-2'],
-            'uppercase' => ['XL-8@PORTRAIT', null, 'XL', 8, 'PORTRAIT'],
-            'default ratio used' => ['lg-4', '16-9', 'lg', 4, '16-9'],
-            'segment ratio overrides default' => ['lg-4@landscape', '16-9', 'lg', 4, 'landscape'],
+			'full format'                     => ['lg:4@landscape', null, 'lg', 4, 'landscape'],
+			'without ratio'                   => ['lg:4', null, 'lg', 4, null],
+			'different breakpoint'            => ['xs:12', null, 'xs', 12, null],
+			'different breakpoint with ratio' => ['xs:12@square', null, 'xs', 12, 'square'],
+			'ratio with numbers'              => ['md:6@3-2', null, 'md', 6, '3-2'],
+			'uppercase'                       => ['XL:8@PORTRAIT', null, 'XL', 8, 'PORTRAIT'],
+			'default ratio used'              => ['lg:4', '16-9', 'lg', 4, '16-9'],
+			'segment ratio overrides default' => ['lg:4@landscape', '16-9', 'lg', 4, 'landscape'],
+			'missing breakpoint name'         => ['12@portrait', null, 'default', 12, 'portrait'],
+			'only columns'                    => ['6', null, 'default', 6, null],
+			'only columns with default ratio' => ['8', '16/9', 'default', 8, '16/9'],
+			'explicit dimensions'             => ['xxl:[430x370]', null, 'xxl', 0, '430x370', 430, 370],
+			'explicit width with ratio'       => ['xl:[430]@square', null, 'xl', 0, 'square', 430, null],
         ];
     }
 
@@ -57,7 +64,7 @@ class BreakpointAssignmentTest extends TestCase
 
     public function testParseStrong(): void
     {
-        $input = 'lg-4@landscape xs-12@square';
+		$input = 'lg:4@landscape xs:12@square';
         $results = BreakpointAssignment::parseSegments($input, null);
 
         $this->assertCount(2, $results);
@@ -81,10 +88,10 @@ class BreakpointAssignmentTest extends TestCase
     public static function provideMultipleSegments(): array
     {
         return [
-            ['lg-4@landscape xs-12', null, 2],
-            ['lg-4', null, 1],
-            ['lg-4@landscape', null, 1],
-            ['lg-4 xs-12', '16-9', 2],
+			['lg:4@landscape xs:12', null, 2],
+			['lg:4', null, 1],
+			['lg:4@landscape', null, 1],
+			['lg:4 xs:12', '16-9', 2],
         ];
     }
 }

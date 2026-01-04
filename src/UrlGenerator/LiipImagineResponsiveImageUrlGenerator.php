@@ -33,7 +33,7 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
     ) {
     }
 
-    public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null): string
+	public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null): string
     {
         $targetH = $targetH ?? $targetW;
         $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter, $pointInterest);

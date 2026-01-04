@@ -33,10 +33,10 @@ final class Image
      * @var array<string, mixed>
      */
     public array $context = [];
-    private ?ImageMetadata $metadata;
+	private ?ImageMetadata $metadata        = null;
     private string $decoratedSrc;
-    private ?int $decoratedWidth;
-    private ?int $decoratedHeight;
+	private ?int           $decoratedWidth  = null;
+	private ?int           $decoratedHeight = null;
     public bool $preload = false;
     public ?int $ttl = null;
     public string $priority = 'high';
@@ -47,7 +47,7 @@ final class Image
      */
     private array $breakpoinsts = [];
     /**
-     * @var array{sizes: string, srcset: string}|null
+	 * @var array{sizes: string, srcset: string, variables: array<string, string>}|null
      */
     private ?array $responsiveAttributes = null;
 
@@ -59,33 +59,41 @@ final class Image
         private readonly iterable $pathDecorator,
         private readonly ?ResponsiveAttributeGenerator $responsiveAttributeGenerator,
         private readonly PreloadCollector $preloadCollector,
+		private readonly string $framework = 'custom',
     ) {
     }
 
     #[PostMount]
     public function postMount(): void
     {
+		$this->decoratedSrc = $this->src;
+		foreach ($this->pathDecorator as $decorator) {
+			$this->decoratedSrc = $decorator->decorate($this->decoratedSrc, $this->context);
+		}
+
         try {
             $this->metadata = $this->analyzer->getMetadata($this->src);
         } catch (PathResolutionException) {
             $this->metadata = null;
         }
-        $this->decoratedSrc = $this->src;
-        $this->decoratedWidth = $this->metadata?->width;
-        $this->decoratedHeight = $this->metadata?->height;
-        foreach ($this->pathDecorator as $decorator) {
-            $this->decoratedSrc = $decorator->decorate($this->decoratedSrc, $this->context);
-            $size = $decorator->getSize($this->decoratedSrc, $this->context);
-            if ($size) {
-                $this->decoratedWidth = $size['width'];
-                $this->decoratedHeight = $size['height'];
-            }
-        }
-        $this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
-        if ($this->breakpoinsts) {
-            $this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->decoratedWidth ?? 0, $this->preload, $this->pointInterest);
-        } elseif ($this->preload) {
-            $this->preloadCollector->add($this->decoratedSrc, 'image', $this->priority);
+
+		$this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
+		if ($this->breakpoinsts) {
+			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->metadata?->width ?? 0, $this->preload, $this->pointInterest);
+		} else {
+			$this->decoratedWidth  = $this->metadata?->width;
+			$this->decoratedHeight = $this->metadata?->height;
+			foreach ($this->pathDecorator as $decorator) {
+				$size = $decorator->getSize($this->decoratedSrc, $this->context);
+				if ($size) {
+					$this->decoratedWidth  = $size['width'];
+					$this->decoratedHeight = $size['height'];
+				}
+			}
+
+			if ($this->preload) {
+				$this->preloadCollector->add($this->decoratedSrc, 'image', $this->priority);
+			}
         }
     }
 
@@ -114,12 +122,16 @@ final class Image
 
     public function getWidth(): ?int
     {
-        return $this->decoratedWidth ?? $this->metadata?->width;
+		return $this->decoratedWidth;
     }
 
     public function getHeight(): ?int
     {
-        return $this->decoratedHeight ?? $this->metadata?->height;
+		return $this->decoratedHeight;
+	}
+
+	public function getVariables(): array {
+		return $this->responsiveAttributes['variables'] ?? [];
     }
 
     public function getDecoratedSrc(): string
@@ -131,4 +143,8 @@ final class Image
     {
         return ProgressiveImageBundle::STIMULUS_CONTROLLER;
     }
+
+	public function getFramework(): string {
+		return $this->framework;
+	}
 }

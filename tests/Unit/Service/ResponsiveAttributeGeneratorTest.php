@@ -72,6 +72,12 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $this->assertStringContainsString('url-360 360w', $result['srcset']);
         $this->assertStringNotContainsString('url-720 720w', $result['srcset']); // No more 2x multiplier by default
         $this->assertStringContainsString('url-1920 1920w', $result['srcset']);
+
+		$this->assertArrayHasKey('variables', $result);
+		$this->assertEquals('100vw', $result['variables']['--img-width']);
+		$this->assertEquals('1', $result['variables']['--img-aspect']);
+		$this->assertEquals('360px', $result['variables']['--img-width-md']);
+		$this->assertEquals('1.5', $result['variables']['--img-aspect-md']);
     }
 
     public function testResolveRatioWithDifferentFormats(): void
@@ -121,4 +127,48 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $this->assertEquals('url-360 360w', $result['srcset']);
     }
+
+	public function testGenerateWithDefaultBreakpoint(): void {
+		$path          = 'test.jpg';
+		$assignments   = [
+			new BreakpointAssignment('default', 12, 'square'),
+		];
+		$originalWidth = 2000;
+
+		// xs in gridConfig has min_viewport 0.
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->willReturn('url-1920');
+
+		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
+
+		$this->assertEquals('100vw', $result['sizes']);
+		$this->assertStringContainsString('url-1920 1920w', $result['srcset']);
+		$this->assertEquals('100vw', $result['variables']['--img-width']);
+	}
+
+	public function testGenerateWithExplicitDimensions(): void {
+		$path          = 'test.jpg';
+		$assignments   = [
+			new BreakpointAssignment('xxl', 0, '430x370', 430, 370),
+			new BreakpointAssignment('xl', 0, 'square', 430),
+		];
+		$originalWidth = 2000;
+
+		// Since both have width 430, only the first one generates a URL due to $processedWidths check
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 430, 370)
+			->willReturn('url-430x370');
+
+		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
+
+		$this->assertStringContainsString('430px', $result['sizes']);
+		$this->assertStringContainsString('430w', $result['srcset']);
+
+		$this->assertEquals('430px', $result['variables']['--img-width-xxl']);
+		$this->assertEqualsWithDelta(1.162162, (float) $result['variables']['--img-aspect-xxl'], 0.00001);
+		$this->assertEquals('430px', $result['variables']['--img-width-xl']);
+		$this->assertEquals('1', $result['variables']['--img-aspect-xl']);
+	}
 }

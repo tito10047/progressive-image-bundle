@@ -58,6 +58,16 @@ return [
 This configuration is optional,
 create `config/packages/progressive_image.yaml` to configure your resolvers and loaders.
 
+### Import Routing
+
+To enable dynamic image filtering with LiipImagine, you need to import the bundle's routing in your `config/routes.yaml`:
+
+```yaml
+progressive_image:
+    resource: "@ProgressiveImageBundle/config/routes.php"
+```
+
+### Bundle Configuration
 ```yaml
 progressive_image:
     # Define how to locate your images
@@ -149,10 +159,13 @@ In your Twig templates, use the `sizes` attribute to define how many columns the
 
 ```twig
 {# Image takes 12 columns on mobile (fluid) and 4 columns on desktop #}
-<twig:pgi:Image src="hero.jpg" sizes="sm-12 xl-4" />
+<twig:pgi:Image src="hero.jpg" sizes="mobile:12 desktop:4" />
 
 {# You can also specify aspect ratios per breakpoint #}
-<twig:pgi:Image src="hero.jpg" sizes="sm-12@1-1 xl-4@16-9" />
+<twig:pgi:Image src="hero.jpg" sizes="mobile:12@1-1 desktop:4@16-9" />
+
+{# Explicit dimensions in square brackets [width] or [widthxheight] #}
+<twig:pgi:Image src="hero.jpg" sizes="xxl:[430x370] xl:[430]@square" />
 ```
 
 The bundle automatically:

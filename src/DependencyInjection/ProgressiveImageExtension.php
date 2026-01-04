@@ -186,6 +186,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$pathDecorator', array_map(fn ($id) => new Reference($id), $configs['path_decorators'] ?? []))
             ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) ? new Reference(ResponsiveAttributeGenerator::class) : null)
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
+			->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
             ->setShared(false)
             ->addTag('twig.component')
             ->setPublic(true);

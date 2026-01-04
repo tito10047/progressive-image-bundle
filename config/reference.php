@@ -743,7 +743,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     }>,
  *     driver?: "gd"|"imagick", // Default: "gd"
  *     loader?: scalar|null, // Default: null
- *     resolver?: scalar|null, // Default: null
+ *     resolver?: scalar|null, // Default: "default"
  *     cache?: scalar|null, // Default: null
  *     image_cache_service?: scalar|null, // Default: "cache.app"
  *     hash_resolution?: array{

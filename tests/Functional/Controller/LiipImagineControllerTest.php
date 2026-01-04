@@ -16,6 +16,7 @@ use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGIWebTestCase;
+use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
 
 class LiipImagineControllerTest extends PGIWebTestCase
 {
@@ -245,4 +246,62 @@ class LiipImagineControllerTest extends PGIWebTestCase
 
         imagedestroy($resultImg);
     }
+
+	public function testIndexWithSignedUrlFromGenerator(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$client = static::createClient([
+			'progressive_image' => [
+				'path_decorators' => [
+					'progressive_image.decorator.liip_imagine',
+				],
+				'resolvers'       => [
+					'temp' => [
+						'type'  => 'filesystem',
+						'roots' => [$this->tempDir],
+					],
+				],
+				'resolver'        => 'temp',
+			],
+			'liip_imagine'      => [
+				'loaders' => [
+					'default' => [
+						'filesystem' => [
+							'data_root' => $this->tempDir,
+						],
+					],
+				],
+			],
+		]);
+
+		$container = $client->getContainer();
+
+		/** @var LiipImagineResponsiveImageUrlGenerator $generator */
+		$generator = $container->get(LiipImagineResponsiveImageUrlGenerator::class);
+
+		$path   = 'test.png';
+		$width  = 60;
+		$height = 60;
+
+		$signedUrl = $generator->generateUrl($path, $width, $height);
+
+		$client->request('GET', $signedUrl);
+
+		$this->assertResponseRedirects();
+		$redirectUrl = $client->getResponse()->headers->get('Location');
+		$this->assertStringContainsString('/media/cache/60x60/', $redirectUrl);
+
+		// Verify physical file exists
+		$projectDir       = $container->getParameter('kernel.project_dir');
+		$relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
+		$absoluteFilePath = $projectDir . '/public' . $relativeFilePath;
+
+		$this->assertFileExists($absoluteFilePath);
+
+		// Verify image size
+		$imageSize = getimagesize($absoluteFilePath);
+		$this->assertEquals(60, $imageSize[0]);
+		$this->assertEquals(60, $imageSize[1]);
+	}
 }

@@ -12,7 +12,7 @@
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
 /**
- * Represents a single instruction, e.g. "lg-4@landscape".
+ * Represents a single instruction, e.g. "lg:4@landscape".
  */
 final readonly class BreakpointAssignment
 {
@@ -20,6 +20,8 @@ final readonly class BreakpointAssignment
         public string $breakpoint,
         public int $columns,
         public ?string $ratio,
+		public ?int $width = null,
+		public ?int $height = null,
     ) {
     }
 
@@ -28,15 +30,32 @@ final readonly class BreakpointAssignment
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {
-        if (!preg_match('/^([a-z0-9]+)-([0-9]+)(?:@([a-z0-9-]+))?$/i', $segment, $matches)) {
-            throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $segment));
-        }
+		if (preg_match('/^(?:([a-z0-9]+):)?\[(\d+)(?:x(\d+))?\](?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
+			$width  = (int) $matches[2];
+			$height = ($matches[3] ?? '') !== '' ? (int) $matches[3] : null;
+			$r      = ($matches[4] ?? '') !== '' ? $matches[4] : ($ratio ?? null);
+			if ($height !== null && $r === null) {
+				$r = $width . 'x' . $height;
+			}
 
-        return new self(
-            $matches[1],
-            (int) $matches[2],
-            $matches[3] ?? $ratio ?? null
-        );
+			return new self(
+				($matches[1] ?? '') !== '' ? $matches[1] : 'default',
+				0,
+				$r,
+				$width,
+				$height
+			);
+		}
+
+		if (preg_match('/^(?:([a-z0-9]+):)?([0-9]+)(?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
+			return new self(
+				($matches[1] ?? '') !== '' ? $matches[1] : 'default',
+				(int) $matches[2],
+				($matches[3] ?? '') !== '' ? $matches[3] : ($ratio ?? null)
+			);
+		}
+
+		throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $segment));
     }
 
     /**

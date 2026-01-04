@@ -18,6 +18,10 @@ use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInt
 class ResponsiveAttributeGeneratorTest extends PGITestCase {
 
 	public function testRatioFromConfiguration(): void {
+
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		self::bootKernel([
 			'progressive_image' => [
 				'responsive_strategy' => [

@@ -215,6 +215,9 @@ class ImageComponentTest extends PGITestCase
 	}
 
 	public function testRenderWithMultipleBreakpoints(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$this->_bootKernel([
 			'progressive_image' => [
 				'responsive_strategy' => [
@@ -248,6 +251,9 @@ class ImageComponentTest extends PGITestCase
 	}
 
 	public function testRenderWithOmittedBreakpoint(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$this->_bootKernel([
 			'progressive_image' => [
 				'responsive_strategy' => [

@@ -155,11 +155,13 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		];
 		$originalWidth = 2000;
 
-		// Since both have width 430, only the first one generates a URL due to $processedWidths check
-		$this->urlGenerator->expects($this->once())
+		// Both have width 430, so both generate a URL
+		$this->urlGenerator->expects($this->exactly(2))
 			->method('generateUrl')
-			->with($path, 430, 370)
-			->willReturn('url-430x370');
+			->willReturnMap([
+				[$path, 430, 370, null, 'url-430x370'],
+				[$path, 430, 430, null, 'url-430x430'],
+			]);
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
 

@@ -72,7 +72,7 @@ class ImageOriginalBreakpointTest extends PGITestCase
 
         $this->assertStringContainsString('srcset="', $html);
         $this->assertStringContainsString('100w', $html);
-        $this->assertStringNotContainsString('1920w', $html);
+		$this->assertStringContainsString('1920w', $html);
     }
 
     private function _bootKernel(array $extraOptions = []): void

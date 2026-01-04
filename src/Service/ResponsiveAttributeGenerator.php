@@ -160,18 +160,13 @@ final class ResponsiveAttributeGenerator
     ): ?string {
         $ratio = $this->resolveRatio($assignment);
 
-		if ($basePixelWidth > $originalWidth) {
+		$requestedWidth = $basePixelWidth;
+		if ($originalWidth > 0 && $basePixelWidth > $originalWidth) {
 			$basePixelWidth = $originalWidth;
-		}
-
-		if (isset($processedWidths[$basePixelWidth])) {
-            return null;
         }
 
         $targetH = $ratio ? (int) round($basePixelWidth / $ratio) : null;
         $url = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest);
-
-        $processedWidths[$basePixelWidth] = true;
 
         return $url;
     }

@@ -206,7 +206,7 @@ class ImageComponentTest extends PGITestCase
         // original image is 100x100
 		// mobile: 12/12 * 1920 = 1920px -> reduced to 100px
         // desktop: 1/12 * 1200 = 100px -> OK
-        $this->assertStringNotContainsString('1920w', $html);
+		$this->assertStringContainsString('1920w', $html);
         $this->assertStringContainsString('100w', $html);
         $this->assertStringContainsString('sizes="(min-width: 1024px) 100px, 100vw"', $html);
 
@@ -340,13 +340,13 @@ class ImageComponentTest extends PGITestCase
         $this->assertStringContainsString('rel=preload', $linkHeader);
         $this->assertStringContainsString('as=image', $linkHeader);
         $this->assertStringContainsString('imagesrcset="', $linkHeader);
-        $this->assertStringContainsString('100w', $linkHeader);
-        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px"', $linkHeader);
+		$this->assertStringContainsString('1920w', $linkHeader);
+		$this->assertStringContainsString('imagesizes="100vw"', $linkHeader);
 
         $content = $response->getContent();
         $this->assertStringContainsString('<link rel="preload"', $content);
         $this->assertStringContainsString('imagesrcset="', $content);
-        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px"', $content);
+		$this->assertStringContainsString('imagesizes="100vw"', $content);
     }
 
 	public function testRenderFrameworkAttribute(): void {

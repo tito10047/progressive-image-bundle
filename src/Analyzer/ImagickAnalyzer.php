@@ -31,10 +31,12 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
         try {
 			// 3. Loading directly from handle
             $image->readImageFile($loader->load($path));
+			$orgWidth  = $image->getImageWidth();
+			$orgHeight = $image->getImageHeight();
             $image->thumbnailImage(64, 64, true);
-
             $width = $image->getImageWidth();
             $height = $image->getImageHeight();
+
             $pixels = $image->exportImagePixels(0, 0, $width, $height, 'RGB', \Imagick::PIXEL_CHAR);
 
             $formattedPixels = [];
@@ -58,8 +60,8 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
 
         return new ImageMetadata(
             $hash,
-            $width,
-            $height
+			$orgWidth,
+			$orgHeight
         );
     }
 }

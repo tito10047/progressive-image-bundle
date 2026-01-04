@@ -76,7 +76,6 @@ final class Image
         } catch (PathResolutionException) {
             $this->metadata = null;
         }
-
 		$this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
 		if ($this->breakpoinsts && $this->responsiveAttributeGenerator) {
 			$this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoinsts, $this->metadata->width ?? 0, $this->preload, $this->pointInterest);

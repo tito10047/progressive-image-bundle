@@ -31,7 +31,7 @@ final readonly class BreakpointAssignment
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {
-		if (preg_match('/^(?:([a-z0-9]+):)?\[(\d+)?(%)?(?:x(\d+))?\](?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
+		if (preg_match('/^(?:([a-z0-9_]+):)?\[(\d+)?(%)?(?:x(\d+))?\](?:@([a-z0-9_\/-]+))?$/i', $segment, $matches)) {
 			$widthPercent = ($matches[3] ?? '') === '%' ? $matches[2] . '%' : null;
 			$width        = $widthPercent === null && ($matches[2] ?? '') !== '' ? (int) $matches[2] : null;
 			$height       = ($matches[4] ?? '') !== '' ? (int) $matches[4] : null;
@@ -50,7 +50,7 @@ final readonly class BreakpointAssignment
 			);
 		}
 
-		if (preg_match('/^(?:([a-z0-9]+):)?([0-9]+)(?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
+		if (preg_match('/^(?:([a-z0-9_]+):)?([0-9]+)(?:@([a-z0-9_\/-]+))?$/i', $segment, $matches)) {
 			return new self(
 				'' !== $matches[1] ? $matches[1] : 'default',
 				(int) $matches[2],

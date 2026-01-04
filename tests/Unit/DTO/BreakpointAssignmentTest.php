@@ -47,6 +47,8 @@ class BreakpointAssignmentTest extends TestCase
 			'explicit dimensions'             => ['xxl:[430x370]', null, 'xxl', 0, '430x370', 430, 370],
 			'explicit width with ratio'       => ['xl:[430]@square', null, 'xl', 0, 'square', 430, null],
 			'percentage width' => ['2xl:[80%]@landscape', null, '2xl', 0, 'landscape', null, null, '80%'],
+			'ratio with underscore'      => ['lg:4@hero_portrait', null, 'lg', 4, 'hero_portrait'],
+			'breakpoint with underscore' => ['my_bp:12', null, 'my_bp', 12, null],
         ];
     }
 

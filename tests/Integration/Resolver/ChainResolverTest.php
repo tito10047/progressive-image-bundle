@@ -13,7 +13,7 @@ class ChainResolverTest extends PGITestCase {
 				'resolvers' => [
 					'public_files' => [
 						'type'  => 'filesystem',
-						'roots' => ['%kernel.project_dir%/public'],
+						'roots' => ['%kernel.project_dir%/var'],
 					],
 					'assets'       => [
 						'type' => 'asset_mapper',
@@ -50,7 +50,7 @@ class ChainResolverTest extends PGITestCase {
 				'resolvers' => [
 					'custom' => [
 						'type'  => 'filesystem',
-						'roots' => ['%kernel.project_dir%/public'],
+						'roots' => ['%kernel.project_dir%/var'],
 					],
 				],
 				// resolver is not specified, should default to 'default' which should pick the first one 'custom'

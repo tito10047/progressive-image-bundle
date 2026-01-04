@@ -1,0 +1,11 @@
+liip_imagine:
+    driver: "imagick"
+    resolvers:
+        default:
+            web_path: ~
+    filter_sets:
+        cache: ~
+        thumbnail:
+            quality: 75
+            filters:
+                thumbnail: { size: [ 120, 90 ], mode: outbound }

@@ -19,7 +19,7 @@ jobs:
                 uses: shivammathur/setup-php@v2
                 with:
                     php-version: '8.2'
-                    extensions: mbstring, xml, ctype, iconv, twig, gd, imagick
+                    extensions: mbstring, xml, ctype, iconv, gd, imagick
                     tools: composer
 
             -   name: Create Dummy Symfony Project
@@ -40,6 +40,8 @@ jobs:
             -   name: Copy E2E Test Files
                 run: |
                     cp -R my-bundle/tests_ete/basic/* dummy-project/
+                    # Ensure config files are in the right place if they were not already
+                    # (cp -R should handle it, but being explicit for clarity if needed)
 
             -   name: Run PHP Built-in Server
                 run: |

@@ -62,7 +62,6 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$configuration', service('liip_imagine.filter.configuration'))
         ;
 
-
         $services->set('uri_signer', UriSigner::class)
             ->args([
                 new Parameter('kernel.secret'),

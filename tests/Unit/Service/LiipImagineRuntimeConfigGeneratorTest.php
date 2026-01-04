@@ -116,8 +116,8 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 		$imageConfigs = [
 			'quality'         => 75,
 			'post_processors' => [
-				'cwebp' => ['q' => 75, 'm' => 6]
-			]
+				'cwebp' => ['q' => 75, 'm' => 6],
+			],
 		];
 		$generator    = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration, $imageConfigs);
 

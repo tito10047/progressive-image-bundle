@@ -304,4 +304,68 @@ class LiipImagineControllerTest extends PGIWebTestCase
 		$this->assertEquals(60, $imageSize[0]);
 		$this->assertEquals(60, $imageSize[1]);
 	}
+
+	public function testGenerateImageProcess(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$client = static::createClient([
+			'progressive_image' => [
+				'path_decorators' => [
+					'progressive_image.decorator.liip_imagine',
+				],
+				'resolvers'       => [
+					'temp' => [
+						'type'  => 'filesystem',
+						'roots' => [$this->tempDir],
+					],
+				],
+				'resolver'        => 'temp',
+			],
+			'liip_imagine'      => [
+				'loaders' => [
+					'default' => [
+						'filesystem' => [
+							'data_root' => $this->tempDir,
+						],
+					],
+				],
+			],
+		]);
+
+		$container = $client->getContainer();
+		/** @var UriSigner $signer */
+		$signer = $container->get('uri_signer');
+
+		$path   = 'test.png';
+		$width  = 80;
+		$height = 80;
+
+		// 1. vygeneruj obrazok cez controller aby sa ulozil na disk
+		$url       = sprintf('/progressive-image?path=%s&width=%d&height=%d', $path, $width, $height);
+		$signedUrl = $signer->sign('http://localhost' . $url);
+		$client->request('GET', $signedUrl);
+
+		$this->assertResponseRedirects();
+		$redirectUrl = $client->getResponse()->headers->get('Location');
+		$this->assertStringContainsString('/media/cache/80x80/', $redirectUrl);
+		$this->assertStringNotContainsString('/resolve/', $redirectUrl, 'URL by nemala obsahovat /resolve/');
+		$projectDir       = $container->getParameter('kernel.project_dir');
+		$relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
+		$absoluteFilePath = $projectDir . '/public' . $relativeFilePath;
+
+		$this->assertFileExists($absoluteFilePath, 'Obrazok by mal existovat na disku po volani controllera');
+
+		// 3. pouzi LiipImagineResponsiveImageUrlGenerator aby ti vratila url adresu obrazku
+		/** @var LiipImagineResponsiveImageUrlGenerator $generator */
+		$generator    = $container->get(LiipImagineResponsiveImageUrlGenerator::class);
+		$generatedUrl = $generator->generateUrl($path, $width, $height);
+
+		// 4. skontroluj ci adresa ktora ti vratil url generator smeruje na obrazok
+		$this->assertEquals($redirectUrl, $generatedUrl, 'URL z generatora by mala byt rovnaka ako URL na ktoru nas presmeroval controller');
+
+		$relativeGeneratedPath = parse_url($generatedUrl, PHP_URL_PATH);
+		$absoluteGeneratedPath = $projectDir . '/public' . $relativeGeneratedPath;
+		$this->assertFileExists($absoluteGeneratedPath, 'URL z generatora musi smerovat na existujuci subor');
+	}
 }

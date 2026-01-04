@@ -71,7 +71,9 @@ final class LiipImagineController
         }
 
         return $this->createRedirectResponse(function () use ($path, $filterName) {
-            return $this->filterService->getUrlOfFilteredImage($path, $filterName);
+			$url = $this->filterService->getUrlOfFilteredImage($path, $filterName);
+
+			return str_replace('/resolve/', '/', $url);
         }, $path, $filterName);
     }
 

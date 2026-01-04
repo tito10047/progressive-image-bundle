@@ -48,7 +48,8 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         }
 
         if ($this->cacheManager->isStored($path, $filterName)) {
-            return $this->cacheManager->getBrowserPath($path, $filterName);
+			$browserPath = $this->cacheManager->getBrowserPath($path, $filterName);
+			return str_replace('/resolve/', '/', $browserPath);
         }
 
         $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);

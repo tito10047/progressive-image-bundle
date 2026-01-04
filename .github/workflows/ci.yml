@@ -188,6 +188,15 @@ jobs:
                       exit 1
                     fi
                     
+                    if [[ "${{ matrix.test_type }}" == "responsive" ]]; then
+                      if [[ "$RESPONSE" == *"test_800x800.png&width=324 324w"* ]]; then
+                        echo "Responsive image found in response."
+                      else
+                        echo "Responsive image NOT found in response!"
+                        exit 1
+                      fi
+                    fi
+
                     if [[ "$RESPONSE" == *"progressive-image"* ]]; then
                       echo "Component rendered."
                     else
@@ -196,7 +205,7 @@ jobs:
                     fi
 
             -   name: Upload HTML Response on Failure
-                if: true
+                if: failure()
                 uses: actions/upload-artifact@v4
                 with:
                     name: test-response-html-${{ matrix.test_type }}

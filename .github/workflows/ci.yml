@@ -1,0 +1,203 @@
+name: CI
+
+on:
+    push:
+        branches: [ main ]
+    pull_request: ~
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    php-cs-fixer:
+        name: "Coding Standard"
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.2'
+                    tools: php-cs-fixer
+            -   name: Check CS
+                run: php-cs-fixer fix --dry-run --diff
+                continue-on-error: true
+
+    phpstan:
+        name: "Static Analysis"
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+            -   name: "Install PHP"
+                uses: "shivammathur/setup-php@v2"
+                with:
+                    php-version: "8.3"
+                    ini-values: memory_limit=-1
+                    extensions: imagick
+            -   name: "Install dependencies"
+                run: composer update --no-interaction --no-progress
+            -   name: "Run PHPStan"
+                run: vendor/bin/phpstan analyse
+                continue-on-error: true
+
+    tests:
+        name: "Tests (PHP ${{ matrix.php-version }}, Symfony ${{ matrix.symfony }})"
+        runs-on: ${{ matrix.operating-system }}
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version:
+                    - "8.2"
+                    - "8.3"
+                    - "8.4"
+                    - "8.5"
+                symfony:
+                    - '6.4.*'
+                    - '7.3.*'
+                    - '7.4.*'
+                    - '8.0.*'
+                operating-system:
+                    - "ubuntu-latest"
+                liip:
+                    - "with"
+                include:
+                    -   php-version: "8.4"
+                        symfony: "7.4.*"
+                        operating-system: "ubuntu-latest"
+                        liip: "without"
+                exclude:
+                    -   php-version: "8.1"
+                        symfony: '8.0.*'
+                        operating-system: "ubuntu-latest"
+                    -   php-version: "8.2"
+                        symfony: '8.0.*'
+                        operating-system: "ubuntu-latest"
+                    -   php-version: "8.3"
+                        symfony: '8.0.*'
+                        operating-system: "ubuntu-latest"
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+            -   name: "Install PHP"
+                uses: "shivammathur/setup-php@v2"
+                with:
+                    coverage: "pcov"
+                    php-version: "${{ matrix.php-version }}"
+                    ini-values: memory_limit=-1
+                    extensions: imagick
+                    tools: php-coveralls
+            -   name: "Configure Symfony"
+                run: 'composer config extra.symfony.require "${{ matrix.symfony }}"'
+            -   name: Get composer cache directory
+                id: composer-cache
+                run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+            -   name: "Cache dependencies"
+                uses: "actions/cache@v3"
+                with:
+                    path: |
+                        ~/.composer/cache
+                        vendor
+                    key: "php-${{ matrix.php-version }}-symfony-${{ matrix.symfony }}-${{ matrix.liip }}"
+                    restore-keys: "php-${{ matrix.php-version }}-symfony-${{ matrix.symfony }}-${{ matrix.liip }}"
+            -   name: "Remove Liip bundle"
+                run: composer remove liip/imagine-bundle --dev --no-update
+                if: matrix.liip == 'without'
+            -   name: "Install highest dependencies"
+                run: |
+                    composer global require php-coveralls/php-coveralls
+                    composer update --no-interaction --no-progress
+            -   name: Execute tests (Unit and Feature tests) via PHPUnit
+                run: vendor/bin/phpunit --coverage-clover build/reports/clover.xml
+            -   name: Upload coverage results to Coveralls
+                env:
+                    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                run: |
+                    php-coveralls --coverage_clover=build/reports/clover.xml --json_path=build/reports/coveralls-upload.json -v
+
+    e2e-tests:
+        name: "E2E Test (${{ matrix.test_type }})"
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                test_type: [ basic, responsive ]
+        
+        steps:
+            -   name: Checkout bundle code
+                uses: actions/checkout@v4
+                with:
+                    path: my-bundle
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.2'
+                    extensions: mbstring, xml, ctype, iconv, gd, imagick
+                    tools: composer
+
+            -   name: Create Dummy Symfony Project
+                run: |
+                    composer create-project symfony/skeleton dummy-project
+                    cd dummy-project
+                    composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
+
+            -   name: Get Composer Cache Directory
+                id: composer-cache
+                run: |
+                    echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            -   name: Cache Composer dependencies
+                uses: actions/cache@v4
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: |
+                        ${{ runner.os }}-composer-
+
+            -   name: Install Dependencies
+                run: |
+                    cd dummy-project
+                    composer config extra.symfony.allow-contrib true
+                    composer require webapp --no-scripts
+                    composer config minimum-stability dev
+                    composer config prefer-stable true
+                    composer require liip/imagine-bundle --no-scripts
+                    composer require tito10047/progressive-image-bundle:dev-main --no-scripts
+
+            -   name: Copy E2E Test Files
+                run: |
+                    cp -R my-bundle/tests_ete/${{ matrix.test_type }}/* dummy-project/
+
+            -   name: Run PHP Built-in Server
+                run: |
+                    cd dummy-project
+                    php -S 127.0.0.1:8000 -t public &
+                    sleep 5
+
+            -   name: Test URL
+                run: |
+                    curl -s http://127.0.0.1:8000/test-bundle > response.html
+                    RESPONSE=$(cat response.html)
+                    
+                    if [[ "$RESPONSE" == *"test_800x800.png"* ]]; then
+                      echo "Image found in response."
+                    else
+                      echo "Image NOT found in response!"
+                      exit 1
+                    fi
+                    
+                    if [[ "$RESPONSE" == *"progressive-image"* ]]; then
+                      echo "Component rendered."
+                    else
+                      echo "Component NOT rendered!"
+                      exit 1
+                    fi
+
+            -   name: Upload HTML Response on Failure
+                if: true
+                uses: actions/upload-artifact@v4
+                with:
+                    name: test-response-html-${{ matrix.test_type }}
+                    path: response.html

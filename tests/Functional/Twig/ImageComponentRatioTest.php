@@ -28,13 +28,13 @@ class ImageComponentRatioTest extends PGITestCase {
 
 		$this->bootKernel([
 			'progressive_image' => [
-				'resolvers' => [
+				'resolvers'           => [
 					'temp' => [
 						'type'  => 'filesystem',
 						'roots' => [$this->tempDir],
 					],
 				],
-				'resolver'  => 'temp',
+				'resolver'            => 'temp',
 				'responsive_strategy' => [
 					'grid'   => [
 						'framework' => 'tailwind',
@@ -56,7 +56,7 @@ class ImageComponentRatioTest extends PGITestCase {
 				'fetchpriority' => 'high',
 				'preload'       => true,
 				'decoding'      => 'sync',
-				'sizes' => '2xl:12@landscape xl:12@landscape lg:12@landscape md:12@landscape sm:12@landscape default:12@landscape',
+				'sizes'         => '2xl:12@landscape xl:12@landscape lg:12@landscape md:12@landscape sm:12@landscape default:12@landscape',
 				'class'         => 'w-full h-full object-cover brightness-[0.1] animate-ken-burns',
 			]
 		);
@@ -88,5 +88,4 @@ class ImageComponentRatioTest extends PGITestCase {
 		$this->assertStringContainsString('768w', $html);
 		$this->assertStringContainsString('640w', $html);
 	}
-
 }

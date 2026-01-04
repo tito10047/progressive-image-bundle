@@ -14,7 +14,6 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Integration;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
 class ResponsiveAttributeGeneratorTest extends PGITestCase {
 
@@ -29,9 +28,9 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase {
 						'framework' => 'bootstrap',
 					],
 					'ratios' => [
-						'landscape' => '16/9',
-						'portrait'  => '3/4',
-						'square'    => '400x500',
+						'landscape'     => '16/9',
+						'portrait'      => '3/4',
+						'square'        => '400x500',
 						'hero_portrait' => '0.65',
 					],
 				],

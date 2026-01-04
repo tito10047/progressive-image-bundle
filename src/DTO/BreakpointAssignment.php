@@ -20,8 +20,8 @@ final readonly class BreakpointAssignment
         public string $breakpoint,
         public int $columns,
         public ?string $ratio,
-		public ?int $width = null,
-		public ?int $height = null,
+		public ?int    $width = null,
+		public ?int    $height = null,
 		public ?string $widthPercent = null,
     ) {
     }
@@ -61,7 +61,7 @@ final readonly class BreakpointAssignment
 				$height = (int) $heightStr;
 			} elseif (str_ends_with($dimensions, '%')) {
 				$widthPercent = $dimensions;
-			} elseif ($dimensions !== '') {
+			} elseif ('' !== $dimensions) {
 				$width = (int) $dimensions;
 			}
 		} elseif (is_numeric($segment)) {

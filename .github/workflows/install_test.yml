@@ -24,13 +24,14 @@ jobs:
 
             -   name: Create Dummy Symfony Project
                 run: |
-                    composer create-project symfony/skeleton dummy-project --webapp
+                    composer create-project symfony/skeleton dummy-project
                     cd dummy-project
                     composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
 
             -   name: Install Dependencies
                 run: |
                     cd dummy-project
+                    composer require webapp
                     composer config minimum-stability dev
                     composer config prefer-stable true
                     composer require tito10047/progressive-image-bundle:dev-main

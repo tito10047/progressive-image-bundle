@@ -39,7 +39,7 @@ final readonly class BreakpointAssignment
 			}
 
 			return new self(
-				($matches[1] ?? '') !== '' ? $matches[1] : 'default',
+				'' !== $matches[1] ? $matches[1] : 'default',
 				0,
 				$r,
 				$width,
@@ -49,7 +49,7 @@ final readonly class BreakpointAssignment
 
 		if (preg_match('/^(?:([a-z0-9]+):)?([0-9]+)(?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
 			return new self(
-				($matches[1] ?? '') !== '' ? $matches[1] : 'default',
+				'' !== $matches[1] ? $matches[1] : 'default',
 				(int) $matches[2],
 				($matches[3] ?? '') !== '' ? $matches[3] : ($ratio ?? null)
 			);

@@ -78,8 +78,8 @@ final class Image
         }
 
 		$this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
-		if ($this->breakpoinsts) {
-			$this->responsiveAttributes = $this->responsiveAttributeGenerator?->generate($this->src, $this->breakpoinsts, $this->metadata?->width ?? 0, $this->preload, $this->pointInterest);
+		if ($this->breakpoinsts && $this->responsiveAttributeGenerator) {
+			$this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoinsts, $this->metadata->width ?? 0, $this->preload, $this->pointInterest);
 		} else {
 			$this->decoratedWidth  = $this->metadata?->width;
 			$this->decoratedHeight = $this->metadata?->height;
@@ -130,6 +130,9 @@ final class Image
 		return $this->decoratedHeight;
 	}
 
+	/**
+	 * @return array<string, string>
+	 */
 	public function getVariables(): array {
 		return $this->responsiveAttributes['variables'] ?? [];
     }

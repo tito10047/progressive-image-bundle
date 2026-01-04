@@ -52,7 +52,7 @@ final class ResponsiveAttributeGenerator
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
 			if (!$layout && 'default' === $assignment->breakpoint) {
 				foreach ($this->gridConfig['layouts'] as $l) {
-					if (($l['min_viewport'] ?? null) === 0) {
+					if (0 === $l['min_viewport']) {
 						$layout = $l;
 						break;
 					}
@@ -157,7 +157,7 @@ final class ResponsiveAttributeGenerator
         int $originalWidth,
         array &$processedWidths,
         ?string $pointInterest = null,
-    ): ?string {
+	): string {
         $ratio = $this->resolveRatio($assignment);
 
 		$requestedWidth = $basePixelWidth;

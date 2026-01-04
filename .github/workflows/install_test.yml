@@ -24,7 +24,7 @@ jobs:
 
             -   name: Create Dummy Symfony Project
                 run: |
-                    composer create-project symfony/skeleton dummy-project
+                    composer create-project symfony/skeleton dummy-project --webapp
                     cd dummy-project
                     composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
 

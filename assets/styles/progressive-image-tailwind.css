@@ -11,7 +11,7 @@
 /* sm: 640px */
 @media (min-width: 640px) {
 	.progressive-image-container {
-		max-width: var(--img-width-sm, var(--img-width));
+		width: var(--img-width-sm, var(--img-width));
 		aspect-ratio: var(--img-aspect-sm, var(--img-aspect));
 	}
 }
@@ -19,31 +19,63 @@
 /* md: 768px */
 @media (min-width: 768px) {
 	.progressive-image-container {
-		max-width: var(--img-width-md, var(--img-width-sm, var(--img-width)));
-		aspect-ratio: var(--img-aspect-md, var(--img-aspect-sm, var(--img-aspect)));
+		width: var(--img-width-md,
+		var(--img-width-sm,
+				var(--img-width)));
+
+		aspect-ratio: var(--img-aspect-md,
+		var(--img-aspect-sm,
+				var(--img-aspect)));
 	}
 }
 
 /* lg: 1024px */
 @media (min-width: 1024px) {
 	.progressive-image-container {
-		max-width: var(--img-width-lg, var(--img-width-md, var(--img-width)));
-		aspect-ratio: var(--img-aspect-lg, var(--img-aspect-md, var(--img-aspect)));
+		width: var(--img-width-lg,
+		var(--img-width-md,
+				var(--img-width-sm,
+						var(--img-width))));
+
+		aspect-ratio: var(--img-aspect-lg,
+		var(--img-aspect-md,
+				var(--img-aspect-sm,
+						var(--img-aspect))));
 	}
 }
 
 /* xl: 1280px */
 @media (min-width: 1280px) {
 	.progressive-image-container {
-		max-width: var(--img-width-xl, var(--img-width-lg, var(--img-width)));
-		aspect-ratio: var(--img-aspect-xl, var(--img-aspect-lg, var(--img-aspect)));
+		width: var(--img-width-xl,
+		var(--img-width-lg,
+				var(--img-width-md,
+						var(--img-width-sm,
+								var(--img-width)))));
+
+		aspect-ratio: var(--img-aspect-xl,
+		var(--img-aspect-lg,
+				var(--img-aspect-md,
+						var(--img-aspect-sm,
+								var(--img-aspect)))));
 	}
 }
 
 /* 2xl: 1536px */
 @media (min-width: 1536px) {
 	.progressive-image-container {
-		max-width: var(--img-width-xxl, var(--img-width-xl, var(--img-width)));
-		aspect-ratio: var(--img-aspect-xxl, var(--img-aspect-xl, var(--img-aspect)));
+		width: var(--img-width-xxl,
+		var(--img-width-xl,
+				var(--img-width-lg,
+						var(--img-width-md,
+								var(--img-width-sm,
+										var(--img-width))))));
+
+		aspect-ratio: var(--img-aspect-xxl,
+		var(--img-aspect-xl,
+				var(--img-aspect-lg,
+						var(--img-aspect-md,
+								var(--img-aspect-sm,
+										var(--img-aspect))))));
 	}
 }

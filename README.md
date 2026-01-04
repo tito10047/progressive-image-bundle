@@ -15,7 +15,11 @@
 Deliver lightning-fast user experiences by serving beautiful Blurhash placeholders while high-resolution images load in the background. This bundle simplifies responsive images with a **Breakpoint-First approach** (supporting standard aliases like `sm`, `md`, `lg`, `xl`) and features seamless **LiipImagine integration** for automatic thumbnail generation. It eliminates layout shifts (Zero CLS), boosts SEO with smart preload injection, and ensures upscale protection—all while maintaining a minimal memory footprint through stream-based metadata extraction.
 
 ```twig
-<twig:pgi:Image src="images/hero.jpg" alt="Amazing Landscape" pointInterest="50x50" sizes="md-6@landscape xl-12@portrait">Image Not Found</twig:pgi:Image>
+<twig:pgi:Image
+    src="my_image.png" 
+    alt="Náhľadový obrázok otázky" 
+    sizes="xl:[257]@square lg:[233]@square md:[262]@square sm:[250]@square md:[250]@square"
+    />
 ```
 
 ![Progressive Image Preview](docs/preview.gif)
@@ -69,44 +73,39 @@ progressive_image:
 
 ### Bundle Configuration
 ```yaml
+framework:
+    cache:
+        pools:
+            progresive_image.cache:
+                adapter: cache.adapter.filesystem
+                tags: true
 progressive_image:
-    # Define how to locate your images
+    driver: "imagick"
+    responsive_strategy:
+        grid:
+            framework: tailwind
+        ratios:
+            landscape: "16/9"
+            portrait: "3/4"
+            square: "1/1"
+    path_decorators:
+        - "progressive_image.decorator.liip_imagine"
+    image_cache_enabled: true
+    image_cache_service: "progresive_image.cache"
+
     resolvers:
         public_files:
             type: "filesystem"
             roots: ['%kernel.project_dir%/public']
             allowUnresolvable: true
-            
+
         assets:
             type: "asset_mapper"
-            
-        # Try multiple resolvers in order
         chain:
             type: "chain"
             resolvers:
                 - 'public_files'
                 - 'assets'
-
-    # Global settings
-    driver: "gd"          # Image processor: "gd" or "imagick"
-    loader: "progressive_image.filesystem.loader" # Service ID for loading file streams
-    resolver: "chain"     # Default resolver to use
-    cache: "app.cache.progressive_image" # Recommended to use a persistent cache
-
-    # Resolution for the generated Blurhash
-    hash_resolution:
-        width: 10
-        height: 8
-
-    # Transparent HTML Caching
-    image_cache_enabled: false # Set to true to enable HTML caching
-    image_cache_service: "cache.app" # The cache service to use
-    ttl: 3600 # Cache TTL in seconds (null = default)
-
-    # Integrations
-    path_decorators:
-        - "progressive_image.decorator.liip_imagine" # Enable LiipImagine support
-
 when@dev:
     progressive_image:
         resolver: chain

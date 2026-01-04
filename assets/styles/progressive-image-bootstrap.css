@@ -1,5 +1,12 @@
 /* Progressive Image Container - Bootstrap 5 Breakpoints */
-
+.progressive-image-container {
+	display: block;
+	width: 100%;
+	max-width: var(--img-width, 100%);
+	aspect-ratio: var(--img-aspect);
+	position: relative;
+	overflow: hidden;
+}
 /* sm: 576px */
 @media (min-width: 576px) {
 	.progressive-image-container {

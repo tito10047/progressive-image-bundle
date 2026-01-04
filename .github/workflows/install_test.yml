@@ -44,17 +44,16 @@ jobs:
             -   name: Install Dependencies
                 run: |
                     cd dummy-project
-                    composer require webapp --no-scripts
+                    composer config extra.symfony.allow-contrib true
+                    composer require webapp 
                     composer config minimum-stability dev
                     composer config prefer-stable true
                     composer require liip/imagine-bundle
-                    composer require tito10047/progressive-image-bundle:dev-main --no-scripts
+                    composer require tito10047/progressive-image-bundle:dev-main
 
             -   name: Copy E2E Test Files
                 run: |
                     cp -R my-bundle/tests_ete/basic/* dummy-project/
-                    # Ensure config files are in the right place if they were not already
-                    # (cp -R should handle it, but being explicit for clarity if needed)
 
             -   name: Run PHP Built-in Server
                 run: |

@@ -156,6 +156,9 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('path_decorators')
                     ->scalarPrototype()->end()
                 ->end()
+			->arrayNode('image_configs')
+			->variablePrototype()->end()
+			->end()
             ->end()
         ->end()
         ;

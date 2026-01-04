@@ -111,4 +111,20 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
         $this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);
     }
+
+	public function testGenerateWithExtraConfig(): void {
+		$imageConfigs = [
+			'quality'         => 75,
+			'post_processors' => [
+				'cwebp' => ['q' => 75, 'm' => 6]
+			]
+		];
+		$generator    = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration, $imageConfigs);
+
+		$result = $generator->generate(200, 150);
+
+		$this->assertStringContainsString('_', $result['filterName']);
+		$this->assertEquals(75, $result['config']['quality']);
+		$this->assertEquals(['q' => 75, 'm' => 6], $result['config']['post_processors']['cwebp']);
+	}
 }

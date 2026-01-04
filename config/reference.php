@@ -761,6 +761,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         ratios?: array<string, scalar|null|Param>,
  *     },
  *     path_decorators?: list<scalar|null|Param>,
+ *     image_configs?: list<mixed>,
  * }
  * @psalm-type LiipImagineConfig = array{
  *     resolvers?: array<string, array{ // Default: []

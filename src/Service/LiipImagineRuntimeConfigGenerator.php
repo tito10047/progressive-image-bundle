@@ -19,6 +19,7 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
 {
     public function __construct(
         private readonly FilterConfiguration $filterConfiguration,
+		private readonly array $imageConfigs = [],
     ) {
     }
 
@@ -32,6 +33,9 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
         if ($pointInterest) {
             $filterName .= '_'.$pointInterest;
         }
+		if ($this->imageConfigs) {
+			$filterName .= '_' . substr(md5(serialize($this->imageConfigs)), 0, 5);
+		}
 
         $config = [];
         if (null !== $filter) {
@@ -40,6 +44,8 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
             } catch (NonExistingFilterException) {
             }
         }
+
+		$config = array_replace_recursive($config, $this->imageConfigs);
 
         if (!isset($config['filters'])) {
             $config['filters'] = [];

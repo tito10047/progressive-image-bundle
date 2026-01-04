@@ -65,6 +65,13 @@ progressive_image:
     # List of path decorators (e.g., for LiipImagine)
     path_decorators:
         - "progressive_image.decorator.liip_imagine"
+
+    # Global image configuration (quality, post-processors, etc.)
+    # These settings are applied to all generated images.
+    image_configs:
+        quality: 75
+        post_processors:
+            cwebp: { q: 75, m: 6 }
 ```
 
 ## Detailed Section Description
@@ -88,3 +95,10 @@ The bundle can cache generated HTML components, saving time on subsequent Blurha
 ### Decorators (`path_decorators`)
 
 They allow modifying the final image URL. Most commonly used for integration with LiipImagine, which generates thumbnails.
+
+### Image Configs (`image_configs`)
+
+Allows defining global parameters for image generation that are passed to the underlying library (e.g. LiipImagine).
+
+- **quality**: Defines the output image quality.
+- **post_processors**: Configures post-processing filters like `cwebp` for WebP conversion.

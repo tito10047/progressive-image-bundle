@@ -24,6 +24,7 @@ use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\ChainResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
+use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
@@ -142,6 +143,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         ;
         $container->setParameter('progressive_image.image_cache_enabled', $imageCacheEnabled);
         $container->setParameter('progressive_image.ttl', $ttl);
+		$container->setParameter('progressive_image.image_configs', $configs['image_configs'] ?? []);
         $container->setAlias('progressive_image.image_cache_service', $imageCacheServiceId);
 
         $container->register(TransparentCacheExtension::class)
@@ -158,6 +160,10 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         ;
 
         if (class_exists(LiipImagineBundle::class)) {
+			$container->register(LiipImagineRuntimeConfigGenerator::class)
+				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
+				->setArgument('$imageConfigs', new Parameter('progressive_image.image_configs'));
+
             $container->register(LiipImagineResponsiveImageUrlGenerator::class)
                 ->setArgument('$cacheManager', new Reference('liip_imagine.cache.manager'))
                 ->setArgument('$router', new Reference('router'))
@@ -167,7 +173,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$cache', $imageCacheServiceReference)
                 ->setPublic(true);
 
-            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class);
+			$container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);
+			$container->setAlias(LiipImagineRuntimeConfigGeneratorInterface::class, LiipImagineRuntimeConfigGenerator::class)->setPublic(true);
         }
         $responsiveConfig = $configs['responsive_strategy'] ?? [];
         $generatorId = $responsiveConfig['generator'] ?? null;

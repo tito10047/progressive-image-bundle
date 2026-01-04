@@ -18,7 +18,7 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 class BreakpointAssignmentTest extends TestCase
 {
     #[DataProvider('provideBreakpointStrings')]
-	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null): void
+	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null, ?string $expectedWidthPercent = null): void
     {
         $assignment = BreakpointAssignment::fromSegment($input, $ratio);
 
@@ -27,6 +27,7 @@ class BreakpointAssignmentTest extends TestCase
         $this->assertSame($expectedRatio, $assignment->ratio);
 		$this->assertSame($expectedWidth, $assignment->width);
 		$this->assertSame($expectedHeight, $assignment->height);
+		$this->assertSame($expectedWidthPercent, $assignment->widthPercent);
     }
 
     public static function provideBreakpointStrings(): array
@@ -45,6 +46,7 @@ class BreakpointAssignmentTest extends TestCase
 			'only columns with default ratio' => ['8', '16/9', 'default', 8, '16/9'],
 			'explicit dimensions'             => ['xxl:[430x370]', null, 'xxl', 0, '430x370', 430, 370],
 			'explicit width with ratio'       => ['xl:[430]@square', null, 'xl', 0, 'square', 430, null],
+			'percentage width' => ['2xl:[80%]@landscape', null, '2xl', 0, 'landscape', null, null, '80%'],
         ];
     }
 

@@ -173,4 +173,24 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$this->assertEquals('430px', $result['variables']['--img-width-xl']);
 		$this->assertEquals('1', $result['variables']['--img-aspect-xl']);
 	}
+
+	public function testGenerateWithPercentageWidth(): void {
+		$path          = 'test.jpg';
+		$assignments   = [
+			new BreakpointAssignment('xxl', 0, 'landscape', null, null, '80%'),
+		];
+		$originalWidth = 2000;
+
+		// xxl: 80% of 1320px = 1056px.
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 1056, 704)
+			->willReturn('url-1056');
+
+		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
+
+		$this->assertEquals('(min-width: 1400px) 1056px', $result['sizes']);
+		$this->assertStringContainsString('url-1056 1056w', $result['srcset']);
+		$this->assertEquals('80%', $result['variables']['--img-width-xxl']);
+	}
 }

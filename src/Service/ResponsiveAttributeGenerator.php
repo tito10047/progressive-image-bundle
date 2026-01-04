@@ -63,7 +63,7 @@ final class ResponsiveAttributeGenerator
 				throw new \InvalidArgumentException(sprintf('Breakpoint "%s" is not defined in the grid configuration.', $assignment->breakpoint));
             }
 
-            [$pixelWidth, $sizeValue] = $this->calculateDimensions($assignment, $layout);
+			[$pixelWidth, $sizeValue, $cssValue] = $this->calculateDimensions($assignment, $layout);
 
             $size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
             $sizesParts[] = $size;
@@ -81,7 +81,7 @@ final class ResponsiveAttributeGenerator
 
 			$ratio                              = $this->resolveRatio($assignment);
 			$suffix                             = 0 === $layout['min_viewport'] ? '' : '-' . $assignment->breakpoint;
-			$variables['--img-width' . $suffix] = $sizeValue;
+			$variables['--img-width' . $suffix] = $cssValue;
 			if ($ratio) {
 				$variables['--img-aspect' . $suffix] = (string) $ratio;
 			}
@@ -118,15 +118,29 @@ final class ResponsiveAttributeGenerator
     /**
      * @param array{min_viewport: int, max_container: int|null} $layout
      *
-     * @return array{0: float, 1: string}
+	 * @return array{0: float, 1: string, 2: string}
      */
     private function calculateDimensions(BreakpointAssignment $assignment, array $layout): array
     {
+		if (null !== $assignment->widthPercent) {
+			$percentValue = (float) rtrim($assignment->widthPercent, '%');
+			$cssValue     = $assignment->widthPercent;
+
+			$maxContainer = $layout['max_container'];
+			if ($maxContainer) {
+				$pixelWidth = ($percentValue / 100) * $maxContainer;
+			} else {
+				$pixelWidth = ($percentValue / 100) * 1920;
+			}
+
+			return [$pixelWidth, round($pixelWidth) . 'px', $cssValue];
+		}
+
 		if (null !== $assignment->width) {
 			$pixelWidth = (float) $assignment->width;
 			$sizeValue  = $assignment->width . 'px';
 
-			return [$pixelWidth, $sizeValue];
+			return [$pixelWidth, $sizeValue, $sizeValue];
 		}
 
         $totalCols = $this->gridConfig['columns'];
@@ -144,7 +158,7 @@ final class ResponsiveAttributeGenerator
             $pixelWidth = ($vwWidth / 100) * 1920;
         }
 
-        return [$pixelWidth, $sizeValue];
+		return [$pixelWidth, $sizeValue, $sizeValue];
     }
 
     /**

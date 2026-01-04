@@ -22,6 +22,7 @@ final readonly class BreakpointAssignment
         public ?string $ratio,
 		public ?int $width = null,
 		public ?int $height = null,
+		public ?string $widthPercent = null,
     ) {
     }
 
@@ -30,11 +31,12 @@ final readonly class BreakpointAssignment
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {
-		if (preg_match('/^(?:([a-z0-9]+):)?\[(\d+)(?:x(\d+))?\](?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
-			$width  = (int) $matches[2];
-			$height = ($matches[3] ?? '') !== '' ? (int) $matches[3] : null;
-			$r      = ($matches[4] ?? '') !== '' ? $matches[4] : ($ratio ?? null);
-			if (null !== $height && null === $r) {
+		if (preg_match('/^(?:([a-z0-9]+):)?\[(\d+)?(%)?(?:x(\d+))?\](?:@([a-z0-9\/-]+))?$/i', $segment, $matches)) {
+			$widthPercent = ($matches[3] ?? '') === '%' ? $matches[2] . '%' : null;
+			$width        = $widthPercent === null && ($matches[2] ?? '') !== '' ? (int) $matches[2] : null;
+			$height       = ($matches[4] ?? '') !== '' ? (int) $matches[4] : null;
+			$r            = ($matches[5] ?? '') !== '' ? $matches[5] : ($ratio ?? null);
+			if (null !== $height && null === $r && null !== $width) {
 				$r = $width . 'x' . $height;
 			}
 
@@ -43,7 +45,8 @@ final readonly class BreakpointAssignment
 				0,
 				$r,
 				$width,
-				$height
+				$height,
+				$widthPercent
 			);
 		}
 

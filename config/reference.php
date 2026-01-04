@@ -188,7 +188,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         only_exceptions?: bool|Param, // Default: false
  *         only_main_requests?: bool|Param, // Default: false
  *         dsn?: scalar|null|Param, // Default: "file:%kernel.cache_dir%/profiler"
- *         collect_serializer_data?: bool|Param, // Enables the serializer data collector and profiler panel. // Default: false
+ *         collect_serializer_data?: true|Param, // Default: true
  *     },
  *     workflows?: bool|array{
  *         enabled?: bool|Param, // Default: false
@@ -232,7 +232,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *         resource: scalar|null|Param,
  *         type?: scalar|null|Param,
- *         cache_dir?: scalar|null|Param, // Deprecated: Setting the "framework.router.cache_dir.cache_dir" configuration option is deprecated. It will be removed in version 8.0. // Default: "%kernel.build_dir%"
  *         default_uri?: scalar|null|Param, // The default URI used to generate URLs in a non-HTTP context. // Default: null
  *         http_port?: scalar|null|Param, // Default: 80
  *         https_port?: scalar|null|Param, // Default: 443
@@ -256,8 +255,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         gc_maxlifetime?: scalar|null|Param,
  *         save_path?: scalar|null|Param, // Defaults to "%kernel.cache_dir%/sessions" if the "handler_id" option is not null.
  *         metadata_update_threshold?: int|Param, // Seconds to wait between 2 session metadata updates. // Default: 0
- *         sid_length?: int|Param, // Deprecated: Setting the "framework.session.sid_length.sid_length" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.
- *         sid_bits_per_character?: int|Param, // Deprecated: Setting the "framework.session.sid_bits_per_character.sid_bits_per_character" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.
  *     },
  *     request?: bool|array{ // Request configuration
  *         enabled?: bool|Param, // Default: false
@@ -331,11 +328,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     validation?: bool|array{ // Validation configuration
  *         enabled?: bool|Param, // Default: false
- *         cache?: scalar|null|Param, // Deprecated: Setting the "framework.validation.cache.cache" configuration option is deprecated. It will be removed in version 8.0.
  *         enable_attributes?: bool|Param, // Default: true
  *         static_method?: list<scalar|null|Param>,
  *         translation_domain?: scalar|null|Param, // Default: "validators"
- *         email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|"loose"|Param, // Default: "html5"
+ *         email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|Param, // Default: "html5"
  *         mapping?: array{
  *             paths?: list<scalar|null|Param>,
  *         },
@@ -347,9 +343,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         auto_mapping?: array<string, array{ // Default: []
  *             services?: list<scalar|null|Param>,
  *         }>,
- *     },
- *     annotations?: bool|array{
- *         enabled?: bool|Param, // Default: false
  *     },
  *     serializer?: bool|array{ // Serializer configuration
  *         enabled?: bool|Param, // Default: false
@@ -382,7 +375,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     property_info?: bool|array{ // Property info configuration
  *         enabled?: bool|Param, // Default: true
- *         with_constructor_extractor?: bool|Param, // Registers the constructor extractor.
+ *         with_constructor_extractor?: bool|Param, // Registers the constructor extractor. // Default: true
  *     },
  *     cache?: array{ // Cache configuration
  *         prefix_seed?: scalar|null|Param, // Used to namespace cache keys when using several apps with the same shared backend. // Default: "_%kernel.project_dir%.%kernel.container_class%"
@@ -769,6 +762,106 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     path_decorators?: list<scalar|null|Param>,
  * }
+ * @psalm-type LiipImagineConfig = array{
+ *     resolvers?: array<string, array{ // Default: []
+ *         web_path?: array{
+ *             web_root?: scalar|null|Param, // Default: "%kernel.project_dir%/public"
+ *             cache_prefix?: scalar|null|Param, // Default: "media/cache"
+ *         },
+ *         aws_s3?: array{
+ *             bucket: scalar|null|Param,
+ *             cache?: scalar|null|Param, // Default: false
+ *             use_psr_cache?: bool|Param, // Default: false
+ *             acl?: scalar|null|Param, // Default: "public-read"
+ *             cache_prefix?: scalar|null|Param, // Default: ""
+ *             client_id?: scalar|null|Param, // Default: null
+ *             client_config: list<mixed>,
+ *             get_options?: array<string, scalar|null|Param>,
+ *             put_options?: array<string, scalar|null|Param>,
+ *             proxies?: array<string, scalar|null|Param>,
+ *         },
+ *         flysystem?: array{
+ *             filesystem_service: scalar|null|Param,
+ *             cache_prefix?: scalar|null|Param, // Default: ""
+ *             root_url: scalar|null|Param,
+ *             visibility?: "public"|"private"|"noPredefinedVisibility"|Param, // Default: "public"
+ *         },
+ *     }>,
+ *     loaders?: array<string, array{ // Default: []
+ *         stream?: array{
+ *             wrapper: scalar|null|Param,
+ *             context?: scalar|null|Param, // Default: null
+ *         },
+ *         filesystem?: array{
+ *             locator?: "filesystem"|"filesystem_insecure"|Param, // Using the "filesystem_insecure" locator is not recommended due to a less secure resolver mechanism, but is provided for those using heavily symlinked projects. // Default: "filesystem"
+ *             data_root?: list<scalar|null|Param>,
+ *             allow_unresolvable_data_roots?: bool|Param, // Default: false
+ *             bundle_resources?: array{
+ *                 enabled?: bool|Param, // Default: false
+ *                 access_control_type?: "blacklist"|"whitelist"|Param, // Sets the access control method applied to bundle names in "access_control_list" into a blacklist or whitelist. // Default: "blacklist"
+ *                 access_control_list?: list<scalar|null|Param>,
+ *             },
+ *         },
+ *         flysystem?: array{
+ *             filesystem_service: scalar|null|Param,
+ *         },
+ *         chain?: array{
+ *             loaders: list<scalar|null|Param>,
+ *         },
+ *     }>,
+ *     driver?: scalar|null|Param, // Default: "gd"
+ *     cache?: scalar|null|Param, // Default: "default"
+ *     cache_base_path?: scalar|null|Param, // Default: ""
+ *     data_loader?: scalar|null|Param, // Default: "default"
+ *     default_image?: scalar|null|Param, // Default: null
+ *     default_filter_set_settings?: array{
+ *         quality?: scalar|null|Param, // Default: 100
+ *         jpeg_quality?: scalar|null|Param, // Default: null
+ *         png_compression_level?: scalar|null|Param, // Default: null
+ *         png_compression_filter?: scalar|null|Param, // Default: null
+ *         format?: scalar|null|Param, // Default: null
+ *         animated?: bool|Param, // Default: false
+ *         cache?: scalar|null|Param, // Default: null
+ *         data_loader?: scalar|null|Param, // Default: null
+ *         default_image?: scalar|null|Param, // Default: null
+ *         filters?: array<string, array<string, mixed>>,
+ *         post_processors?: array<string, array<string, mixed>>,
+ *     },
+ *     controller?: array{
+ *         filter_action?: scalar|null|Param, // Default: "Liip\\ImagineBundle\\Controller\\ImagineController::filterAction"
+ *         filter_runtime_action?: scalar|null|Param, // Default: "Liip\\ImagineBundle\\Controller\\ImagineController::filterRuntimeAction"
+ *         redirect_response_code?: int|Param, // Default: 302
+ *     },
+ *     filter_sets?: array<string, array{ // Default: []
+ *         quality?: scalar|null|Param,
+ *         jpeg_quality?: scalar|null|Param,
+ *         png_compression_level?: scalar|null|Param,
+ *         png_compression_filter?: scalar|null|Param,
+ *         format?: scalar|null|Param,
+ *         animated?: bool|Param,
+ *         cache?: scalar|null|Param,
+ *         data_loader?: scalar|null|Param,
+ *         default_image?: scalar|null|Param,
+ *         filters?: array<string, array<string, mixed>>,
+ *         post_processors?: array<string, array<string, mixed>>,
+ *     }>,
+ *     twig?: array{
+ *         mode?: "none"|"lazy"|"legacy"|Param, // Twig mode: none/lazy/legacy (default) // Default: "legacy"
+ *         assets_version?: scalar|null|Param, // Default: null
+ *     },
+ *     enqueue?: bool|Param, // Enables integration with enqueue if set true. Allows resolve image caches in background by sending messages to MQ. // Default: false
+ *     messenger?: bool|array{ // Enables integration with symfony/messenger if set true. Warmup image caches in background by sending messages to MQ.
+ *         enabled?: bool|Param, // Default: false
+ *     },
+ *     templating?: bool|Param, // Enables integration with symfony/templating component // Default: true
+ *     webp?: array{
+ *         generate?: bool|Param, // Default: false
+ *         quality?: int|Param, // Default: 100
+ *         cache?: scalar|null|Param, // Default: null
+ *         data_loader?: scalar|null|Param, // Default: null
+ *         post_processors?: array<string, array<string, mixed>>,
+ *     },
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -778,6 +871,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig?: TwigConfig,
  *     stimulus?: StimulusConfig,
  *     progressive_image?: ProgressiveImageConfig,
+ *     liip_imagine?: LiipImagineConfig,
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,

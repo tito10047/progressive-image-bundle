@@ -47,8 +47,8 @@ jobs:
                     composer require webapp --no-scripts
                     composer config minimum-stability dev
                     composer config prefer-stable true
+                    composer require liip/imagine-bundle
                     composer require tito10047/progressive-image-bundle:dev-main --no-scripts
-                    composer require liip/imagine-bundle --no-scripts
 
             -   name: Copy E2E Test Files
                 run: |

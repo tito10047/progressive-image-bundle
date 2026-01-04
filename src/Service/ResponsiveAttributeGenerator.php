@@ -50,7 +50,7 @@ final class ResponsiveAttributeGenerator
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
-			if (!$layout && $assignment->breakpoint === 'default') {
+			if (!$layout && 'default' === $assignment->breakpoint) {
 				foreach ($this->gridConfig['layouts'] as $l) {
 					if (($l['min_viewport'] ?? null) === 0) {
 						$layout = $l;
@@ -60,7 +60,7 @@ final class ResponsiveAttributeGenerator
 			}
 
             if (!$layout) {
-                continue;
+				throw new \InvalidArgumentException(sprintf('Breakpoint "%s" is not defined in the grid configuration.', $assignment->breakpoint));
             }
 
             [$pixelWidth, $sizeValue] = $this->calculateDimensions($assignment, $layout);
@@ -80,7 +80,7 @@ final class ResponsiveAttributeGenerator
             }
 
 			$ratio                              = $this->resolveRatio($assignment);
-			$suffix                             = $layout['min_viewport'] === 0 ? '' : '-' . $assignment->breakpoint;
+			$suffix                             = 0 === $layout['min_viewport'] ? '' : '-' . $assignment->breakpoint;
 			$variables['--img-width' . $suffix] = $sizeValue;
 			if ($ratio) {
 				$variables['--img-aspect' . $suffix] = (string) $ratio;
@@ -122,7 +122,7 @@ final class ResponsiveAttributeGenerator
      */
     private function calculateDimensions(BreakpointAssignment $assignment, array $layout): array
     {
-		if ($assignment->width !== null) {
+		if (null !== $assignment->width) {
 			$pixelWidth = (float) $assignment->width;
 			$sizeValue  = $assignment->width . 'px';
 
@@ -159,6 +159,10 @@ final class ResponsiveAttributeGenerator
         ?string $pointInterest = null,
     ): ?string {
         $ratio = $this->resolveRatio($assignment);
+
+		if ($basePixelWidth > $originalWidth) {
+			$basePixelWidth = $originalWidth;
+		}
 
 		if (isset($processedWidths[$basePixelWidth])) {
             return null;
@@ -198,6 +202,6 @@ final class ResponsiveAttributeGenerator
             return (float) $matches[1] / (float) $matches[2];
         }
 
-        return null;
+		throw new \InvalidArgumentException(sprintf('Invalid ratio format or missing ratio configuration for: "%s"', $ratioString));
     }
 }

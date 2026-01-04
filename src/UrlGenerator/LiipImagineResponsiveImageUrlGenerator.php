@@ -49,6 +49,7 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
 
         if ($this->cacheManager->isStored($path, $filterName)) {
 			$browserPath = $this->cacheManager->getBrowserPath($path, $filterName);
+
 			return str_replace('/resolve/', '/', $browserPath);
         }
 

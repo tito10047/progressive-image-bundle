@@ -34,7 +34,7 @@ final readonly class BreakpointAssignment
 			$width  = (int) $matches[2];
 			$height = ($matches[3] ?? '') !== '' ? (int) $matches[3] : null;
 			$r      = ($matches[4] ?? '') !== '' ? $matches[4] : ($ratio ?? null);
-			if ($height !== null && $r === null) {
+			if (null !== $height && null === $r) {
 				$r = $width . 'x' . $height;
 			}
 

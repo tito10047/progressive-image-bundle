@@ -2,8 +2,8 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration\Resolver;
 
-use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
+use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 
 class ChainResolverTest extends PGITestCase {
 

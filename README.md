@@ -1,9 +1,9 @@
 
 # 🖼️ Progressive Image Bundle
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/symfony.yml?branch=main)](https://github.com/tito10047/progressive-image-bundle/actions)
-[![PHP-CS-Fixer](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/php-cs-fixer.yml?branch=main&label=code%20style)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/php-cs-fixer.yml)
-[![PHPStan](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/phpstan.yml?branch=main&label=phpstan)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/phpstan.yml)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main)](https://github.com/tito10047/progressive-image-bundle/actions)
+[![PHP-CS-Fixer](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main&label=code%20style)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/ci.yml)
+[![PHPStan](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main&label=phpstan)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/tito10047/progressive-image-bundle.svg)](https://packagist.org/packages/tito10047/progressive-image-bundle)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892bf.svg)](https://php.net)

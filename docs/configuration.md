@@ -1,4 +1,4 @@
-# Configuration
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Configuration
 
 The bundle configuration is usually located in `config/packages/progressive_image.yaml`. All settings are optional as the bundle has sensible default values.
 

@@ -1,4 +1,4 @@
-# Advanced Features
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Advanced Features
 
 ## Smart Preload Injection (LCP Optimization)
 

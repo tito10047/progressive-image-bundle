@@ -1,4 +1,4 @@
-# Usage
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Usage
 
 The main way to use the bundle is via the `<twig:pgi:Image>` Twig component.
 

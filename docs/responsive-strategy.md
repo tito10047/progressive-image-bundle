@@ -1,4 +1,4 @@
-# Responsive Strategy
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Responsive Strategy
 
 Progressive Image Bundle doesn't just use static dimensions; it operates with a **Breakpoint-First approach**. This means it calculates the exact width of the image based
 on your CSS grid.

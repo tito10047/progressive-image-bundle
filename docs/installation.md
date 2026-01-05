@@ -1,4 +1,4 @@
-# Installation
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Installation
 
 Progressive Image Bundle requires **PHP 8.2+** and **Symfony 6.4+**.
 

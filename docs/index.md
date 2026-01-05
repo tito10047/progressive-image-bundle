@@ -1,4 +1,4 @@
-# Progressive Image Bundle Documentation
+# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Progressive Image Bundle Documentation
 
 Welcome to the documentation for the **Progressive Image Bundle** for Symfony. This bundle helps you deliver lightning-fast and fully responsive images with minimal
 effort.

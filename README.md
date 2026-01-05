@@ -1,5 +1,4 @@
-
-# 🖼️ Progressive Image Bundle
+# <img src="docs/logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Progressive Image Bundle
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main)](https://github.com/tito10047/progressive-image-bundle/actions)
 [![PHP-CS-Fixer](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main&label=code%20style)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/ci.yml)

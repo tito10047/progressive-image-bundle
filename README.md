@@ -31,7 +31,8 @@ This bundle handles everything you need for modern image management. From **full
 
 ## 🎨 Usage
 
-Simply use the Twig component. The bundle takes care of the rest.
+Simply use the Twig component. The bundle takes care of everything — it automatically calculates the required image dimensions for each breakpoint, resizes the original,
+and generates all necessary variants on the fly.
 
 ```twig
 {# Basic usage - everything is automatic #}
@@ -47,16 +48,20 @@ Simply use the Twig component. The bundle takes care of the rest.
 
 ### 📱 Selector Examples (Breakpoint Assignment)
 
-The bundle supports flexible size assignment based on breakpoints you know from Tailwind or Bootstrap:
+The bundle supports flexible size assignment based on breakpoints you know from Tailwind or Bootstrap. For each selector, it automatically calculates the final pixel
+dimensions based on the container width defined by your CSS framework (Bootstrap or Tailwind) and generates the corresponding image.
 
-| Selector              | Meaning                                          |
-|:----------------------|:-------------------------------------------------|
-| `6`                   | 6 grid columns on all breakpoints                |
-| `md:6`                | 6 grid columns from `md` breakpoint              |
-| `lg:4@landscape`      | 4 columns from `lg` with 16:9 aspect ratio       |
-| `xs:12@square`        | 12 columns on `xs` with 1:1 aspect ratio         |
-| `xxl:[430x370]`       | Explicit dimensions for a specific breakpoint    |
-| `xl:[100%]@landscape` | 100% container width with landscape aspect ratio |
+| Selector              | Meaning                                          | Resulting behavior                                      |
+|:----------------------|:-------------------------------------------------|:--------------------------------------------------------|
+| `6`                   | 6 grid columns on all breakpoints                | Width: 50% of container, original aspect ratio          |
+| `md:6`                | 6 grid columns from `md` breakpoint              | From `md` up: 50% of container, below `md`: full width  |
+| `lg:4@landscape`      | 4 columns from `lg` with 16:9 aspect ratio       | From `lg` up: 33.3% of container, cropped to 16:9 ratio |
+| `xs:12@square`        | 12 columns on `xs` with 1:1 aspect ratio         | Full width container, cropped to 1:1 square             |
+| `xxl:[430x370]`       | Explicit dimensions for a specific breakpoint    | Exact size 430x370px on `xxl` and larger                |
+| `xl:[100%]@landscape` | 100% container width with landscape aspect ratio | Full width container, cropped to 16:9 ratio             |
+
+> **What is a "container"?** The bundle automatically detects your CSS framework (Bootstrap or Tailwind) and extracts the exact container widths for each breakpoint from
+> its configuration. It then uses these values to calculate the precise pixel dimensions for your images.
 
 ---
 

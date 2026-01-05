@@ -26,6 +26,11 @@
 		left: 0;
 	}
 
+	.progressive-image-high-res {
+		opacity: 0;
+		transition: opacity 700ms ease-in-out;
+	}
+
 	.progressive-image-placeholder,
 	.progressive-image-high-res,
 	.progressive-image-error-overlay {

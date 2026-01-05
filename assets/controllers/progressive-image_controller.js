@@ -14,18 +14,18 @@ export default class extends Controller {
 	}
 
 	connect() {
+		if (this.highResTarget.complete && this.highResTarget.naturalWidth === 0) {
+			this.handleError(true);
+			return;
+		} else if (this.highResTarget.complete && this.highResTarget.naturalWidth > 0) {
+			this.reveal();
+			return;
+		}
+
         this.renderBlurhash();
 
-        // Ak obrázok ešte nie je načítaný, nastavíme mu opacity na 0 bez transition
         if (!this.highResTarget.complete) {
             this.highResTarget.style.opacity = '0';
-        }
-
-        // Senior tip: Ak obrázok zlyhal skôr, než sa stihol pripojiť JS
-        if (this.highResTarget.complete && this.highResTarget.naturalWidth === 0) {
-            this.handleError();
-        } else if (this.highResTarget.complete && this.highResTarget.naturalWidth > 0) {
-            this.reveal();
         }
 	}
 
@@ -43,21 +43,33 @@ export default class extends Controller {
     }
 
     reveal() {
+		if (this.highResTarget.complete && this.highResTarget.naturalWidth > 0) {
+			this.highResTarget.style.transition = 'none';
+		}
+		// Force reflow pre istotu, ak by sa opacity menilo príliš rýchlo po pripojení do DOM
+		this.highResTarget.offsetHeight;
         this.highResTarget.style.opacity = '1';
         if (this.hasPlaceholderTarget) {
-            setTimeout(() => this.placeholderTarget.style.display = 'none', 1000);
+			const delay = (this.highResTarget.style.transition === 'none') ? 0 : 1000;
+			setTimeout(() => this.placeholderTarget.style.display = 'none', delay);
         }
     }
 
-    handleError() {
+	handleError(immediate = false) {
         if (this.hasErrorOverlayTarget) {
 			if (this.hasPlaceholderTarget) this.placeholderTarget.style.display = 'none';
 			this.highResTarget.style.display = 'none';
             this.errorOverlayTarget.style.display = 'block';
-            // Malý delay pre plynulý fade-in overlayu, ak máš transition
-            setTimeout(() => {
-                this.errorOverlayTarget.style.opacity = '1';
-            }, 50);
+
+			if (immediate) {
+				this.errorOverlayTarget.style.transition = 'none';
+				this.errorOverlayTarget.style.opacity = '1';
+			} else {
+				// Malý delay pre plynulý fade-in overlayu, ak máš transition
+				setTimeout(() => {
+					this.errorOverlayTarget.style.opacity = '1';
+				}, 50);
+			}
         }
         
         console.error(`ProgressiveImage: Failed to load image at ${this.highResTarget.src}`);

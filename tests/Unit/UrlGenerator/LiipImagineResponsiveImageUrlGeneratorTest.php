@@ -16,6 +16,7 @@ use Liip\ImagineBundle\Exception\Imagine\Filter\NonExistingFilterException;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
@@ -29,6 +30,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
     private UriSigner $uriSigner;
     private LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator;
     private FilterConfiguration $filterConfiguration;
+	private RequestStack $requestStack;
     private TagAwareCacheInterface $cache;
     private LiipImagineResponsiveImageUrlGenerator $generator;
 
@@ -42,6 +44,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
         $this->uriSigner = $this->createMock(UriSigner::class);
         $this->runtimeConfigGenerator = $this->createMock(LiipImagineRuntimeConfigGeneratorInterface::class);
         $this->filterConfiguration = $this->createMock(FilterConfiguration::class);
+		$this->requestStack = $this->createMock(RequestStack::class);
         $this->cache = $this->createMock(TagAwareCacheInterface::class);
 
         $this->generator = new LiipImagineResponsiveImageUrlGenerator(
@@ -50,7 +53,9 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             $this->uriSigner,
             $this->runtimeConfigGenerator,
             $this->filterConfiguration,
+			$this->requestStack,
             $this->cache,
+			false,
             'my_filter'
         );
     }
@@ -72,7 +77,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             ->willReturn(true);
 
         $this->cacheManager->expects($this->once())
-            ->method('getBrowserPath')
+			->method('resolve')
             ->with($path, 'my_filter_100x100')
             ->willReturn('/media/cache/my_filter_100x100/test.jpg');
 

@@ -70,12 +70,19 @@ final class LiipImagineController
             throw new BadRequestHttpException(\sprintf('Signed url does not pass the sign check for path "%s" and filter "%s"', $path, $filter));
         }
 
-        return $this->createRedirectResponse(function () use ($path, $filterName) {
-			$url = $this->filterService->getUrlOfFilteredImage($path, $filterName);
-
-			return str_replace('/resolve/', '/', $url);
+		return $this->createRedirectResponse(function () use ($path, $filterName, $request) {
+			return $this->filterService->getUrlOfFilteredImage(
+				$path,
+				$filterName,
+				null,
+				$this->isWebpSupported($request)
+			);
         }, $path, $filterName);
     }
+
+	private function isWebpSupported(Request $request): bool {
+		return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
+	}
 
     private function createRedirectResponse(\Closure $url, string $path, string $filter): RedirectResponse
     {

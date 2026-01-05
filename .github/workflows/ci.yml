@@ -89,6 +89,8 @@ jobs:
                     ini-values: memory_limit=-1
                     extensions: imagick
                     tools: php-coveralls
+            -   name: "Install system dependencies"
+                run: sudo apt-get update && sudo apt-get install -y webp
             -   name: "Configure Symfony"
                 run: 'composer config extra.symfony.require "${{ matrix.symfony }}"'
             -   name: Get composer cache directory

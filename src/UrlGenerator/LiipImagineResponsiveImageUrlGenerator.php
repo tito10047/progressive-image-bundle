@@ -15,6 +15,7 @@ namespace Tito10047\ProgressiveImageBundle\UrlGenerator;
 use Liip\ImagineBundle\Exception\Imagine\Filter\NonExistingFilterException;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
@@ -28,7 +29,9 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         private readonly UriSigner $uriSigner,
         private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
         private readonly FilterConfiguration $filterConfiguration,
+		private readonly RequestStack $requestStack,
         private readonly ?TagAwareCacheInterface $cache,
+		private readonly bool         $webpGenerate = false,
         private readonly ?string $filter = null,
     ) {
     }
@@ -47,10 +50,14 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
             $this->filterConfiguration->set($filterName, $config);
         }
 
-        if ($this->cacheManager->isStored($path, $filterName)) {
-			$browserPath = $this->cacheManager->getBrowserPath($path, $filterName);
+		$isWebpSupported = $this->isWebpSupported();
+		$finalPath       = $path;
+		if ($this->webpGenerate && $isWebpSupported) {
+			$finalPath = $path . '.webp';
+		}
 
-			return str_replace('/resolve/', '/', $browserPath);
+		if ($this->cacheManager->isStored($finalPath, $filterName)) {
+			return $this->cacheManager->resolve($finalPath, $filterName);
         }
 
         $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
@@ -64,5 +71,14 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         ], UrlGeneratorInterface::ABSOLUTE_URL);
 
         return $this->uriSigner->sign($url);
+	}
+
+	private function isWebpSupported(): bool {
+		$request = $this->requestStack->getCurrentRequest();
+		if (null === $request) {
+			return false;
+		}
+
+		return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
     }
 }

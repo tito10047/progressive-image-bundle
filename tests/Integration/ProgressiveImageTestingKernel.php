@@ -144,10 +144,10 @@ class ProgressiveImageTestingKernel extends Kernel
     public function shutdown(): void
     {
         parent::shutdown();
-        $cacheDir = $this->getCacheDir();
-        if (is_dir($cacheDir)) {
-            $this->removeDir($cacheDir);
-        }
+//        $cacheDir = $this->getCacheDir();
+//        if (is_dir($cacheDir)) {
+//            $this->removeDir($cacheDir);
+//        }
     }
 
     private function removeDir(string $dir): void

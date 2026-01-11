@@ -106,6 +106,80 @@ class LiipImagineControllerTest extends PGIWebTestCase
         $this->assertEquals(100, $imageSize[1]);
     }
 
+	public function testIndexWithCustomConfiguredFilter(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$client = static::createClient([
+			'progressive_image' => [
+				'path_decorators' => [
+					'progressive_image.decorator.liip_imagine',
+				],
+				'resolvers'       => [
+					'temp' => [
+						'type'  => 'filesystem',
+						'roots' => [$this->tempDir],
+					],
+				],
+				'resolver'        => 'temp',
+			],
+			'liip_imagine'      => [
+				'loaders'     => [
+					'default' => [
+						'filesystem' => [
+							'data_root' => $this->tempDir,
+						],
+					],
+				],
+				'filter_sets' => [
+					'custom_filter' => [
+						'quality' => 80,
+						'filters' => [
+							'thumbnail' => [
+								'size' => [120, 120],
+								'mode' => 'outbound',
+							],
+						],
+					],
+				],
+			],
+		]);
+
+		$container = $client->getContainer();
+
+		/** @var UriSigner $signer */
+		$signer = $container->get('uri_signer');
+
+		$path = 'test_custom.png';
+		$this->fs->copy(__DIR__ . '/../../Fixtures/test_800x800.png', $this->tempDir . '/' . $path);
+
+		$width  = 150;
+		$height = 150;
+		$filter = 'custom_filter';
+
+		$url       = sprintf('/progressive-image?path=%s&width=%d&height=%d&filter=%s', $path, $width, $height, $filter);
+		$signedUrl = $signer->sign('http://localhost' . $url);
+
+		$client->request('GET', $signedUrl);
+
+		$this->assertResponseRedirects();
+		$redirectUrl = $client->getResponse()->headers->get('Location');
+		// The URL should contain the filter name and dimensions
+		$this->assertStringContainsString('/media/cache/custom_filter_150x150/', $redirectUrl);
+
+		// Verify physical file exists
+		$projectDir       = $container->getParameter('kernel.project_dir');
+		$relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
+		$absoluteFilePath = $projectDir . '/public' . $relativeFilePath;
+
+		$this->assertFileExists($absoluteFilePath);
+
+		// Verify image size
+		$imageSize = getimagesize($absoluteFilePath);
+		$this->assertEquals(150, $imageSize[0]);
+		$this->assertEquals(150, $imageSize[1]);
+	}
+
     public function testIndexWithPointInterest(): void
     {
         if (!class_exists(CacheManager::class)) {

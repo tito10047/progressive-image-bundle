@@ -62,8 +62,8 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $this->urlGenerator->expects($this->exactly(2))
             ->method('generateUrl')
             ->willReturnMap([
-                [$path, 360, 240, 'url-360'],
-                [$path, 1920, 1920, 'url-1920'],
+				[$path, 360, 240, null, [], 'url-360'],
+				[$path, 1920, 1920, null, [], 'url-1920'],
             ]);
 
         $result = $this->generator->generate($path, $assignments, $originalWidth, false);
@@ -90,7 +90,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
-            ->with($path, 360, 480)
+			->with($path, 360, 480, null, [])
             ->willReturn('url');
 
         $this->generator->generate($path, $assignments1, $originalWidth, false);
@@ -102,7 +102,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
-            ->with($path, 360, (int) round(360 / (16 / 9)))
+			->with($path, 360, (int) round(360 / (16 / 9)), null, [])
             ->willReturn('url');
 
         $this->generator->generate($path, $assignments2, $originalWidth, false);
@@ -120,7 +120,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
-            ->with($path, 360, 240)
+			->with($path, 360, 240, null, [])
             ->willReturn('url-360');
 
         $result = $this->generator->generate($path, $assignments, $originalWidth, false);
@@ -138,6 +138,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// xs in gridConfig has min_viewport 0.
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
+			->with($path, 1920, 1920, null, [])
 			->willReturn('url-1920');
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
@@ -159,8 +160,8 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$this->urlGenerator->expects($this->exactly(2))
 			->method('generateUrl')
 			->willReturnMap([
-				[$path, 430, 370, null, 'url-430x370'],
-				[$path, 430, 430, null, 'url-430x430'],
+				[$path, 430, 370, null, [], 'url-430x370'],
+				[$path, 430, 430, null, [], 'url-430x430'],
 			]);
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
@@ -184,7 +185,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// xxl: 80% of 1320px = 1056px.
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
-			->with($path, 1056, 704)
+			->with($path, 1056, 704, null, [])
 			->willReturn('url-1056');
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
@@ -204,7 +205,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$assignments1 = [BreakpointAssignment::fromSegment('sm:[100%]@[0.65]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
-			->with($path, 540, 831)
+			->with($path, 540, 831, null, [])
 			->willReturn('url-decimal');
 
 		$result1 = $this->generator->generate($path, $assignments1, $originalWidth, false);
@@ -218,7 +219,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$assignments2       = [BreakpointAssignment::fromSegment('[100%]@[10/9]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
-			->with($path, 1920, 1728)
+			->with($path, 1920, 1728, null, [])
 			->willReturn('url-fraction');
 
 		$result2 = $this->generator->generate($path, $assignments2, $originalWidth, false);
@@ -231,7 +232,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		$assignments3       = [BreakpointAssignment::fromSegment('[100%]@[1500x700]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
-			->with($path, 1920, 896)
+			->with($path, 1920, 896, null, [])
 			->willReturn('url-dimensions');
 
 		$result3 = $this->generator->generate($path, $assignments3, $originalWidth, false);

@@ -32,14 +32,14 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
 		private readonly RequestStack $requestStack,
         private readonly ?TagAwareCacheInterface $cache,
 		private readonly bool         $webpGenerate = false,
-        private readonly ?string $filter = null,
     ) {
     }
 
-	public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null): string
+	public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null, array $context = []): string
     {
         $targetH = $targetH ?? $targetW;
-        $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $this->filter, $pointInterest);
+		$filter = $context['filter'] ?? null;
+		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest);
         $filterName = $result['filterName'];
         $config = $result['config'];
 
@@ -66,7 +66,7 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
             'path' => $path,
             'width' => $targetW,
             'height' => $targetH,
-            'filter' => $this->filter,
+			'filter' => $filter,
             'pointInterest' => $pointInterest,
         ], UrlGeneratorInterface::ABSOLUTE_URL);
 

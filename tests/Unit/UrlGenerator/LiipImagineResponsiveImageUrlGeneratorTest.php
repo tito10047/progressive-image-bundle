@@ -55,8 +55,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             $this->filterConfiguration,
 			$this->requestStack,
             $this->cache,
-			false,
-            'my_filter'
+			false
         );
     }
 
@@ -83,7 +82,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->router->expects($this->never())->method('generate');
 
-        $url = $this->generator->generateUrl($path, $targetW, $targetH);
+		$url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
 
         $this->assertEquals('/media/cache/my_filter_100x100/test.jpg', $url);
     }
@@ -133,7 +132,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             ->with('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter')
             ->willReturn('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter&_hash=123');
 
-        $url = $this->generator->generateUrl($path, $targetW, $targetH);
+		$url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
 
         $this->assertEquals('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter&_hash=123', $url);
     }

@@ -88,6 +88,48 @@ They determine how the bundle searches for image files on disk or within the pro
 
 This is where you define how image sizes are calculated. For more information, see the [Responsive Strategy](responsive-strategy.md) section.
 
+#### CSS Frameworks & Custom CSS Generation
+
+The bundle supports `tailwind`, `bootstrap`, and `custom` frameworks.
+
+- **Tailwind & Bootstrap**: These frameworks have pre-defined breakpoints. The bundle includes pre-generated CSS files for these frameworks in `assets/styles/`.
+- **Custom**: If you use a `custom` framework, you need to define your own breakpoints in the `layouts` section. To handle the responsive behavior of images (like width
+  and aspect ratio via CSS variables), you need a corresponding CSS file.
+
+**Pre-defined CSS files:**
+
+- Tailwind: `assets/styles/progressive-image-tailwind.css`
+- Bootstrap: `assets/styles/progressive-image-bootstrap.css`
+
+**Why use the generator for custom frameworks?**
+The bundle uses CSS variables (e.g., `--img-width-md`) to communicate the calculated image size from PHP to your CSS. For `custom` frameworks, these variables must be
+properly mapped to the `.progressive-image-container` class within media queries. The generator automates this process, creating a CSS file with all necessary media
+queries and fallback logic based on your runtime configuration.
+
+To generate this file, use the following command:
+
+```bash
+php bin/console progressive-image:generate-custom-css [path]
+```
+
+- `[path]` (optional): Path where the file will be generated. Default is `assets/styles`.
+- The command creates `progressive-image-custom.css`.
+
+Example of generated CSS logic:
+
+```css
+.progressive-image-container {
+    width: var(--img-width-md, var(--img-width-sm, var(--img-width)));
+}
+@media (min-width: 768px) {
+    .progressive-image-container {
+        width: var(--img-width-md, var(--img-width-sm, var(--img-width)));
+    }
+}
+```
+
+This ensures that if a variable for a specific breakpoint is missing, it falls back to the next smaller available size.
+
 ### Cache
 
 The bundle can cache generated HTML components, saving time on subsequent Blurhash generation and metadata reading.

@@ -19,6 +19,7 @@ use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
+use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\ChainResolver;
@@ -189,6 +190,11 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
             ;
         }
+
+		$container->register(GenerateCustomCssCommand::class)
+			->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
+			->setArgument('$projectDir', new Parameter('kernel.project_dir'))
+			->addTag('console.command');
 
         $container->register(Image::class, Image::class)
             ->setArgument('$analyzer', new Reference(MetadataReader::class))

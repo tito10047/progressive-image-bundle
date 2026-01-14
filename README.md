@@ -123,3 +123,9 @@ For detailed guides, configuration, and advanced features, check out our full do
 - [**Usage (Twig component)**](docs/usage.md)
 - [**Responsive Strategy**](docs/responsive-strategy.md)
 - [**Advanced Features**](docs/advanced.md)
+
+---
+
+## 📜 Changelog
+
+All notable changes to this project are documented in [CHANGELOG.md](CHANGELOG.md).

@@ -24,6 +24,11 @@ progressive_image:
     # Cache time-to-live in seconds
     ttl: 86400
 
+    # Retina support settings
+    retina:
+        enabled: true
+        multipliers: [1, 2]
+
     # Blurhash generation settings
     hash_resolution:
         width: 10
@@ -133,6 +138,15 @@ This ensures that if a variable for a specific breakpoint is missing, it falls b
 ### Cache
 
 The bundle can cache generated HTML components, saving time on subsequent Blurhash generation and metadata reading.
+
+### Retina Support (`retina`)
+
+The bundle supports generating images for high-density (Retina) displays.
+
+- **retina**:
+  - **enabled**: Enables or disables retina support globally. Default is `true`.
+  - **multipliers**: Defines the multipliers for which additional image versions should be generated. Default is `[1, 2]`. For each multiplier, a corresponding version is
+    added to the `srcset` attribute.
 
 ### Decorators (`path_decorators`)
 

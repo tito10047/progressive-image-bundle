@@ -23,6 +23,7 @@ This bundle handles everything you need for modern image management. From **full
 - 🎨 **Blur & Error Placeholders:** Users see a beautiful Blurhash placeholder while loading. If an image is not found, the bundle automatically displays a stylish error
   placeholder.
 - 📱 **Tailwind-like Selectors:** Define responsiveness naturally directly in your template using familiar breakpoints.
+- 🖼️ **Retina Support:** Automatically generates 1x, 2x (and more) versions for high-density displays.
 - ⚙️ **Automatic Generation:** The bundle automatically generates all necessary image sizes on disk (local or network), saving time and resources.
 - 🎯 **Zero CLS (Cumulative Layout Shift):** Automatically reserves space for the image, preventing content jumping during load.
 - ⚡ **Smart Preload:** Automatically injects `<link rel="preload">` for critical images (hero images), significantly improving LCP scores.
@@ -103,6 +104,9 @@ progressive_image:
             portrait: "3/4"
             square: "1/1"
     image_cache_enabled: true
+    retina:
+        enabled: true
+        multipliers: [1, 2]
 ```
 
 ---

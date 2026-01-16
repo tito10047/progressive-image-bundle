@@ -250,6 +250,157 @@ class ImageComponentTest extends PGITestCase
 		$this->assertStringContainsString('--img-aspect-md: 1.777', $html);
 	}
 
+	public function testRenderWithRetina(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$this->_bootKernel([
+			'progressive_image' => [
+				'retina'              => [
+					'multipliers' => [1, 2, 3],
+				],
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport'  => 1024,
+								'max_container' => 1200,
+							],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'    => '/test.png',
+				'sizes'  => 'desktop:1',
+				'retina' => true,
+			]
+		);
+
+		$this->assertStringContainsString('srcset="', $html);
+		// desktop: 1/12 * 1200 = 100px.
+		// multipliers: 1x=100w, 2x=200w, 3x=300w
+		$this->assertStringContainsString('100w', $html);
+		$this->assertStringContainsString('200w', $html);
+		$this->assertStringContainsString('300w', $html);
+	}
+
+	public function testRenderWithGlobalRetinaDefault(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$this->_bootKernel([
+			'progressive_image' => [
+				'retina'              => [
+					'multipliers' => [1, 2],
+				],
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport'  => 1024,
+								'max_container' => 1200,
+							],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'   => '/test.png',
+				'sizes' => 'desktop:1',
+			]
+		);
+
+		$this->assertStringContainsString('srcset="', $html);
+		$this->assertStringContainsString('100w', $html);
+		$this->assertStringContainsString('200w', $html);
+	}
+
+	public function testRenderWithGlobalRetinaDisabled(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$this->_bootKernel([
+			'progressive_image' => [
+				'retina'              => [
+					'enabled'     => false,
+					'multipliers' => [1, 2],
+				],
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport'  => 1024,
+								'max_container' => 1200,
+							],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'   => '/test.png',
+				'sizes' => 'desktop:1',
+			]
+		);
+
+		$this->assertStringContainsString('srcset="', $html);
+		$this->assertStringContainsString('100w', $html);
+		$this->assertStringNotContainsString('200w', $html);
+	}
+
+	public function testRenderWithLocalRetinaOverride(): void {
+		if (!class_exists(CacheManager::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
+		$this->_bootKernel([
+			'progressive_image' => [
+				'retina'              => [
+					'enabled'     => false,
+					'multipliers' => [1, 2],
+				],
+				'responsive_strategy' => [
+					'grid' => [
+						'columns' => 12,
+						'layouts' => [
+							'desktop' => [
+								'min_viewport'  => 1024,
+								'max_container' => 1200,
+							],
+						],
+					],
+				],
+			],
+		]);
+
+		$html = $this->renderTwigComponent(
+			name: 'pgi:Image',
+			data: [
+				'src'    => '/test.png',
+				'sizes'  => 'desktop:1',
+				'retina' => true,
+			]
+		);
+
+		$this->assertStringContainsString('srcset="', $html);
+		$this->assertStringContainsString('100w', $html);
+		$this->assertStringContainsString('200w', $html);
+	}
+
 	public function testRenderWithOmittedBreakpoint(): void {
 		if (!class_exists(CacheManager::class)) {
 			$this->markTestSkipped('LiipImagineBundle is not installed.');

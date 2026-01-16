@@ -127,6 +127,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $imageCacheServiceId = $configs['image_cache_service'] ?? 'cache.app';
         $imageCacheEnabled = $configs['image_cache_enabled'] ?? false;
         $ttl = $configs['ttl'] ?? null;
+		$retinaConfig = $configs['retina'] ?? ['enabled' => true, 'multipliers' => [1, 2]];
+		$retina = $retinaConfig['enabled'] ?? true;
+		$retinaMultipliers = $retinaConfig['multipliers'] ?? [1, 2];
 
         if (!$imageCacheEnabled) {
             $imageCacheServiceReference = null;
@@ -186,6 +189,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
                 ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
                 ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
+				->setArgument('$retinaMultipliers', $retinaMultipliers)
                 ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
                 ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
             ;
@@ -202,6 +206,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) ? new Reference(ResponsiveAttributeGenerator::class) : null)
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
 			->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
+			->setArgument('$defaultRetina', $retina)
             ->setShared(false)
             ->addTag('twig.component')
             ->setPublic(true);

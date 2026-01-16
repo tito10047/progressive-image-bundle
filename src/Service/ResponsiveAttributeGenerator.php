@@ -25,10 +25,12 @@ final class ResponsiveAttributeGenerator
      *      columns: int
      *      } $gridConfig
      * @param array<string, string> $ratioConfig
+	 * @param int[] $retinaMultipliers
      */
     public function __construct(
         private array $gridConfig,
         private array $ratioConfig,
+		private readonly array $retinaMultipliers,
         private readonly PreloadCollector $preloadCollector,
         private ResponsiveImageUrlGeneratorInterface $urlGenerator,
     ) {
@@ -39,7 +41,7 @@ final class ResponsiveAttributeGenerator
      *
 	 * @return array{sizes: string, srcset: string, variables: array<string, string>}
      */
-	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = []): array
+	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): array
     {
         $assignments = $this->sortAssignments($assignments);
 
@@ -68,15 +70,19 @@ final class ResponsiveAttributeGenerator
             $size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
             $sizesParts[] = $size;
 
-			$url = $this->generateUrl($path, $assignment, (int) round($pixelWidth), $originalWidth, $processedWidths, $pointInterest, $context);
+			$multipliers = $retina ? $this->retinaMultipliers : [1];
 
-            if ($url) {
-                $actualPixelWidth = (int) round($pixelWidth);
-                if ($preload) {
-                    $this->preloadCollector->add($url, 'image', 'high', "{$actualPixelWidth}w", $size);
-                }
+			foreach ($multipliers as $multiplier) {
+				$mPixelWidth = (int) round($pixelWidth * $multiplier);
+				$url         = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $processedWidths, $pointInterest, $context);
 
-                $srcsetParts[] = $url." {$actualPixelWidth}w";
+				if ($url) {
+					if ($preload && 1 === $multiplier) {
+						$this->preloadCollector->add($url, 'image', 'high', "{$mPixelWidth}w", $size);
+					}
+
+					$srcsetParts[] = $url . " {$mPixelWidth}w";
+				}
             }
 
 			$ratio                              = $this->resolveRatio($assignment);

@@ -44,7 +44,31 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         ];
         $this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
         $this->preloadCollector = $this->createMock(PreloadCollector::class);
-        $this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
+	}
+
+	public function testGenerateRetina(): void {
+		$path          = 'test.jpg';
+		$assignments   = [
+			new BreakpointAssignment('md', 6, 'landscape'),
+		];
+		$originalWidth = 2000;
+
+		// md: 6/12 * 720px = 360px.
+		// retina: 360 * 1 = 360, 360 * 2 = 720.
+
+		$this->urlGenerator->expects($this->exactly(2))
+			->method('generateUrl')
+			->willReturnMap([
+				[$path, 360, 240, null, [], 'url-360'],
+				[$path, 720, 480, null, [], 'url-720'],
+			]);
+
+		$result = $this->generator->generate($path, $assignments, $originalWidth, false, null, [], true);
+
+		$this->assertEquals('(min-width: 768px) 360px', $result['sizes']);
+		$this->assertStringContainsString('url-360 360w', $result['srcset']);
+		$this->assertStringContainsString('url-720 720w', $result['srcset']);
     }
 
     public function testGenerateBasic(): void
@@ -98,7 +122,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         // Test format "16-9"
         $assignments2 = [new BreakpointAssignment('md', 6, '16-9')];
         $this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
-        $this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
 
         $this->urlGenerator->expects($this->once())
             ->method('generateUrl')
@@ -215,7 +239,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// default/xs max_container is null -> 100% of 1920 = 1920.
 		// ratio 10/9 = 1.111... -> 1920 / 1.111... = 1728
 		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
-		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
 		$assignments2       = [BreakpointAssignment::fromSegment('[100%]@[10/9]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
@@ -228,7 +252,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// Test dimensions ratio: [100%]@[1500x700]
 		// ratio 1500/700 = 2.1428... -> 1920 / 2.1428... = 896
 		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
-		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, $this->preloadCollector, $this->urlGenerator);
+		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
 		$assignments3       = [BreakpointAssignment::fromSegment('[100%]@[1500x700]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')

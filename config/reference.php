@@ -748,6 +748,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     fallback_image?: scalar|null|Param, // Default: null
  *     image_cache_enabled?: bool|Param, // Default: false
  *     ttl?: int|Param, // Default: null
+ *     retina?: array{
+ *         enabled?: bool|Param, // Default: true
+ *         multipliers?: list<int|Param>,
+ *     },
  *     responsive_strategy?: array{
  *         grid?: array{
  *             framework?: "bootstrap"|"tailwind"|"custom"|Param, // Default: "custom"

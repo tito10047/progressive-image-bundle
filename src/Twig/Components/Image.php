@@ -42,6 +42,7 @@ final class Image
     public string $priority = 'high';
     public ?string $sizes = null;
     public ?string $ratio = null;
+	public ?bool $retina = null;
     /**
      * @var BreakpointAssignment[]
      */
@@ -60,12 +61,17 @@ final class Image
         private readonly ?ResponsiveAttributeGenerator $responsiveAttributeGenerator,
         private readonly PreloadCollector $preloadCollector,
 		private readonly string $framework = 'custom',
+		private readonly bool $defaultRetina = true,
     ) {
     }
 
     #[PostMount]
     public function postMount(): void
     {
+		if (null === $this->retina) {
+			$this->retina = $this->defaultRetina;
+		}
+
 		$this->decoratedSrc = $this->src;
 		foreach ($this->pathDecorator as $decorator) {
 			$this->decoratedSrc = $decorator->decorate($this->decoratedSrc, $this->context);
@@ -82,7 +88,7 @@ final class Image
 			if ($this->filter) {
 				$context['filter'] = $this->filter;
 			}
-			$this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoinsts, $this->metadata->width ?? 0, $this->preload, $this->pointInterest, $context);
+			$this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoinsts, $this->metadata->width ?? 0, $this->preload, $this->pointInterest, $context, $this->retina);
 		} else {
 			$this->decoratedWidth  = $this->metadata?->width;
 			$this->decoratedHeight = $this->metadata?->height;

@@ -52,6 +52,7 @@ If you need a specific object to always remain visible when cropping, use the `p
 | `alt`           | Alternative text for SEO and accessibility.               |
 | `sizes`         | Responsiveness definition (columns/breakpoints).          |
 | `ratio`         | Default aspect ratio for the entire image.                |
+| `retina`        | Enable/disable retina for this image (overrides global).  |
 | `preload`       | If present, the image is added to preload (LCP).          |
 | `pointInterest` | Focal point for cropping (e.g., `50x50`).                 |
 | `class`         | CSS classes for the `<img>` tag.                          |
@@ -66,5 +67,17 @@ If you are using LiipImagine, you can pass the filter name via `context`.
     src="uploads/photo.png" 
     :context="{ 'filter': 'my_custom_filter' }"
     alt="User photo"
+/>
+```
+
+## Retina Support
+
+By default, Retina support is enabled if configured globally. You can override it per image:
+
+```twig
+<twig:pgi:Image 
+    src="images/photo.jpg" 
+    sizes="lg:[1024]" 
+    :retina="false" 
 />
 ```

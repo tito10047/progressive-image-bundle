@@ -242,14 +242,17 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             if ('filesystem' === $resolverConfig['type']) {
                 $container->register($id, FileSystemResolver::class)
                     ->setArgument('$roots', $resolverConfig['roots'] ?? ['%kernel.project_dir%/public'])
-					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true);
+					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true)
+					->setPublic(true);
             } elseif ('asset_mapper' === $resolverConfig['type']) {
 				$container->register($id, AssetMapperResolver::class)
-					->setArgument('$assetMapper', new Reference('asset_mapper'));
+					->setArgument('$assetMapper', new Reference('asset_mapper'))
+					->setPublic(true);
 			} elseif ('chain' === $resolverConfig['type']) {
 				$childResolvers = array_map(fn($name) => new Reference('progressive_image.resolver.' . $name), $resolverConfig['resolvers'] ?? []);
 				$container->register($id, ChainResolver::class)
-					->setArgument('$resolvers', $childResolvers);
+					->setArgument('$resolvers', $childResolvers)
+					->setPublic(true);
             }
         }
 
@@ -263,7 +266,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             $firstResolver = array_key_first($resolvers);
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$firstResolver);
         } else {
-            $container->register('progressive_image.resolver.default', FileSystemResolver::class)
+			$container->register('progressive_image.resolver.default', FileSystemResolver::class)
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])
                 ->setArgument('$allowUnresolvable', true);
         }

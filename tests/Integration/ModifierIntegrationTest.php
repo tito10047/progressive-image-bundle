@@ -48,6 +48,9 @@ class CustomFilter implements ModifierInterface {
 class ModifierIntegrationTest extends TestCase {
 
 	public function testModifiersAreRegisteredAndApplied(): void {
+		if (!class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$kernel = new ProgressiveImageTestingKernel([
 			'progressive_image' => [
 				'responsive_strategy' => [
@@ -89,6 +92,9 @@ class ModifierIntegrationTest extends TestCase {
 	}
 
 	public function testFilterPriority(): void {
+		if (!class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
+			$this->markTestSkipped('LiipImagineBundle is not installed.');
+		}
 		$kernel = new ProgressiveImageTestingKernel([
 			'progressive_image' => [
 				'responsive_strategy' => [

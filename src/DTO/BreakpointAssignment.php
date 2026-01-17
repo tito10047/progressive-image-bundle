@@ -20,78 +20,78 @@ final readonly class BreakpointAssignment
         public string $breakpoint,
         public int $columns,
         public ?string $ratio,
-		public ?int    $width = null,
-		public ?int    $height = null,
-		public ?string $widthPercent = null,
-		public array   $modifiers = [],
+        public ?int $width = null,
+        public ?int $height = null,
+        public ?string $widthPercent = null,
+        public array $modifiers = [],
     ) {
     }
 
     /**
-	 * Helper method to create from a string.
+     * Helper method to create from a string.
      */
     public static function fromSegment(string $segment, ?string $ratio): self
     {
-		$originalSegment = $segment;
-		$modifiers       = [];
-		if (str_contains($segment, '|')) {
-			$parts     = explode('|', $segment);
-			$segment   = array_shift($parts);
-			$modifiers = $parts;
-		}
+        $originalSegment = $segment;
+        $modifiers = [];
+        if (str_contains($segment, '|')) {
+            $parts = explode('|', $segment);
+            $segment = array_shift($parts);
+            $modifiers = $parts;
+        }
 
-		$breakpoint = 'default';
-		if (preg_match('/^([a-z0-9_]+):(.*)$/i', $segment, $matches)) {
-			$breakpoint = $matches[1];
-			$segment    = $matches[2];
-		}
+        $breakpoint = 'default';
+        if (preg_match('/^([a-z0-9_]+):(.*)$/i', $segment, $matches)) {
+            $breakpoint = $matches[1];
+            $segment = $matches[2];
+        }
 
-		$segmentRatio = $ratio;
-		if (str_contains($segment, '@')) {
-			$atPos        = strrpos($segment, '@');
-			$segmentRatio = substr($segment, $atPos + 1);
-			$segment      = substr($segment, 0, $atPos);
-			if (str_starts_with($segmentRatio, '[') && str_ends_with($segmentRatio, ']')) {
-				$segmentRatio = substr($segmentRatio, 1, -1);
-			}
-		}
+        $segmentRatio = $ratio;
+        if (str_contains($segment, '@')) {
+            $atPos = strrpos($segment, '@');
+            $segmentRatio = substr($segment, $atPos + 1);
+            $segment = substr($segment, 0, $atPos);
+            if (str_starts_with($segmentRatio, '[') && str_ends_with($segmentRatio, ']')) {
+                $segmentRatio = substr($segmentRatio, 1, -1);
+            }
+        }
 
-		$width        = null;
-		$height       = null;
-		$widthPercent = null;
-		$columns      = 0;
+        $width = null;
+        $height = null;
+        $widthPercent = null;
+        $columns = 0;
 
-		if (str_starts_with($segment, '[') && str_ends_with($segment, ']')) {
-			$dimensions = substr($segment, 1, -1);
-			if (str_contains($dimensions, 'x')) {
-				[$widthStr, $heightStr] = explode('x', $dimensions, 2);
-				$width  = (int) $widthStr;
-				$height = (int) $heightStr;
-			} elseif (str_ends_with($dimensions, '%')) {
-				$widthPercent = $dimensions;
-			} elseif ('' !== $dimensions) {
-				$width = (int) $dimensions;
-			}
-		} elseif (is_numeric($segment)) {
-			$columns = (int) $segment;
-		} else {
-			throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $originalSegment));
-		}
+        if (str_starts_with($segment, '[') && str_ends_with($segment, ']')) {
+            $dimensions = substr($segment, 1, -1);
+            if (str_contains($dimensions, 'x')) {
+                [$widthStr, $heightStr] = explode('x', $dimensions, 2);
+                $width = (int) $widthStr;
+                $height = (int) $heightStr;
+            } elseif (str_ends_with($dimensions, '%')) {
+                $widthPercent = $dimensions;
+            } elseif ('' !== $dimensions) {
+                $width = (int) $dimensions;
+            }
+        } elseif (is_numeric($segment)) {
+            $columns = (int) $segment;
+        } else {
+            throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $originalSegment));
+        }
 
-		if (null !== $height && null === $segmentRatio && null !== $width) {
-			$segmentRatio = $width . 'x' . $height;
-		}
+        if (null !== $height && null === $segmentRatio && null !== $width) {
+            $segmentRatio = $width.'x'.$height;
+        }
 
-		return new self(
-			$breakpoint,
-			$columns,
-			$segmentRatio,
-			$width,
-			$height,
-			$widthPercent,
-			$modifiers
-		);
-	}
+        return new self(
+            $breakpoint,
+            $columns,
+            $segmentRatio,
+            $width,
+            $height,
+            $widthPercent,
+            $modifiers
+        );
+    }
 
     /**
      * @return array<BreakpointAssignment>

@@ -29,10 +29,10 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
         $image = new \Imagick();
 
         try {
-			// 3. Loading directly from handle
+            // 3. Loading directly from handle
             $image->readImageFile($loader->load($path));
-			$orgWidth  = $image->getImageWidth();
-			$orgHeight = $image->getImageHeight();
+            $orgWidth = $image->getImageWidth();
+            $orgHeight = $image->getImageHeight();
             $image->thumbnailImage(64, 64, true);
             $width = $image->getImageWidth();
             $height = $image->getImageHeight();
@@ -53,15 +53,15 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
                 $formattedPixels[] = $row;
             }
         } catch (\ImagickException $e) {
-			throw new ImageProcessingException('Imagick could not load data from stream: ' . $e->getMessage());
+            throw new ImageProcessingException('Imagick could not load data from stream: '.$e->getMessage());
         }
 
         $hash = Blurhash::encode($formattedPixels, $this->componentsX, $this->componentsY);
 
         return new ImageMetadata(
             $hash,
-			$orgWidth,
-			$orgHeight
+            $orgWidth,
+            $orgHeight
         );
     }
 }

@@ -15,9 +15,9 @@ namespace Tito10047\ProgressiveImageBundle\Service;
 interface LiipImagineRuntimeConfigGeneratorInterface
 {
     /**
-	 * @param array<string, mixed> $context
-	 *
+     * @param array<string, mixed> $context
+     *
      * @return array{filterName: string, config: array<string, mixed>}
-	 */
-	public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null, array $context = []): array;
+     */
+    public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null, array $context = []): array;
 }

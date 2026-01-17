@@ -11,14 +11,14 @@
 
 namespace Tito10047\ProgressiveImageBundle\Modifier;
 
-interface FilterModifierInterface {
+interface FilterModifierInterface
+{
+    public function supports(string $filterName): bool;
 
-	public function supports(string $filterName): bool;
-
-	/**
-	 * @param array<string, mixed> $currentOptions
-	 *
-	 * @return array<string, mixed>
-	 */
-	public function modify(string $filterName, array $currentOptions): array;
+    /**
+     * @param array<string, mixed> $currentOptions
+     *
+     * @return array<string, mixed>
+     */
+    public function modify(string $filterName, array $currentOptions): array;
 }

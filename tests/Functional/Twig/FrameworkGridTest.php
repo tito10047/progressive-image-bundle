@@ -58,20 +58,20 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-				'sizes' => 'xs:1 md:2 xxl:1',
+                'sizes' => 'xs:1 md:2 xxl:1',
             ]
         );
 
-		$this->assertStringContainsString('<picture>', $html);
-		$this->assertStringContainsString('media="(min-width: 1400px)"', $html);
-		$this->assertStringContainsString('sizes="13px"', $html);
-		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
-		$this->assertStringContainsString('sizes="14px"', $html);
-		$this->assertStringContainsString('sizes="1vw"', $html);
+        $this->assertStringContainsString('<picture>', $html);
+        $this->assertStringContainsString('media="(min-width: 1400px)"', $html);
+        $this->assertStringContainsString('sizes="13px"', $html);
+        $this->assertStringContainsString('media="(min-width: 768px)"', $html);
+        $this->assertStringContainsString('sizes="14px"', $html);
+        $this->assertStringContainsString('sizes="1vw"', $html);
         $this->assertStringContainsString('13w', $html);
         $this->assertStringContainsString('14w', $html);
         $this->assertStringContainsString('19w', $html);
-		$this->assertStringNotContainsString('&amp;', $html);
+        $this->assertStringNotContainsString('&amp;', $html);
     }
 
     public function testBootstrapFrameworkGridOverride(): void
@@ -94,13 +94,13 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-				'sizes' => 'md:1', // 1/12 * 600 = 50px
+                'sizes' => 'md:1', // 1/12 * 600 = 50px
             ]
         );
 
-		$this->assertStringContainsString('<picture>', $html);
-		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
-		$this->assertStringContainsString('sizes="50px"', $html);
+        $this->assertStringContainsString('<picture>', $html);
+        $this->assertStringContainsString('media="(min-width: 768px)"', $html);
+        $this->assertStringContainsString('sizes="50px"', $html);
         $this->assertStringContainsString('50w', $html);
     }
 
@@ -121,16 +121,16 @@ class FrameworkGridTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-				'sizes' => 'default:1 md:2 2xl:1',
+                'sizes' => 'default:1 md:2 2xl:1',
             ]
         );
 
-		$this->assertStringContainsString('<picture>', $html);
-		$this->assertStringContainsString('media="(min-width: 1536px)"', $html);
-		$this->assertStringContainsString('sizes="38px"', $html);
-		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
-		$this->assertStringContainsString('sizes="38px"', $html);
-		$this->assertStringContainsString('sizes="3vw"', $html);
+        $this->assertStringContainsString('<picture>', $html);
+        $this->assertStringContainsString('media="(min-width: 1536px)"', $html);
+        $this->assertStringContainsString('sizes="38px"', $html);
+        $this->assertStringContainsString('media="(min-width: 768px)"', $html);
+        $this->assertStringContainsString('sizes="38px"', $html);
+        $this->assertStringContainsString('sizes="3vw"', $html);
         $this->assertStringContainsString('38w', $html);
         $this->assertStringContainsString('48w', $html);
     }

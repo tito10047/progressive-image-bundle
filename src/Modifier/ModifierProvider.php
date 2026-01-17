@@ -11,31 +11,32 @@
 
 namespace Tito10047\ProgressiveImageBundle\Modifier;
 
-final class ModifierProvider {
+final class ModifierProvider
+{
+    /**
+     * @param iterable<ModifierInterface> $modifiers
+     */
+    public function __construct(
+        private readonly iterable $modifiers,
+    ) {
+    }
 
-	/**
-	 * @param iterable<ModifierInterface> $modifiers
-	 */
-	public function __construct(
-		private readonly iterable $modifiers,
-	) {
-	}
+    /**
+     * @param string[]             $modifierStrings
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    public function applyModifiers(array $modifierStrings, array $context): array
+    {
+        foreach ($modifierStrings as $modifierString) {
+            foreach ($this->modifiers as $modifier) {
+                if ($modifier->supports($modifierString)) {
+                    $context = $modifier->modify($modifierString, $context);
+                }
+            }
+        }
 
-	/**
-	 * @param string[]             $modifierStrings
-	 * @param array<string, mixed> $context
-	 *
-	 * @return array<string, mixed>
-	 */
-	public function applyModifiers(array $modifierStrings, array $context): array {
-		foreach ($modifierStrings as $modifierString) {
-			foreach ($this->modifiers as $modifier) {
-				if ($modifier->supports($modifierString)) {
-					$context = $modifier->modify($modifierString, $context);
-				}
-			}
-		}
-
-		return $context;
-	}
+        return $context;
+    }
 }

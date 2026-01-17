@@ -11,14 +11,14 @@
 
 namespace Tito10047\ProgressiveImageBundle\Modifier;
 
-interface ModifierInterface {
+interface ModifierInterface
+{
+    public function supports(string $modifier): bool;
 
-	public function supports(string $modifier): bool;
-
-	/**
-	 * @param array<string, mixed> $context
-	 *
-	 * @return array<string, mixed>
-	 */
-	public function modify(string $modifier, array $context): array;
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    public function modify(string $modifier, array $context): array;
 }

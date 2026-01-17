@@ -11,17 +11,19 @@
 
 namespace Tito10047\ProgressiveImageBundle\Modifier;
 
-class BaseFilterModifier implements ModifierInterface {
+class BaseFilterModifier implements ModifierInterface
+{
+    public function supports(string $modifier): bool
+    {
+        return true;
+    }
 
-	public function supports(string $modifier): bool {
-		return true;
-	}
+    public function modify(string $modifier, array $context): array
+    {
+        if (!isset($context['filter'])) {
+            $context['filter'] = $modifier;
+        }
 
-	public function modify(string $modifier, array $context): array {
-		if (!isset($context['filter'])) {
-			$context['filter'] = $modifier;
-		}
-
-		return $context;
-	}
+        return $context;
+    }
 }

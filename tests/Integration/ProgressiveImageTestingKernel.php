@@ -30,7 +30,7 @@ class ProgressiveImageTestingKernel extends Kernel
         registerContainerConfiguration as microKernelRegisterContainerConfiguration;
     }
 
-	private ?\Closure $customConfiguration = null;
+    private ?\Closure $customConfiguration = null;
 
     public function __construct(
         private array $options = [],
@@ -38,9 +38,10 @@ class ProgressiveImageTestingKernel extends Kernel
         parent::__construct('test', true);
     }
 
-	public function setCustomConfiguration(?\Closure $customConfiguration): void {
-		$this->customConfiguration = $customConfiguration;
-	}
+    public function setCustomConfiguration(?\Closure $customConfiguration): void
+    {
+        $this->customConfiguration = $customConfiguration;
+    }
 
     public function registerBundles(): iterable
     {
@@ -128,9 +129,9 @@ class ProgressiveImageTestingKernel extends Kernel
                 $container->loadFromExtension($bundle, $options);
             }
 
-			if ($this->customConfiguration) {
-				($this->customConfiguration)($container);
-			}
+            if ($this->customConfiguration) {
+                ($this->customConfiguration)($container);
+            }
         });
     }
 
@@ -154,10 +155,10 @@ class ProgressiveImageTestingKernel extends Kernel
     public function shutdown(): void
     {
         parent::shutdown();
-		//        $cacheDir = $this->getCacheDir();
-		//        if (is_dir($cacheDir)) {
-		//            $this->removeDir($cacheDir);
-		//        }
+        //        $cacheDir = $this->getCacheDir();
+        //        if (is_dir($cacheDir)) {
+        //            $this->removeDir($cacheDir);
+        //        }
     }
 
     private function removeDir(string $dir): void

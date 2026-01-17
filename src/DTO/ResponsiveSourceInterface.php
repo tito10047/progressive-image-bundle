@@ -11,11 +11,11 @@
 
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
-interface ResponsiveSourceInterface {
+interface ResponsiveSourceInterface
+{
+    public function getMedia(): ?string;
 
-	public function getMedia(): ?string;
+    public function getSrcset(): string;
 
-	public function getSrcset(): string;
-
-	public function getSizes(): string;
+    public function getSizes(): string;
 }

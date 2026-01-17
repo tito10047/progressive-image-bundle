@@ -66,13 +66,13 @@ class ImageOriginalBreakpointTest extends PGITestCase
             name: 'pgi:Image',
             data: [
                 'src' => '/test.png',
-				'sizes' => 'mobile:12 desktop:1',
+                'sizes' => 'mobile:12 desktop:1',
             ]
         );
 
         $this->assertStringContainsString('srcset="', $html);
         $this->assertStringContainsString('100w', $html);
-		$this->assertStringContainsString('1920w', $html);
+        $this->assertStringContainsString('1920w', $html);
     }
 
     private function _bootKernel(array $extraOptions = []): void

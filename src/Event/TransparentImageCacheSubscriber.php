@@ -62,11 +62,11 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
             return;
         }
 
-		// If we get here, it means there was nothing in the cache (otherwise PreCreateForRenderEvent would have stopped the rendering)
+        // If we get here, it means there was nothing in the cache (otherwise PreCreateForRenderEvent would have stopped the rendering)
         $variables = $event->getVariables();
         $key = $this->generateKey($variables);
 
-		// Wrap the original template in a wrapper that stores the result in the cache
+        // Wrap the original template in a wrapper that stores the result in the cache
         $variables['pgi_original_template'] = $event->getTemplate();
         $variables['pgi_cache_key'] = $key;
         $variables['pgi_cache_ttl'] = $variables['ttl'] ?? $this->ttl;
@@ -81,10 +81,10 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
      */
     private function generateKey(array $vars): string
     {
-		// Remove internal pgi variables if present, so they don't affect the key
+        // Remove internal pgi variables if present, so they don't affect the key
         unset($vars['pgi_original_template'], $vars['pgi_cache_key']);
 
-		// The key must contain everything that changes the HTML output
+        // The key must contain everything that changes the HTML output
         return 'pgi_comp_'.md5(serialize($vars));
     }
 }

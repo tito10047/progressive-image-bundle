@@ -11,24 +11,27 @@
 
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
-class ResponsiveSource implements ResponsiveSourceInterface {
+class ResponsiveSource implements ResponsiveSourceInterface
+{
+    public function __construct(
+        private readonly ?string $media,
+        private readonly string $srcset,
+        private readonly string $sizes,
+    ) {
+    }
 
-	public function __construct(
-		private readonly ?string $media,
-		private readonly string  $srcset,
-		private readonly string  $sizes,
-	) {
-	}
+    public function getMedia(): ?string
+    {
+        return $this->media;
+    }
 
-	public function getMedia(): ?string {
-		return $this->media;
-	}
+    public function getSrcset(): string
+    {
+        return $this->srcset;
+    }
 
-	public function getSrcset(): string {
-		return $this->srcset;
-	}
-
-	public function getSizes(): string {
-		return $this->sizes;
-	}
+    public function getSizes(): string
+    {
+        return $this->sizes;
+    }
 }

@@ -29,87 +29,87 @@ final class ResponsiveAttributeGenerator
      *      columns: int
      *      } $gridConfig
      * @param array<string, string> $ratioConfig
-	 * @param int[] $retinaMultipliers
+     * @param int[]                 $retinaMultipliers
      */
     public function __construct(
         private array $gridConfig,
         private array $ratioConfig,
-		private readonly array             $retinaMultipliers,
+        private readonly array $retinaMultipliers,
         private readonly PreloadCollector $preloadCollector,
         private ResponsiveImageUrlGeneratorInterface $urlGenerator,
-		private readonly ?ModifierProvider $modifierProvider = null,
+        private readonly ?ModifierProvider $modifierProvider = null,
     ) {
     }
 
     /**
      * @param BreakpointAssignment[] $assignments
      */
-	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): ResponsiveAttributesInterface
+    public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): ResponsiveAttributesInterface
     {
         $assignments = $this->sortAssignments($assignments);
 
-		$sources       = [];
-		$variables     = [];
-		$defaultSource = null;
+        $sources = [];
+        $variables = [];
+        $defaultSource = null;
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
-			if (!$layout && 'default' === $assignment->breakpoint) {
-				foreach ($this->gridConfig['layouts'] as $l) {
-					if (0 === $l['min_viewport']) {
-						$layout = $l;
-						break;
-					}
-				}
-			}
-
-            if (!$layout) {
-				throw new \InvalidArgumentException(sprintf('Breakpoint "%s" is not defined in the grid configuration.', $assignment->breakpoint));
+            if (!$layout && 'default' === $assignment->breakpoint) {
+                foreach ($this->gridConfig['layouts'] as $l) {
+                    if (0 === $l['min_viewport']) {
+                        $layout = $l;
+                        break;
+                    }
+                }
             }
 
-			[$pixelWidth, $sizeValue, $cssValue] = $this->calculateDimensions($assignment, $layout);
+            if (!$layout) {
+                throw new \InvalidArgumentException(sprintf('Breakpoint "%s" is not defined in the grid configuration.', $assignment->breakpoint));
+            }
+
+            [$pixelWidth, $sizeValue, $cssValue] = $this->calculateDimensions($assignment, $layout);
 
             $size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
 
-			$multipliers = $retina ? $this->retinaMultipliers : [1];
-			$srcsetParts = [];
+            $multipliers = $retina ? $this->retinaMultipliers : [1];
+            $srcsetParts = [];
 
-			foreach ($multipliers as $multiplier) {
-				$mPixelWidth = (int) round($pixelWidth * $multiplier);
-				$url         = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
+            foreach ($multipliers as $multiplier) {
+                $mPixelWidth = (int) round($pixelWidth * $multiplier);
+                $url = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
 
-				if ($url) {
-					if ($preload && 1 === $multiplier) {
-						$this->preloadCollector->add($url, 'image', 'high', "{$mPixelWidth}w", $size);
-					}
+                if ($url) {
+                    if ($preload && 1 === $multiplier) {
+                        $this->preloadCollector->add($url, 'image', 'high', "{$mPixelWidth}w", $size);
+                    }
 
-					$srcsetParts[] = $url . " {$mPixelWidth}w";
-				}
+                    $srcsetParts[] = $url." {$mPixelWidth}w";
+                }
             }
 
-			$ratio                              = $this->resolveRatio($assignment);
-			$suffix                             = 0 === $layout['min_viewport'] ? '' : '-' . $assignment->breakpoint;
-			$variables['--img-width' . $suffix] = $cssValue;
-			if ($ratio) {
-				$variables['--img-aspect' . $suffix] = (string) $ratio;
-			}
+            $ratio = $this->resolveRatio($assignment);
+            $suffix = 0 === $layout['min_viewport'] ? '' : '-'.$assignment->breakpoint;
+            $variables['--img-width'.$suffix] = $cssValue;
+            if ($ratio) {
+                $variables['--img-aspect'.$suffix] = (string) $ratio;
+            }
 
-			$srcset = implode(', ', $srcsetParts);
-			$media  = $layout['min_viewport'] > 0 ? "(min-width: {$layout['min_viewport']}px)" : null;
-			$source = new ResponsiveSource($media, $srcset, $sizeValue);
+            $srcset = implode(', ', $srcsetParts);
+            $media = $layout['min_viewport'] > 0 ? "(min-width: {$layout['min_viewport']}px)" : null;
+            $source = new ResponsiveSource($media, $srcset, $sizeValue);
 
-			if (null === $media) {
-				$defaultSource = $source;
-			} else {
-				$sources[] = $source;
-			}
+            if (null === $media) {
+                $defaultSource = $source;
+            } else {
+                $sources[] = $source;
+            }
         }
 
-		if (null === $defaultSource) {
-			$defaultSource = new ResponsiveSource(null, '', '');
-		}
+        if (null === $defaultSource) {
+            $defaultSource = new ResponsiveSource(null, '', '');
+        }
 
-		return new ResponsiveAttributes($sources, $defaultSource, $variables);
+        return new ResponsiveAttributes($sources, $defaultSource, $variables);
     }
 
     private function formatSizePart(int $minViewport, string $sizeValue): string
@@ -136,47 +136,47 @@ final class ResponsiveAttributeGenerator
     /**
      * @param array{min_viewport: int, max_container: int|null} $layout
      *
-	 * @return array{0: float, 1: string, 2: string}
+     * @return array{0: float, 1: string, 2: string}
      */
     private function calculateDimensions(BreakpointAssignment $assignment, array $layout): array
     {
-		if (null !== $assignment->widthPercent) {
-			$percentValue = (float) rtrim($assignment->widthPercent, '%');
-			$cssValue     = $assignment->widthPercent;
+        if (null !== $assignment->widthPercent) {
+            $percentValue = (float) rtrim($assignment->widthPercent, '%');
+            $cssValue = $assignment->widthPercent;
 
-			$maxContainer = $layout['max_container'];
-			if ($maxContainer) {
-				$pixelWidth = ($percentValue / 100) * $maxContainer;
-			} else {
-				$pixelWidth = ($percentValue / 100) * 1920;
-			}
+            $maxContainer = $layout['max_container'];
+            if ($maxContainer) {
+                $pixelWidth = ($percentValue / 100) * $maxContainer;
+            } else {
+                $pixelWidth = ($percentValue / 100) * 1920;
+            }
 
-			return [$pixelWidth, round($pixelWidth) . 'px', $cssValue];
-		}
+            return [$pixelWidth, round($pixelWidth).'px', $cssValue];
+        }
 
-		if (null !== $assignment->width) {
-			$pixelWidth = (float) $assignment->width;
-			$sizeValue  = $assignment->width . 'px';
+        if (null !== $assignment->width) {
+            $pixelWidth = (float) $assignment->width;
+            $sizeValue = $assignment->width.'px';
 
-			return [$pixelWidth, $sizeValue, $sizeValue];
-		}
+            return [$pixelWidth, $sizeValue, $sizeValue];
+        }
 
         $totalCols = $this->gridConfig['columns'];
         $maxContainer = $layout['max_container'];
 
         if ($maxContainer) {
-			// Fixed container (e.g. 1320px) -> width in px
+            // Fixed container (e.g. 1320px) -> width in px
             $pixelWidth = ($assignment->columns / $totalCols) * $maxContainer;
             $sizeValue = round($pixelWidth).'px';
         } else {
-			// Fluid (null) -> width in vw
+            // Fluid (null) -> width in vw
             $vwWidth = ($assignment->columns / $totalCols) * 100;
             $sizeValue = round($vwWidth).'vw';
-			// For URL calculation we estimate px width from some reasonable max-width (e.g. 1920)
+            // For URL calculation we estimate px width from some reasonable max-width (e.g. 1920)
             $pixelWidth = ($vwWidth / 100) * 1920;
         }
 
-		return [$pixelWidth, $sizeValue, $sizeValue];
+        return [$pixelWidth, $sizeValue, $sizeValue];
     }
 
     private function generateUrl(
@@ -185,21 +185,21 @@ final class ResponsiveAttributeGenerator
         int $basePixelWidth,
         int $originalWidth,
         ?string $pointInterest = null,
-		array $context = [],
-	): string {
+        array $context = [],
+    ): string {
         $ratio = $this->resolveRatio($assignment);
 
-		if ($this->modifierProvider && $assignment->modifiers) {
-			$context = $this->modifierProvider->applyModifiers($assignment->modifiers, $context);
-		}
+        if ($this->modifierProvider && $assignment->modifiers) {
+            $context = $this->modifierProvider->applyModifiers($assignment->modifiers, $context);
+        }
 
-		$requestedWidth = $basePixelWidth;
-		if ($originalWidth > 0 && $basePixelWidth > $originalWidth) {
-			$basePixelWidth = $originalWidth;
+        $requestedWidth = $basePixelWidth;
+        if ($originalWidth > 0 && $basePixelWidth > $originalWidth) {
+            $basePixelWidth = $originalWidth;
         }
 
         $targetH = $ratio ? (int) round($basePixelWidth / $ratio) : null;
-		$url            = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
+        $url = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
 
         return $url;
     }
@@ -211,25 +211,25 @@ final class ResponsiveAttributeGenerator
             return null;
         }
 
-		// If it's a key in ratioConfig, use that
+        // If it's a key in ratioConfig, use that
         if (isset($this->ratioConfig[$ratioString])) {
-			$ratioString = $this->ratioConfig[$ratioString];
-		}
-
-		if (is_numeric($ratioString)) {
-			return (float) $ratioString;
+            $ratioString = $this->ratioConfig[$ratioString];
         }
 
-		// Otherwise try to parse format "16/9" or "3-4"
-        if (preg_match('/^(\d+)[\/-](\d+)$/', $ratioString, $matches)) {
-			return (float) $matches[1] / (float) $matches[2];
-		}
+        if (is_numeric($ratioString)) {
+            return (float) $ratioString;
+        }
 
-		// Or format "400x500"
-		if (preg_match('/^(\d+)x(\d+)$/', $ratioString, $matches)) {
+        // Otherwise try to parse format "16/9" or "3-4"
+        if (preg_match('/^(\d+)[\/-](\d+)$/', $ratioString, $matches)) {
             return (float) $matches[1] / (float) $matches[2];
         }
 
-		throw new \InvalidArgumentException(sprintf('Invalid ratio format or missing ratio configuration for: "%s"', $ratioString));
+        // Or format "400x500"
+        if (preg_match('/^(\d+)x(\d+)$/', $ratioString, $matches)) {
+            return (float) $matches[1] / (float) $matches[2];
+        }
+
+        throw new \InvalidArgumentException(sprintf('Invalid ratio format or missing ratio configuration for: "%s"', $ratioString));
     }
 }

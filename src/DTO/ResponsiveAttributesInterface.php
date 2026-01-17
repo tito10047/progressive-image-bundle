@@ -11,13 +11,13 @@
 
 namespace Tito10047\ProgressiveImageBundle\DTO;
 
-interface ResponsiveAttributesInterface {
+interface ResponsiveAttributesInterface
+{
+    /** @return ResponsiveSourceInterface[] */
+    public function getSources(): array;
 
-	/** @return ResponsiveSourceInterface[] */
-	public function getSources(): array;
+    public function getDefaultSource(): ResponsiveSourceInterface;
 
-	public function getDefaultSource(): ResponsiveSourceInterface;
-
-	/** @return array<string, string> */
-	public function getVariables(): array;
+    /** @return array<string, string> */
+    public function getVariables(): array;
 }

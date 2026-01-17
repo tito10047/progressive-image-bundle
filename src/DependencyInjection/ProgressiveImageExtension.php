@@ -131,9 +131,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $imageCacheServiceId = $configs['image_cache_service'] ?? 'cache.app';
         $imageCacheEnabled = $configs['image_cache_enabled'] ?? false;
         $ttl = $configs['ttl'] ?? null;
-		$retinaConfig = $configs['retina'] ?? ['enabled' => true, 'multipliers' => [1, 2]];
-		$retina = $retinaConfig['enabled'] ?? true;
-		$retinaMultipliers = $retinaConfig['multipliers'] ?? [1, 2];
+        $retinaConfig = $configs['retina'] ?? ['enabled' => true, 'multipliers' => [1, 2]];
+        $retina = $retinaConfig['enabled'] ?? true;
+        $retinaMultipliers = $retinaConfig['multipliers'] ?? [1, 2];
 
         if (!$imageCacheEnabled) {
             $imageCacheServiceReference = null;
@@ -144,14 +144,15 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $definition = $container->getDefinition(MetadataReader::class);
         $definition->setArgument('$analyzer', new Reference($analyzerId))
             ->setArgument('$loader', new Reference($loaderId))
-			->setArgument('$pathResolver', new Reference('progressive_image.resolver.default'))
+            ->setArgument('$pathResolver', new Reference('progressive_image.resolver.default'))
             ->setArgument('$cache', new Reference($cacheId))
             ->setArgument('$ttl', $configs['ttl'] ?? null)
             ->setArgument('$fallbackPath', $configs['fallback_image'] ?? null)
         ;
         $container->setParameter('progressive_image.image_cache_enabled', $imageCacheEnabled);
         $container->setParameter('progressive_image.ttl', $ttl);
-		$container->setParameter('progressive_image.image_configs', $configs['image_configs'] ?? []);
+        $container->setParameter('progressive_image.image_configs', $configs['image_configs'] ?? []);
+        $container->setParameter('progressive_image.responsive_strategy.ratios', $configs['responsive_strategy']['ratios'] ?? []);
         $container->setAlias('progressive_image.image_cache_service', $imageCacheServiceId);
 
         $container->register(TransparentCacheExtension::class)
@@ -167,22 +168,22 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->addTag('kernel.event_subscriber')
         ;
 
-		$container->registerForAutoconfiguration(ModifierInterface::class)
-			->addTag('progressive_image.modifier');
+        $container->registerForAutoconfiguration(ModifierInterface::class)
+            ->addTag('progressive_image.modifier');
 
-		$container->registerForAutoconfiguration(FilterModifierInterface::class)
-			->addTag('pgi.filter_modifier');
+        $container->registerForAutoconfiguration(FilterModifierInterface::class)
+            ->addTag('pgi.filter_modifier');
 
-		$container->register(ModifierProvider::class)
-			->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('progressive_image.modifier'));
+        $container->register(ModifierProvider::class)
+            ->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('progressive_image.modifier'));
 
-		$container->register(BaseFilterModifier::class)
-			->addTag('progressive_image.modifier', ['priority' => -100]);
+        $container->register(BaseFilterModifier::class)
+            ->addTag('progressive_image.modifier', ['priority' => -100]);
 
         if (class_exists(LiipImagineBundle::class)) {
-			$container->register(LiipImagineRuntimeConfigGenerator::class)
-				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
-				->setArgument('$imageConfigs', new Parameter('progressive_image.image_configs'));
+            $container->register(LiipImagineRuntimeConfigGenerator::class)
+                ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
+                ->setArgument('$imageConfigs', new Parameter('progressive_image.image_configs'));
 
             $container->register(LiipImagineResponsiveImageUrlGenerator::class)
                 ->setArgument('$cacheManager', new Reference('liip_imagine.cache.manager'))
@@ -190,41 +191,48 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$uriSigner', new Reference('uri_signer'))
                 ->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
                 ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
-				->setArgument('$requestStack', new Reference('request_stack'))
+                ->setArgument('$requestStack', new Reference('request_stack'))
                 ->setArgument('$cache', $imageCacheServiceReference)
-				->setArgument('$webpGenerate', new Parameter('liip_imagine.webp.generate'))
+                ->setArgument('$webpGenerate', new Parameter('liip_imagine.webp.generate'))
                 ->setPublic(true);
 
-			$container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);
-			$container->setAlias(LiipImagineRuntimeConfigGeneratorInterface::class, LiipImagineRuntimeConfigGenerator::class)->setPublic(true);
+            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);
+            $container->setAlias(LiipImagineRuntimeConfigGeneratorInterface::class, LiipImagineRuntimeConfigGenerator::class)->setPublic(true);
         }
         $responsiveConfig = $configs['responsive_strategy'] ?? [];
         $generatorId = $responsiveConfig['generator'] ?? null;
 
-        if ($generatorId || class_exists(LiipImagineBundle::class)) {
+        if ($generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid'])) {
+            if (!$generatorId && !class_exists(LiipImagineBundle::class)) {
+                // We need some default URL generator if LiipImagine is not present but we want to use ResponsiveAttributeGenerator
+                $container->register('progressive_image.url_generator.default', \Tito10047\ProgressiveImageBundle\UrlGenerator\DefaultResponsiveImageUrlGenerator::class)
+                    ->setPublic(true);
+                $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, 'progressive_image.url_generator.default')->setPublic(true);
+            }
+
             $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
                 ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
                 ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
-				->setArgument('$retinaMultipliers', $retinaMultipliers)
+                ->setArgument('$retinaMultipliers', $retinaMultipliers)
                 ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
                 ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
-				->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
-				->setPublic(true)
+                ->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
+                ->setPublic(true)
             ;
         }
 
-		$container->register(GenerateCustomCssCommand::class)
-			->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
-			->setArgument('$projectDir', new Parameter('kernel.project_dir'))
-			->addTag('console.command');
+        $container->register(GenerateCustomCssCommand::class)
+            ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
+            ->setArgument('$projectDir', new Parameter('kernel.project_dir'))
+            ->addTag('console.command');
 
         $container->register(Image::class, Image::class)
             ->setArgument('$analyzer', new Reference(MetadataReader::class))
             ->setArgument('$pathDecorator', array_map(fn ($id) => new Reference($id), $configs['path_decorators'] ?? []))
-            ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) ? new Reference(ResponsiveAttributeGenerator::class) : null)
+            ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid']) ? new Reference(ResponsiveAttributeGenerator::class) : null)
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
-			->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
-			->setArgument('$defaultRetina', $retina)
+            ->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
+            ->setArgument('$defaultRetina', $retina)
             ->setShared(false)
             ->addTag('twig.component')
             ->setPublic(true);
@@ -242,31 +250,31 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             if ('filesystem' === $resolverConfig['type']) {
                 $container->register($id, FileSystemResolver::class)
                     ->setArgument('$roots', $resolverConfig['roots'] ?? ['%kernel.project_dir%/public'])
-					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true)
-					->setPublic(true);
+                    ->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true)
+                    ->setPublic(true);
             } elseif ('asset_mapper' === $resolverConfig['type']) {
-				$container->register($id, AssetMapperResolver::class)
-					->setArgument('$assetMapper', new Reference('asset_mapper'))
-					->setPublic(true);
-			} elseif ('chain' === $resolverConfig['type']) {
-				$childResolvers = array_map(fn($name) => new Reference('progressive_image.resolver.' . $name), $resolverConfig['resolvers'] ?? []);
-				$container->register($id, ChainResolver::class)
-					->setArgument('$resolvers', $childResolvers)
-					->setPublic(true);
+                $container->register($id, AssetMapperResolver::class)
+                    ->setArgument('$assetMapper', new Reference('asset_mapper'))
+                    ->setPublic(true);
+            } elseif ('chain' === $resolverConfig['type']) {
+                $childResolvers = array_map(fn ($name) => new Reference('progressive_image.resolver.'.$name), $resolverConfig['resolvers'] ?? []);
+                $container->register($id, ChainResolver::class)
+                    ->setArgument('$resolvers', $childResolvers)
+                    ->setPublic(true);
             }
         }
 
-		$resolver = $config['resolver'] ?? 'default';
+        $resolver = $config['resolver'] ?? 'default';
 
-		if (isset($resolvers[$resolver])) {
-			$container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.' . $resolver);
-		} elseif (in_array($resolver, ['filesystem', 'asset_mapper'])) {
-			$container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.' . $resolver);
-		} elseif (!empty($resolvers) && 'default' === $resolver) {
+        if (isset($resolvers[$resolver])) {
+            $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
+        } elseif (in_array($resolver, ['filesystem', 'asset_mapper'])) {
+            $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
+        } elseif (!empty($resolvers) && 'default' === $resolver) {
             $firstResolver = array_key_first($resolvers);
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$firstResolver);
         } else {
-			$container->register('progressive_image.resolver.default', FileSystemResolver::class)
+            $container->register('progressive_image.resolver.default', FileSystemResolver::class)
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])
                 ->setArgument('$allowUnresolvable', true);
         }

@@ -4,3 +4,4 @@ composer.lock
 /var/
 .phpunit.result.cache
 /config/reference.php
+/.php-cs-fixer.cache

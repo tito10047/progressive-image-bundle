@@ -9,9 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Tito10047\ProgressiveImageBundle\UrlGenerator;
+namespace Tito10047\ProgressiveImageBundle\DTO;
 
-interface ResponsiveImageUrlGeneratorInterface
+interface ResponsiveSourceInterface
 {
-    public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null, array $context = []): string;
+    public function getMedia(): ?string;
+
+    public function getSrcset(): string;
+
+    public function getSizes(): string;
 }

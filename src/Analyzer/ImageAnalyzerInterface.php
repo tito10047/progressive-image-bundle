@@ -22,10 +22,10 @@ use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 interface ImageAnalyzerInterface
 {
     /**
-	 * Analyzes an image and returns a metadata object (dimensions, hash, etc.).
+     * Analyzes an image and returns a metadata object (dimensions, hash, etc.).
      *
-	 * @throws PathResolutionException       If the path does not exist
-	 * @throws UnsupportedImageTypeException If the format is not supported
+     * @throws PathResolutionException       If the path does not exist
+     * @throws UnsupportedImageTypeException If the format is not supported
      */
     public function analyze(LoaderInterface $loader, string $path): ImageMetadata;
 }

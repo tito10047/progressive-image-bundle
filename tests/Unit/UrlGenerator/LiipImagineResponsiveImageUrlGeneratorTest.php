@@ -30,7 +30,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
     private UriSigner $uriSigner;
     private LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator;
     private FilterConfiguration $filterConfiguration;
-	private RequestStack $requestStack;
+    private RequestStack $requestStack;
     private TagAwareCacheInterface $cache;
     private LiipImagineResponsiveImageUrlGenerator $generator;
 
@@ -44,7 +44,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
         $this->uriSigner = $this->createMock(UriSigner::class);
         $this->runtimeConfigGenerator = $this->createMock(LiipImagineRuntimeConfigGeneratorInterface::class);
         $this->filterConfiguration = $this->createMock(FilterConfiguration::class);
-		$this->requestStack = $this->createMock(RequestStack::class);
+        $this->requestStack = $this->createMock(RequestStack::class);
         $this->cache = $this->createMock(TagAwareCacheInterface::class);
 
         $this->generator = new LiipImagineResponsiveImageUrlGenerator(
@@ -53,9 +53,9 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             $this->uriSigner,
             $this->runtimeConfigGenerator,
             $this->filterConfiguration,
-			$this->requestStack,
+            $this->requestStack,
             $this->cache,
-			false
+            false
         );
     }
 
@@ -67,7 +67,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
+            ->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => []]);
 
         $this->cacheManager->expects($this->once())
@@ -76,13 +76,13 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             ->willReturn(true);
 
         $this->cacheManager->expects($this->once())
-			->method('resolve')
+            ->method('resolve')
             ->with($path, 'my_filter_100x100')
             ->willReturn('/media/cache/my_filter_100x100/test.jpg');
 
         $this->router->expects($this->never())->method('generate');
 
-		$url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
+        $url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
 
         $this->assertEquals('/media/cache/my_filter_100x100/test.jpg', $url);
     }
@@ -95,7 +95,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
+            ->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => ['foo' => 'bar']]);
 
         $this->cacheManager->expects($this->once())
@@ -131,7 +131,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             ->with('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter')
             ->willReturn('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter&_hash=123');
 
-		$url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
+        $url = $this->generator->generateUrl($path, $targetW, $targetH, null, ['filter' => 'my_filter']);
 
         $this->assertEquals('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter&_hash=123', $url);
     }

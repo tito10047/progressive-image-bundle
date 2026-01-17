@@ -52,8 +52,8 @@ final class LiipImagineController
     ): Response {
         $path = PathHelper::urlPathToFilePath($path);
 
-		$context = $request->query->all();
-		unset($context['path'], $context['width'], $context['height'], $context['filter'], $context['pointInterest'], $context['_hash']);
+        $context = $request->query->all();
+        unset($context['path'], $context['width'], $context['height'], $context['filter'], $context['pointInterest'], $context['_hash']);
 
         $origWidth = null;
         $origHeight = null;
@@ -63,7 +63,7 @@ final class LiipImagineController
             $origHeight = $metadata->height;
         }
 
-		$result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight, $context);
+        $result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 
@@ -73,19 +73,20 @@ final class LiipImagineController
             throw new BadRequestHttpException(\sprintf('Signed url does not pass the sign check for path "%s" and filter "%s"', $path, $filter));
         }
 
-		return $this->createRedirectResponse(function () use ($path, $filterName, $request) {
-			return $this->filterService->getUrlOfFilteredImage(
-				$path,
-				$filterName,
-				null,
-				$this->isWebpSupported($request)
-			);
+        return $this->createRedirectResponse(function () use ($path, $filterName, $request) {
+            return $this->filterService->getUrlOfFilteredImage(
+                $path,
+                $filterName,
+                null,
+                $this->isWebpSupported($request)
+            );
         }, $path, $filterName);
     }
 
-	private function isWebpSupported(Request $request): bool {
-		return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
-	}
+    private function isWebpSupported(Request $request): bool
+    {
+        return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
+    }
 
     private function createRedirectResponse(\Closure $url, string $path, string $filter): RedirectResponse
     {

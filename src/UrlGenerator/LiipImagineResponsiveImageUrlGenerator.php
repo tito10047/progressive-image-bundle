@@ -29,17 +29,17 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         private readonly UriSigner $uriSigner,
         private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
         private readonly FilterConfiguration $filterConfiguration,
-		private readonly RequestStack $requestStack,
+        private readonly RequestStack $requestStack,
         private readonly ?TagAwareCacheInterface $cache,
-		private readonly bool         $webpGenerate = false,
+        private readonly bool $webpGenerate = false,
     ) {
     }
 
-	public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null, array $context = []): string
+    public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null, array $context = []): string
     {
         $targetH = $targetH ?? $targetW;
-		$filter = $context['filter'] ?? null;
-		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest, null, null, $context);
+        $filter = $context['filter'] ?? null;
+        $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest, null, null, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 
@@ -50,38 +50,39 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
             $this->filterConfiguration->set($filterName, $config);
         }
 
-		$isWebpSupported = $this->isWebpSupported();
-		$finalPath       = $path;
-		if ($this->webpGenerate && $isWebpSupported) {
-			$finalPath = $path . '.webp';
-		}
+        $isWebpSupported = $this->isWebpSupported();
+        $finalPath = $path;
+        if ($this->webpGenerate && $isWebpSupported) {
+            $finalPath = $path.'.webp';
+        }
 
-		if ($this->cacheManager->isStored($finalPath, $filterName)) {
-			return $this->cacheManager->resolve($finalPath, $filterName);
+        if ($this->cacheManager->isStored($finalPath, $filterName)) {
+            return $this->cacheManager->resolve($finalPath, $filterName);
         }
 
         $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
 
-		$params = [
+        $params = [
             'path' => $path,
             'width' => $targetW,
             'height' => $targetH,
-			'filter' => $filter,
+            'filter' => $filter,
             'pointInterest' => $pointInterest,
-		];
-		$params = array_merge($params, $context);
+        ];
+        $params = array_merge($params, $context);
 
-		$url = $this->router->generate('progressive_image_filter', array_filter($params), UrlGeneratorInterface::ABSOLUTE_URL);
+        $url = $this->router->generate('progressive_image_filter', array_filter($params), UrlGeneratorInterface::ABSOLUTE_URL);
 
         return $this->uriSigner->sign($url);
-	}
+    }
 
-	private function isWebpSupported(): bool {
-		$request = $this->requestStack->getCurrentRequest();
-		if (null === $request) {
-			return false;
-		}
+    private function isWebpSupported(): bool
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request) {
+            return false;
+        }
 
-		return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
+        return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
     }
 }

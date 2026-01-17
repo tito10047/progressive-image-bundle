@@ -9,15 +9,20 @@
 			title="Loading..."
 	></canvas>
 
-	<img
-			data-tito10047--progressive-image-bundle--progressive-image-target="highRes"
-			class="progressive-image-high-res"
-			alt="Real-world landscape example"
-			src="/realcase.jpg"
+	<picture>
+		<source
+				media="(min-width: 768px)"
+				srcset="http://localhost/media/cache/384x216/realcase.jpg 384w"
+				sizes="384px"
+		>
+		<img
+				data-tito10047--progressive-image-bundle--progressive-image-target="highRes"
+				class="progressive-image-high-res"
+				alt="Real-world landscape example"
+				src="/realcase.jpg"
 
 
-			data-action="load->tito10047--progressive-image-bundle--progressive-image#reveal error->tito10047--progressive-image-bundle--progressive-image#handleError"
-			srcset="http://localhost/media/cache/384x216/realcase.jpg 384w"
-			sizes="(min-width: 768px) 384px"
-	>
+				data-action="load->tito10047--progressive-image-bundle--progressive-image#reveal error->tito10047--progressive-image-bundle--progressive-image#handleError"
+		>
+	</picture>
 </div>

@@ -74,9 +74,9 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
         $this->filterConfiguration->expects($this->never())
             ->method('get');
 
-		// PoI 50x50 on 1000x1000 image, target 200x100
-		// center is 500x500
-		// start should be 500 - (200/2) = 400, 500 - (100/2) = 450
+        // PoI 50x50 on 1000x1000 image, target 200x100
+        // center is 500x500
+        // start should be 500 - (200/2) = 400, 500 - (100/2) = 450
         $result = $this->generator->generate(200, 100, null, '50x50', 1000, 1000);
 
         $this->assertEquals('200x100_50x50', $result['filterName']);
@@ -96,44 +96,46 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
     public function testGenerateWithPointInterestAtEdges(): void
     {
-		// PoI 0x0 (upper left corner) on 1000x1000, target 200x100
-		// center is 0x0
-		// start should be 0 - 100 = -100, 0 - 50 = -50 -> cropped to 0x0
+        // PoI 0x0 (upper left corner) on 1000x1000, target 200x100
+        // center is 0x0
+        // start should be 0 - 100 = -100, 0 - 50 = -50 -> cropped to 0x0
         $result = $this->generator->generate(200, 100, null, '0x0', 1000, 1000);
 
         $this->assertEquals([0, 0], $result['config']['filters']['crop']['start']);
 
-		// PoI 100x100 (lower right corner)
-		// center is 1000x1000
-		// start should be 1000 - 100 = 900, 1000 - 50 = 950
-		// but max start is orig - target: 1000 - 200 = 800, 1000 - 100 = 900
+        // PoI 100x100 (lower right corner)
+        // center is 1000x1000
+        // start should be 1000 - 100 = 900, 1000 - 50 = 950
+        // but max start is orig - target: 1000 - 200 = 800, 1000 - 100 = 900
         $result = $this->generator->generate(200, 100, null, '100x100', 1000, 1000);
 
         $this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);
     }
 
-	public function testGenerateWithExtraConfig(): void {
-		$imageConfigs = [
-			'quality'         => 75,
-			'post_processors' => [
-				'cwebp' => ['q' => 75, 'm' => 6],
-			],
-		];
-		$generator    = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration, $imageConfigs);
+    public function testGenerateWithExtraConfig(): void
+    {
+        $imageConfigs = [
+            'quality' => 75,
+            'post_processors' => [
+                'cwebp' => ['q' => 75, 'm' => 6],
+            ],
+        ];
+        $generator = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration, $imageConfigs);
 
-		$result = $generator->generate(200, 150);
+        $result = $generator->generate(200, 150);
 
-		$this->assertStringContainsString('_', $result['filterName']);
-		$this->assertEquals(75, $result['config']['quality']);
-		$this->assertEquals(['q' => 75, 'm' => 6], $result['config']['post_processors']['cwebp']);
-	}
+        $this->assertStringContainsString('_', $result['filterName']);
+        $this->assertEquals(75, $result['config']['quality']);
+        $this->assertEquals(['q' => 75, 'm' => 6], $result['config']['post_processors']['cwebp']);
+    }
 
-	public function testGenerateWithContext(): void {
-		$context = ['filter' => 'circle', 'foo' => 'bar'];
-		$result  = $this->generator->generate(200, 150, null, null, null, null, $context);
+    public function testGenerateWithContext(): void
+    {
+        $context = ['filter' => 'circle', 'foo' => 'bar'];
+        $result = $this->generator->generate(200, 150, null, null, null, null, $context);
 
-		$this->assertStringContainsString('_', $result['filterName']);
-		$this->assertEquals('circle', $result['config']['filter']);
-		$this->assertEquals('bar', $result['config']['foo']);
-	}
+        $this->assertStringContainsString('_', $result['filterName']);
+        $this->assertEquals('circle', $result['config']['filter']);
+        $this->assertEquals('bar', $result['config']['foo']);
+    }
 }

@@ -17,20 +17,19 @@ use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 
 final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfigGeneratorInterface
 {
-
-	/**
-	 * @param array<string, mixed> $imageConfigs
-	 */
+    /**
+     * @param array<string, mixed> $imageConfigs
+     */
     public function __construct(
         private readonly FilterConfiguration $filterConfiguration,
-		private readonly array $imageConfigs = [],
+        private readonly array $imageConfigs = [],
     ) {
     }
 
     /**
      * @return array{filterName: string, config: array<string, mixed>}
      */
-	public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null, array $context = []): array
+    public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null, array $context = []): array
     {
         $filterName = $filter ? sprintf('%s_%dx%d', $filter, $width, $height) : sprintf('%dx%d', $width, $height);
 
@@ -38,13 +37,13 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
             $filterName .= '_'.$pointInterest;
         }
 
-		if ($context) {
-			$filterName .= '_' . substr(md5(serialize($context)), 0, 5);
-		}
+        if ($context) {
+            $filterName .= '_'.substr(md5(serialize($context)), 0, 5);
+        }
 
-		if ($this->imageConfigs) {
-			$filterName .= '_' . substr(md5(serialize($this->imageConfigs)), 0, 5);
-		}
+        if ($this->imageConfigs) {
+            $filterName .= '_'.substr(md5(serialize($this->imageConfigs)), 0, 5);
+        }
 
         $config = [];
         if (null !== $filter) {
@@ -54,7 +53,7 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
             }
         }
 
-		$config = array_replace_recursive($config, $this->imageConfigs, $context);
+        $config = array_replace_recursive($config, $this->imageConfigs, $context);
 
         if (!isset($config['filters'])) {
             $config['filters'] = [];
@@ -84,15 +83,15 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
      */
     private function calculateCropStart(int $poiX, int $poiY, int $targetWidth, int $targetHeight, int $origWidth, int $origHeight): array
     {
-		// 1. Calculate the center of the crop on the original image based on the percentage point of interest
+        // 1. Calculate the center of the crop on the original image based on the percentage point of interest
         $centerX = (int) ($poiX / 100 * $origWidth);
         $centerY = (int) ($poiY / 100 * $origHeight);
 
-		// 2. Calculate the start of the crop so that the center is at the point of interest
+        // 2. Calculate the start of the crop so that the center is at the point of interest
         $startX = $centerX - (int) ($targetWidth / 2);
         $startY = $centerY - (int) ($targetHeight / 2);
 
-		// 3. Ensure that the crop does not go outside the original image
+        // 3. Ensure that the crop does not go outside the original image
         $startX = max(0, min($startX, $origWidth - $targetWidth));
         $startY = max(0, min($startY, $origHeight - $targetHeight));
 

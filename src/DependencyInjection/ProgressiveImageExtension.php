@@ -152,6 +152,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->setParameter('progressive_image.image_cache_enabled', $imageCacheEnabled);
         $container->setParameter('progressive_image.ttl', $ttl);
         $container->setParameter('progressive_image.image_configs', $configs['image_configs'] ?? []);
+        $container->setParameter('progressive_image.responsive_strategy.ratios', $configs['responsive_strategy']['ratios'] ?? []);
         $container->setAlias('progressive_image.image_cache_service', $imageCacheServiceId);
 
         $container->register(TransparentCacheExtension::class)

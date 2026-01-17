@@ -23,6 +23,7 @@ final readonly class BreakpointAssignment
 		public ?int    $width = null,
 		public ?int    $height = null,
 		public ?string $widthPercent = null,
+		public array   $modifiers = [],
     ) {
     }
 
@@ -32,7 +33,14 @@ final readonly class BreakpointAssignment
     public static function fromSegment(string $segment, ?string $ratio): self
     {
 		$originalSegment = $segment;
-		$breakpoint      = 'default';
+		$modifiers       = [];
+		if (str_contains($segment, '|')) {
+			$parts     = explode('|', $segment);
+			$segment   = array_shift($parts);
+			$modifiers = $parts;
+		}
+
+		$breakpoint = 'default';
 		if (preg_match('/^([a-z0-9_]+):(.*)$/i', $segment, $matches)) {
 			$breakpoint = $matches[1];
 			$segment    = $matches[2];
@@ -80,7 +88,8 @@ final readonly class BreakpointAssignment
 			$segmentRatio,
 			$width,
 			$height,
-			$widthPercent
+			$widthPercent,
+			$modifiers
 		);
 	}
 

@@ -13,6 +13,8 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
@@ -239,7 +241,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// default/xs max_container is null -> 100% of 1920 = 1920.
 		// ratio 10/9 = 1.111... -> 1920 / 1.111... = 1728
 		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
-		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
+		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
 		$assignments2       = [BreakpointAssignment::fromSegment('[100%]@[10/9]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
@@ -252,7 +254,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 		// Test dimensions ratio: [100%]@[1500x700]
 		// ratio 1500/700 = 2.1428... -> 1920 / 2.1428... = 896
 		$this->urlGenerator = $this->createMock(ResponsiveImageUrlGeneratorInterface::class);
-		$this->generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
+		$this->generator    = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator);
 		$assignments3       = [BreakpointAssignment::fromSegment('[100%]@[1500x700]', null)];
 		$this->urlGenerator->expects($this->once())
 			->method('generateUrl')
@@ -261,5 +263,29 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result3 = $this->generator->generate($path, $assignments3, $originalWidth, false);
 		$this->assertEqualsWithDelta(2.142857, (float) $result3['variables']['--img-aspect'], 0.00001);
+	}
+
+	public function testGenerateWithModifiers(): void {
+		$path          = 'test.jpg';
+		$assignments   = [
+			new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
+		];
+		$originalWidth = 2000;
+
+		$modifier = $this->createMock(ModifierInterface::class);
+		$modifier->method('supports')->with('circle')->willReturn(true);
+		$modifier->method('modify')->with('circle', [])->willReturn(['circle' => true]);
+
+		$modifierProvider = new ModifierProvider([$modifier]);
+		$generator        = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1], $this->preloadCollector, $this->urlGenerator, $modifierProvider);
+
+		$this->urlGenerator->expects($this->once())
+			->method('generateUrl')
+			->with($path, 360, 240, null, ['circle' => true])
+			->willReturn('url-circle');
+
+		$result = $generator->generate($path, $assignments, $originalWidth, false);
+
+		$this->assertStringContainsString('url-circle 360w', $result['srcset']);
 	}
 }

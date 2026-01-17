@@ -12,6 +12,7 @@
 namespace Tito10047\ProgressiveImageBundle\Service;
 
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
 final class ResponsiveAttributeGenerator
@@ -30,9 +31,10 @@ final class ResponsiveAttributeGenerator
     public function __construct(
         private array $gridConfig,
         private array $ratioConfig,
-		private readonly array $retinaMultipliers,
+		private readonly array             $retinaMultipliers,
         private readonly PreloadCollector $preloadCollector,
         private ResponsiveImageUrlGeneratorInterface $urlGenerator,
+		private readonly ?ModifierProvider $modifierProvider = null,
     ) {
     }
 
@@ -181,13 +183,17 @@ final class ResponsiveAttributeGenerator
 	): string {
         $ratio = $this->resolveRatio($assignment);
 
+		if ($this->modifierProvider && $assignment->modifiers) {
+			$context = $this->modifierProvider->applyModifiers($assignment->modifiers, $context);
+		}
+
 		$requestedWidth = $basePixelWidth;
 		if ($originalWidth > 0 && $basePixelWidth > $originalWidth) {
 			$basePixelWidth = $originalWidth;
         }
 
         $targetH = $ratio ? (int) round($basePixelWidth / $ratio) : null;
-		$url = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
+		$url            = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
 
         return $url;
     }

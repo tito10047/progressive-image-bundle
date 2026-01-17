@@ -18,7 +18,7 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 class BreakpointAssignmentTest extends TestCase
 {
     #[DataProvider('provideBreakpointStrings')]
-	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null, ?string $expectedWidthPercent = null): void
+	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null, ?string $expectedWidthPercent = null, array $expectedModifiers = []): void
     {
         $assignment = BreakpointAssignment::fromSegment($input, $ratio);
 
@@ -28,6 +28,7 @@ class BreakpointAssignmentTest extends TestCase
 		$this->assertSame($expectedWidth, $assignment->width);
 		$this->assertSame($expectedHeight, $assignment->height);
 		$this->assertSame($expectedWidthPercent, $assignment->widthPercent);
+		$this->assertSame($expectedModifiers, $assignment->modifiers);
     }
 
     public static function provideBreakpointStrings(): array
@@ -52,6 +53,9 @@ class BreakpointAssignmentTest extends TestCase
 			'decimal ratio'                   => ['sm:[100%]@[0.65]', null, 'sm', 0, '0.65', null, null, '100%'],
 			'fraction ratio'                  => ['[100%]@[10/9]', null, 'default', 0, '10/9', null, null, '100%'],
 			'dimensions ratio'                => ['[100%]@[1500x700]', null, 'default', 0, '1500x700', null, null, '100%'],
+			'single modifier'                 => ['lg:4@landscape|circle', null, 'lg', 4, 'landscape', null, null, null, ['circle']],
+			'multiple modifiers'              => ['lg:4@landscape|circle|border-5', null, 'lg', 4, 'landscape', null, null, null, ['circle', 'border-5']],
+			'modifier without ratio'          => ['lg:4|circle', null, 'lg', 4, null, null, null, null, ['circle']],
         ];
     }
 

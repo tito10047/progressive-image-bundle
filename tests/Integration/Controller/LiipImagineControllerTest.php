@@ -12,12 +12,6 @@ declare(strict_types=1);
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration\Controller;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\UriSigner;
-use Tito10047\ProgressiveImageBundle\Tests\Integration\PGIWebTestCase;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
-
 class LiipImagineControllerTest extends AbstractLiipImagineControllerTestCase {
 
 	public function testIndexWithFilter(): void {

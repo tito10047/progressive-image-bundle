@@ -71,7 +71,7 @@ class GenerateCustomCssCommand extends Command {
 	}
 
 	private function generateCssContent(): string {
-		$layouts = $this->gridConfig['layouts'] ?? [];
+		$layouts = $this->gridConfig['layouts'];
 
 		// Sort layouts by min_viewport descending for the root .progressive-image-container nested variables
 		$sortedLayouts = $layouts;
@@ -96,7 +96,7 @@ class GenerateCustomCssCommand extends Command {
 		uasort($mediaLayouts, fn($a, $b) => $a['min_viewport'] <=> $b['min_viewport']);
 
 		foreach ($mediaLayouts as $name => $layout) {
-			if ($layout['min_viewport'] === 0) {
+			if (0 === $layout['min_viewport']) {
 				continue;
 			}
 
@@ -119,7 +119,7 @@ class GenerateCustomCssCommand extends Command {
 	private function generateVariableFallback(array $sortedLayouts, string $type): string {
 		$variables = [];
 		foreach ($sortedLayouts as $name => $layout) {
-			$suffix      = $layout['min_viewport'] === 0 ? '' : '-' . $name;
+			$suffix      = 0 === $layout['min_viewport'] ? '' : '-' . $name;
 			$variables[] = sprintf('var(--img-%s%s', $type, $suffix);
 		}
 
@@ -141,11 +141,11 @@ class GenerateCustomCssCommand extends Command {
 
 		$variables = [];
 		foreach ($filteredLayouts as $name => $layout) {
-			$suffix      = $layout['min_viewport'] === 0 ? '' : '-' . $name;
+			$suffix      = 0 === $layout['min_viewport'] ? '' : '-' . $name;
 			$variables[] = sprintf('var(--img-%s%s', $type, $suffix);
 		}
 
-		$result = implode(", ", $variables);
+		$result = implode(', ', $variables);
 		if (count($variables) > 1) {
 			$result .= str_repeat(')', count($variables));
 		} else {

@@ -22,6 +22,7 @@ This bundle handles everything you need for modern image management. From **full
 - 🚀 **Zero Configuration:** Install and use. Most features work out of the box.
 - 🎨 **Blur & Error Placeholders:** Users see a beautiful Blurhash placeholder while loading. If an image is not found, the bundle automatically displays a stylish error
   placeholder.
+- 🖼️ **Responsive via `<picture>`:** Uses the modern `<picture>` element with multiple `<source>` tags for optimal browser selection and performance.
 - 📱 **Tailwind-like Selectors:** Define responsiveness naturally directly in your template using familiar breakpoints.
 - 🖼️ **Retina Support:** Automatically generates 1x, 2x (and more) versions for high-density displays.
 - ⚙️ **Automatic Generation:** The bundle automatically generates all necessary image sizes on disk (local or network), saving time and resources.

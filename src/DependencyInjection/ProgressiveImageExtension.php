@@ -201,7 +201,14 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $responsiveConfig = $configs['responsive_strategy'] ?? [];
         $generatorId = $responsiveConfig['generator'] ?? null;
 
-        if ($generatorId || class_exists(LiipImagineBundle::class)) {
+		if ($generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid'])) {
+			if (!$generatorId && !class_exists(LiipImagineBundle::class)) {
+				// We need some default URL generator if LiipImagine is not present but we want to use ResponsiveAttributeGenerator
+				$container->register('progressive_image.url_generator.default', \Tito10047\ProgressiveImageBundle\UrlGenerator\DefaultResponsiveImageUrlGenerator::class)
+					->setPublic(true);
+				$container->setAlias(ResponsiveImageUrlGeneratorInterface::class, 'progressive_image.url_generator.default')->setPublic(true);
+			}
+
             $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
                 ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
                 ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
@@ -221,7 +228,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(Image::class, Image::class)
             ->setArgument('$analyzer', new Reference(MetadataReader::class))
             ->setArgument('$pathDecorator', array_map(fn ($id) => new Reference($id), $configs['path_decorators'] ?? []))
-            ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) ? new Reference(ResponsiveAttributeGenerator::class) : null)
+			->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid']) ? new Reference(ResponsiveAttributeGenerator::class) : null)
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
 			->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
 			->setArgument('$defaultRetina', $retina)

@@ -7,6 +7,7 @@
 	{% set initialStyle = "--img-aspect: " ~ (this.width / this.height) ~ "; --img-width: " ~ this.width ~ "px;" %}
 {% endif %}
 
+{% set responsive = this.responsiveAttributes %}
 <div {{ attributes.defaults(stimulus_controller(this.controller, {
 	hash: this.hash,
 	framework: this.framework
@@ -21,17 +22,21 @@
 			title="{{ 'Loading...'|trans }}"
 	></canvas>
 
-	<img
-			{{ stimulus_target(this.controller,'highRes') }}
-			class="progressive-image-high-res"
-			alt="{{ this.alt }}"
-			src="{{ asset(this.decoratedSrc) }}"
-			{{ attributes.only('lazy') }}
-			{{ attributes.only('fetchpriority') }}
-			{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
-			{{ this.srcSet|raw }}
-			{{ this.responsiveSizes|raw }}
-	>
+	{% if this.hasResponsiveAttributes() and this.responsiveAttributes.sources|length > 0 %}
+		<picture>
+			{% for source in this.responsiveAttributes.sources %}
+				<source
+						{% if source.media %}media="{{ source.media }}"{% endif %}
+						srcset="{{ source.srcset }}"
+						sizes="{{ source.sizes }}"
+				>
+			{% endfor %}
+			{{ block('img_tag') }}
+		</picture>
+	{% else %}
+		{{ block('img_tag') }}
+	{% endif %}
+
 	{% if this.hash is null %}
 		<div
 				{{ stimulus_target(this.controller,'errorOverlay') }}
@@ -48,3 +53,21 @@
 		</div>
 	{% endif %}
 </div>
+
+{% if false %}
+	{% block img_tag %}
+		<img
+				{{ stimulus_target(this.controller,'highRes') }}
+				class="progressive-image-high-res"
+				alt="{{ this.alt }}"
+				src="{{ asset(this.decoratedSrc) }}"
+				{{ attributes.only('lazy') }}
+				{{ attributes.only('fetchpriority') }}
+				{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
+				{% if this.hasResponsiveAttributes() %}
+					srcset="{{ this.responsiveAttributes.defaultSource.srcset }}"
+					sizes="{{ this.responsiveAttributes.defaultSource.sizes }}"
+				{% endif %}
+		>
+	{% endblock %}
+{% endif %}

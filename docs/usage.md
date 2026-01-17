@@ -12,7 +12,8 @@ Simply provide the path to the image and an alternative text.
 
 ## Responsive Images using `sizes`
 
-You can define how many grid columns the image should occupy at different breakpoints. This syntax is inspired by Tailwind.
+You can define how many grid columns the image should occupy at different breakpoints. This syntax is inspired by Tailwind. When multiple breakpoints are used, the bundle
+automatically wraps the image in a `<picture>` element with corresponding `<source>` tags.
 
 ```twig
 <twig:pgi:Image 

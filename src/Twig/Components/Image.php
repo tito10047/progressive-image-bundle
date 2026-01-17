@@ -16,6 +16,7 @@ use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
+use Tito10047\ProgressiveImageBundle\DTO\ResponsiveAttributesInterface;
 use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
@@ -47,10 +48,8 @@ final class Image
      * @var BreakpointAssignment[]
      */
     private array $breakpoinsts = [];
-    /**
-	 * @var array{sizes: string, srcset: string, variables: array<string, string>}|null
-     */
-    private ?array $responsiveAttributes = null;
+
+	private ?ResponsiveAttributesInterface $responsiveAttributes = null;
 
     /**
      * @param iterable<PathDecoratorInterface> $pathDecorator
@@ -112,7 +111,7 @@ final class Image
             return '';
         }
 
-        return "srcset=\"{$this->responsiveAttributes['srcset']}\"";
+		return "srcset=\"{$this->responsiveAttributes->getDefaultSource()->getSrcset()}\"";
     }
 
     public function getResponsiveSizes(): string
@@ -121,8 +120,16 @@ final class Image
             return '';
         }
 
-        return "sizes=\"{$this->responsiveAttributes['sizes']}\"";
+		return "sizes=\"{$this->responsiveAttributes->getDefaultSource()->getSizes()}\"";
+	}
+
+	public function getResponsiveAttributes(): ?ResponsiveAttributesInterface {
+		return $this->responsiveAttributes;
     }
+
+	public function hasResponsiveAttributes(): bool {
+		return $this->responsiveAttributes !== null;
+	}
 
     public function getHash(): ?string
     {
@@ -139,11 +146,8 @@ final class Image
 		return $this->decoratedHeight;
 	}
 
-	/**
-	 * @return array<string, string>
-	 */
 	public function getVariables(): array {
-		return $this->responsiveAttributes['variables'] ?? [];
+		return $this->responsiveAttributes?->getVariables() ?? [];
     }
 
     public function getDecoratedSrc(): string

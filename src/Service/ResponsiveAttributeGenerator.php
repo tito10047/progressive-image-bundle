@@ -12,6 +12,9 @@
 namespace Tito10047\ProgressiveImageBundle\Service;
 
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
+use Tito10047\ProgressiveImageBundle\DTO\ResponsiveAttributes;
+use Tito10047\ProgressiveImageBundle\DTO\ResponsiveAttributesInterface;
+use Tito10047\ProgressiveImageBundle\DTO\ResponsiveSource;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
@@ -40,17 +43,14 @@ final class ResponsiveAttributeGenerator
 
     /**
      * @param BreakpointAssignment[] $assignments
-     *
-	 * @return array{sizes: string, srcset: string, variables: array<string, string>}
      */
-	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): array
+	public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): ResponsiveAttributesInterface
     {
         $assignments = $this->sortAssignments($assignments);
 
-        $sizesParts = [];
-        $srcsetParts = [];
+		$sources         = [];
 		$variables = [];
-        $processedWidths = [];
+		$defaultSource   = null;
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
@@ -70,13 +70,13 @@ final class ResponsiveAttributeGenerator
 			[$pixelWidth, $sizeValue, $cssValue] = $this->calculateDimensions($assignment, $layout);
 
             $size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
-            $sizesParts[] = $size;
 
 			$multipliers = $retina ? $this->retinaMultipliers : [1];
+			$srcsetParts = [];
 
 			foreach ($multipliers as $multiplier) {
 				$mPixelWidth = (int) round($pixelWidth * $multiplier);
-				$url         = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $processedWidths, $pointInterest, $context);
+				$url     = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
 
 				if ($url) {
 					if ($preload && 1 === $multiplier) {
@@ -93,13 +93,23 @@ final class ResponsiveAttributeGenerator
 			if ($ratio) {
 				$variables['--img-aspect' . $suffix] = (string) $ratio;
 			}
+
+			$srcset = implode(', ', $srcsetParts);
+			$media  = $layout['min_viewport'] > 0 ? "(min-width: {$layout['min_viewport']}px)" : null;
+			$source = new ResponsiveSource($media, $srcset, $sizeValue);
+
+			if (null === $media) {
+				$defaultSource = $source;
+			} else {
+				$sources[] = $source;
+			}
         }
 
-        return [
-            'sizes' => implode(', ', $sizesParts),
-            'srcset' => implode(', ', $srcsetParts),
-			'variables' => $variables,
-        ];
+		if (null === $defaultSource) {
+			$defaultSource = new ResponsiveSource(null, '', '');
+		}
+
+		return new ResponsiveAttributes($sources, $defaultSource, $variables);
     }
 
     private function formatSizePart(int $minViewport, string $sizeValue): string
@@ -177,7 +187,6 @@ final class ResponsiveAttributeGenerator
         BreakpointAssignment $assignment,
         int $basePixelWidth,
         int $originalWidth,
-        array &$processedWidths,
         ?string $pointInterest = null,
 		array $context = [],
 	): string {

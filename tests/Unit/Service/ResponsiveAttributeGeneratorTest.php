@@ -68,9 +68,10 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false, null, [], true);
 
-		$this->assertEquals('(min-width: 768px) 360px', $result['sizes']);
-		$this->assertStringContainsString('url-360 360w', $result['srcset']);
-		$this->assertStringContainsString('url-720 720w', $result['srcset']);
+		$this->assertEquals('360px', $result->getSources()[0]->getSizes());
+		$this->assertEquals('(min-width: 768px)', $result->getSources()[0]->getMedia());
+		$this->assertStringContainsString('url-360 360w', $result->getSources()[0]->getSrcset());
+		$this->assertStringContainsString('url-720 720w', $result->getSources()[0]->getSrcset());
     }
 
     public function testGenerateBasic(): void
@@ -94,16 +95,19 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $result = $this->generator->generate($path, $assignments, $originalWidth, false);
 
-        $this->assertEquals('(min-width: 768px) 360px, 100vw', $result['sizes']);
-        $this->assertStringContainsString('url-360 360w', $result['srcset']);
-        $this->assertStringNotContainsString('url-720 720w', $result['srcset']); // No more 2x multiplier by default
-        $this->assertStringContainsString('url-1920 1920w', $result['srcset']);
+		$this->assertEquals('360px', $result->getSources()[0]->getSizes());
+		$this->assertEquals('(min-width: 768px)', $result->getSources()[0]->getMedia());
+		$this->assertStringContainsString('url-360 360w', $result->getSources()[0]->getSrcset());
 
-		$this->assertArrayHasKey('variables', $result);
-		$this->assertEquals('100vw', $result['variables']['--img-width']);
-		$this->assertEquals('1', $result['variables']['--img-aspect']);
-		$this->assertEquals('360px', $result['variables']['--img-width-md']);
-		$this->assertEquals('1.5', $result['variables']['--img-aspect-md']);
+		$this->assertEquals('100vw', $result->getDefaultSource()->getSizes());
+		$this->assertNull($result->getDefaultSource()->getMedia());
+		$this->assertStringContainsString('url-1920 1920w', $result->getDefaultSource()->getSrcset());
+
+		$variables = $result->getVariables();
+		$this->assertEquals('100vw', $variables['--img-width']);
+		$this->assertEquals('1', $variables['--img-aspect']);
+		$this->assertEquals('360px', $variables['--img-width-md']);
+		$this->assertEquals('1.5', $variables['--img-aspect-md']);
     }
 
     public function testResolveRatioWithDifferentFormats(): void
@@ -151,7 +155,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $result = $this->generator->generate($path, $assignments, $originalWidth, false);
 
-        $this->assertEquals('url-360 360w', $result['srcset']);
+		$this->assertEquals('url-360 360w', $result->getSources()[0]->getSrcset());
     }
 
 	public function testGenerateWithDefaultBreakpoint(): void {
@@ -169,9 +173,9 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
 
-		$this->assertEquals('100vw', $result['sizes']);
-		$this->assertStringContainsString('url-1920 1920w', $result['srcset']);
-		$this->assertEquals('100vw', $result['variables']['--img-width']);
+		$this->assertEquals('100vw', $result->getDefaultSource()->getSizes());
+		$this->assertStringContainsString('url-1920 1920w', $result->getDefaultSource()->getSrcset());
+		$this->assertEquals('100vw', $result->getVariables()['--img-width']);
 	}
 
 	public function testGenerateWithExplicitDimensions(): void {
@@ -192,13 +196,14 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
 
-		$this->assertStringContainsString('430px', $result['sizes']);
-		$this->assertStringContainsString('430w', $result['srcset']);
+		$this->assertStringContainsString('430px', $result->getSources()[0]->getSizes());
+		$this->assertStringContainsString('430w', $result->getSources()[0]->getSrcset());
 
-		$this->assertEquals('430px', $result['variables']['--img-width-xxl']);
-		$this->assertEqualsWithDelta(1.162162, (float) $result['variables']['--img-aspect-xxl'], 0.00001);
-		$this->assertEquals('430px', $result['variables']['--img-width-xl']);
-		$this->assertEquals('1', $result['variables']['--img-aspect-xl']);
+		$variables = $result->getVariables();
+		$this->assertEquals('430px', $variables['--img-width-xxl']);
+		$this->assertEqualsWithDelta(1.162162, (float) $variables['--img-aspect-xxl'], 0.00001);
+		$this->assertEquals('430px', $variables['--img-width-xl']);
+		$this->assertEquals('1', $variables['--img-aspect-xl']);
 	}
 
 	public function testGenerateWithPercentageWidth(): void {
@@ -216,9 +221,9 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result = $this->generator->generate($path, $assignments, $originalWidth, false);
 
-		$this->assertEquals('(min-width: 1400px) 1056px', $result['sizes']);
-		$this->assertStringContainsString('url-1056 1056w', $result['srcset']);
-		$this->assertEquals('80%', $result['variables']['--img-width-xxl']);
+		$this->assertEquals('(min-width: 1400px) 1056px', $result->getSources()[0]->getMedia() . ' ' . $result->getSources()[0]->getSizes());
+		$this->assertStringContainsString('url-1056 1056w', $result->getSources()[0]->getSrcset());
+		$this->assertEquals('80%', $result->getVariables()['--img-width-xxl']);
 	}
 
 	public function testGenerateWithNewRatioFormats(): void {
@@ -235,7 +240,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 			->willReturn('url-decimal');
 
 		$result1 = $this->generator->generate($path, $assignments1, $originalWidth, false);
-		$this->assertEquals('0.65', $result1['variables']['--img-aspect-sm']);
+		$this->assertEquals('0.65', $result1->getVariables()['--img-aspect-sm']);
 
 		// Test fraction ratio: [100%]@[10/9]
 		// default/xs max_container is null -> 100% of 1920 = 1920.
@@ -249,7 +254,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 			->willReturn('url-fraction');
 
 		$result2 = $this->generator->generate($path, $assignments2, $originalWidth, false);
-		$this->assertEquals('1.1111111111111', substr($result2['variables']['--img-aspect'], 0, 15));
+		$this->assertEquals('1.1111111111111', substr($result2->getVariables()['--img-aspect'], 0, 15));
 
 		// Test dimensions ratio: [100%]@[1500x700]
 		// ratio 1500/700 = 2.1428... -> 1920 / 2.1428... = 896
@@ -262,7 +267,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 			->willReturn('url-dimensions');
 
 		$result3 = $this->generator->generate($path, $assignments3, $originalWidth, false);
-		$this->assertEqualsWithDelta(2.142857, (float) $result3['variables']['--img-aspect'], 0.00001);
+		$this->assertEqualsWithDelta(2.142857, (float) $result3->getVariables()['--img-aspect'], 0.00001);
 	}
 
 	public function testGenerateWithModifiers(): void {
@@ -286,6 +291,6 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
 		$result = $generator->generate($path, $assignments, $originalWidth, false);
 
-		$this->assertStringContainsString('url-circle 360w', $result['srcset']);
+		$this->assertStringContainsString('url-circle 360w', $result->getSources()[0]->getSrcset());
 	}
 }

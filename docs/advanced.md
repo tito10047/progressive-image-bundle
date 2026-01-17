@@ -8,7 +8,8 @@ the browser discovers it too late.
 Progressive Image Bundle solves this using the **Dependency Discovery Pattern**:
 
 1. During Twig component rendering, the bundle collects URLs of images that have the `preload` attribute.
-2. A Kernel Response Listener then automatically injects `<link rel="preload">` into the HTML header (`<head>`) or sends it as an HTTP Link Header.
+2. For responsive images using the `<picture>` element, it automatically generates the `imagesrcset` and `imagesizes` attributes for the preload link.
+3. A Kernel Response Listener then automatically injects `<link rel="preload">` into the HTML header (`<head>`) or sends it as an HTTP Link Header.
 
 ### Usage:
 
@@ -17,6 +18,36 @@ Simply add the `preload` attribute to the component:
 ```twig
 <twig:pgi:Image src="hero.jpg" preload />
 ```
+
+---
+
+## Responsive Rendering with `<picture>`
+
+Starting from version 2.0, the bundle uses the `<picture>` element for responsive images when multiple breakpoints are defined. This allows for better Art Direction and
+ensures the browser chooses the most appropriate image source.
+
+### HTML Output Example
+
+For a component with `sizes="sm:12 md:6"`, the generated HTML looks like this:
+
+```html
+
+<picture>
+	<source
+			media="(min-width: 768px)"
+			srcset="/media/cache/md/hero.jpg 720w, /media/cache/md_2x/hero.jpg 1440w"
+			sizes="360px">
+	<img
+			src="/hero.jpg"
+			srcset="/media/cache/sm/hero.jpg 100vw, /media/cache/sm_2x/hero.jpg 200vw"
+			sizes="100vw"
+			class="progressive-image-high-res"
+			...
+	>
+</picture>
+```
+
+The `<img>` tag serves as the default (usually the smallest/mobile) version and a fallback for older browsers.
 
 ---
 

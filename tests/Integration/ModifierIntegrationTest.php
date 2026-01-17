@@ -14,7 +14,6 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
-use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;

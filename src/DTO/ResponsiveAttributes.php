@@ -20,7 +20,7 @@ class ResponsiveAttributes implements ResponsiveAttributesInterface {
 	public function __construct(
 		private readonly array                     $sources,
 		private readonly ResponsiveSourceInterface $defaultSource,
-		private readonly array                     $variables = []
+		private readonly array                     $variables = [],
 	) {
 	}
 

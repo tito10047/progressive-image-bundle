@@ -48,9 +48,9 @@ final class ResponsiveAttributeGenerator
     {
         $assignments = $this->sortAssignments($assignments);
 
-		$sources         = [];
-		$variables = [];
-		$defaultSource   = null;
+		$sources       = [];
+		$variables     = [];
+		$defaultSource = null;
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
@@ -76,7 +76,7 @@ final class ResponsiveAttributeGenerator
 
 			foreach ($multipliers as $multiplier) {
 				$mPixelWidth = (int) round($pixelWidth * $multiplier);
-				$url     = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
+				$url         = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
 
 				if ($url) {
 					if ($preload && 1 === $multiplier) {
@@ -179,9 +179,6 @@ final class ResponsiveAttributeGenerator
 		return [$pixelWidth, $sizeValue, $sizeValue];
     }
 
-    /**
-     * @param array<int, bool> $processedWidths
-     */
     private function generateUrl(
         string $path,
         BreakpointAssignment $assignment,

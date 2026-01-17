@@ -16,7 +16,7 @@ class ResponsiveSource implements ResponsiveSourceInterface {
 	public function __construct(
 		private readonly ?string $media,
 		private readonly string  $srcset,
-		private readonly string  $sizes
+		private readonly string  $sizes,
 	) {
 	}
 

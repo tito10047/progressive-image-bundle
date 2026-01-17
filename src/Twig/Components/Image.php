@@ -128,7 +128,7 @@ final class Image
     }
 
 	public function hasResponsiveAttributes(): bool {
-		return $this->responsiveAttributes !== null;
+		return null !== $this->responsiveAttributes;
 	}
 
     public function getHash(): ?string

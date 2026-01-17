@@ -22,8 +22,6 @@ use Symfony\Component\DependencyInjection\Reference;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
-use Tito10047\ProgressiveImageBundle\Modifier\CoreFilterModifier;
-use Tito10047\ProgressiveImageBundle\Modifier\FilterManager;
 use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
@@ -175,18 +173,11 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 		$container->registerForAutoconfiguration(FilterModifierInterface::class)
 			->addTag('pgi.filter_modifier');
 
-		$container->register(CoreFilterModifier::class)
-			->addTag('pgi.filter_modifier', ['priority' => -100]);
-
-		$container->register(FilterManager::class)
-			->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('pgi.filter_modifier'));
-
-		$container->register(BaseFilterModifier::class)
-			->setArgument('$filterManager', new Reference(FilterManager::class))
-			->addTag('progressive_image.modifier', ['priority' => -100]);
-
 		$container->register(ModifierProvider::class)
 			->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('progressive_image.modifier'));
+
+		$container->register(BaseFilterModifier::class)
+			->addTag('progressive_image.modifier', ['priority' => -100]);
 
         if (class_exists(LiipImagineBundle::class)) {
 			$container->register(LiipImagineRuntimeConfigGenerator::class)

@@ -32,16 +32,16 @@ class TestModifier implements ModifierInterface {
 	}
 }
 
-class CustomFilter implements FilterModifierInterface {
+class CustomFilter implements ModifierInterface {
 
-	public function supports(string $filterName): bool {
-		return 'circle' === $filterName;
+	public function supports(string $modifier): bool {
+		return 'circle' === $modifier;
 	}
 
-	public function modify(string $filterName, array $currentOptions): array {
-		$currentOptions['filter'] = 'custom_circle';
+	public function modify(string $modifier, array $context): array {
+		$context['filter'] = 'custom_circle';
 
-		return $currentOptions;
+		return $context;
 	}
 }
 
@@ -105,7 +105,7 @@ class ModifierIntegrationTest extends TestCase {
 
 		$kernel->setCustomConfiguration(function (ContainerBuilder $container) {
 			$container->register(CustomFilter::class)
-				->addTag('pgi.filter_modifier'); // default priority 0 > -100
+				->addTag('progressive_image.modifier'); // default priority 0 > -100
 		});
 
 		$kernel->boot();

@@ -72,10 +72,12 @@ class ModifierIntegrationTest extends TestCase {
 		$kernel->boot();
 		$container = $kernel->getContainer()->get('test.service_container');
 
-		$this->assertTrue($container->has(ModifierProvider::class));
+		$this->assertTrue($container->has(ModifierProvider::class) || $kernel->getContainer()->has(ModifierProvider::class));
 
 		/** @var ResponsiveAttributeGenerator $generator */
-		$generator = $container->get(ResponsiveAttributeGenerator::class);
+		$generator = $container->has(ResponsiveAttributeGenerator::class)
+			? $container->get(ResponsiveAttributeGenerator::class)
+			: $kernel->getContainer()->get(ResponsiveAttributeGenerator::class);
 
 		$result = $generator->generate('test.jpg', [
 			new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
@@ -112,7 +114,9 @@ class ModifierIntegrationTest extends TestCase {
 		$container = $kernel->getContainer()->get('test.service_container');
 
 		/** @var ResponsiveAttributeGenerator $generator */
-		$generator = $container->get(ResponsiveAttributeGenerator::class);
+		$generator = $container->has(ResponsiveAttributeGenerator::class)
+			? $container->get(ResponsiveAttributeGenerator::class)
+			: $kernel->getContainer()->get(ResponsiveAttributeGenerator::class);
 
 		$result = $generator->generate('test.jpg', [
 			new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),

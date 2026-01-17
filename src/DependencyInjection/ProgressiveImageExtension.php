@@ -209,6 +209,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
                 ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
 				->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
+				->setPublic(true)
             ;
         }
 

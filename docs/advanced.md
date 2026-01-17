@@ -125,28 +125,3 @@ filter names (like `circle`, `grayscale`, or custom ones like `border-5`).
 
 Filter modifiers support **Prioritization**. If you want to override a built-in filter, simply register your modifier with a higher priority (default is 0, built-in
 filters use -100).
-
-```php
-namespace App\Modifier;
-
-use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
-
-class CustomCircleModifier implements FilterModifierInterface
-{
-    public function supports(string $filterName): bool
-    {
-        return $filterName === 'circle';
-    }
-
-    public function modify(string $filterName, array $currentOptions): array
-    {
-        // Override default circle behavior
-        $currentOptions['filter'] = 'my_custom_circle_filter';
-        $currentOptions['radius'] = 50;
-        
-        return $currentOptions;
-    }
-}
-```
-
-If a modifier is not recognized by any `FilterModifierInterface`, it is added to the `custom_filters` array in the context.

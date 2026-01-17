@@ -60,7 +60,7 @@ dimensions based on the container width defined by your CSS framework (Bootstrap
 | `xs:12@square`        | 12 columns on `xs` with 1:1 aspect ratio         | Full width container, cropped to 1:1 square             |
 | `xxl:[430x370]`       | Explicit dimensions for a specific breakpoint    | Exact size 430x370px on `xxl` and larger                |
 | `xl:[100%]@landscape` | 100% container width with landscape aspect ratio | Full width container, cropped to 16:9 ratio             |
-| `lg:4                 | circle`                                          | 4 columns on `lg` with custom modifier                  | Passes `circle` to processing pipeline (e.g. crop)      |
+| `lg:4@square\|circle` | 4 columns on `lg` with custom modifier           | Passes `circle` to processing pipeline (e.g. crop)      |
 
 > **What is a "container"?** The bundle automatically detects your CSS framework (Bootstrap or Tailwind) and extracts the exact container widths for each breakpoint from
 > its configuration. It then uses these values to calculate the precise pixel dimensions for your images.

@@ -97,7 +97,7 @@ final class FileSystemResolver implements PathResolverInterface
         }
 
         if ($allowUnresolvable) {
-            return null;
+			return $path;
         }
 
         throw new \InvalidArgumentException(\sprintf('Root image path not resolvable "%s"', $path));

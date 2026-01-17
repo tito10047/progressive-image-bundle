@@ -60,6 +60,7 @@ dimensions based on the container width defined by your CSS framework (Bootstrap
 | `xs:12@square`        | 12 columns on `xs` with 1:1 aspect ratio         | Full width container, cropped to 1:1 square             |
 | `xxl:[430x370]`       | Explicit dimensions for a specific breakpoint    | Exact size 430x370px on `xxl` and larger                |
 | `xl:[100%]@landscape` | 100% container width with landscape aspect ratio | Full width container, cropped to 16:9 ratio             |
+| `lg:4@square\|circle` | 4 columns on `lg` with custom modifier           | Passes `circle` to processing pipeline (e.g. crop)      |
 
 > **What is a "container"?** The bundle automatically detects your CSS framework (Bootstrap or Tailwind) and extracts the exact container widths for each breakpoint from
 > its configuration. It then uses these values to calculate the precise pixel dimensions for your images.
@@ -80,6 +81,11 @@ The bundle never generates an image larger than the original. If you need 1200px
 
 To retrieve dimensions and Blurhash, the bundle doesn't load the entire image into RAM (no 20MB files in memory). It uses PHP streams to read only the necessary header
 bytes.
+
+### Custom Modifiers & Filters
+
+Extend the selector logic with your own modifiers (e.g., `lg:4|circle`). You can implement custom logic for filters like `circle`, `grayscale`, or `sepia` and even
+prioritize them to override default behavior.
 
 ---
 

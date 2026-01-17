@@ -3,3 +3,4 @@ composer.lock
 .idea
 /var/
 .phpunit.result.cache
+/config/reference.php

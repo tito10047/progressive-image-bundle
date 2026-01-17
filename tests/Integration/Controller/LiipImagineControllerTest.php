@@ -12,12 +12,6 @@ declare(strict_types=1);
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration\Controller;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\UriSigner;
-use Tito10047\ProgressiveImageBundle\Tests\Integration\PGIWebTestCase;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
-
 class LiipImagineControllerTest extends AbstractLiipImagineControllerTestCase {
 
 	public function testIndexWithFilter(): void {
@@ -68,5 +62,33 @@ class LiipImagineControllerTest extends AbstractLiipImagineControllerTestCase {
 		$client->request('GET', $signedUrl);
 
 		$this->assertImageRedirectAndProperties($client, '/media/cache/custom_filter_150x150/', 150, 150);
+	}
+
+	public function testIndexWithModifier(): void {
+		$client = $this->createLiipClient();
+		$signer = $this->getUriSigner($client);
+
+		$path   = 'test.png';
+		$width  = 100;
+		$height = 100;
+		$filter = 'preview_big';
+
+		// Pridame circle=1 ako modifier, ktory by sa mal dostat do kontextu
+		$url       = sprintf('/progressive-image?path=%s&width=%d&height=%d&filter=%s&circle=1', $path, $width, $height, $filter);
+		$signedUrl = $signer->sign('http://localhost' . $url);
+
+		$client->request('GET', $signedUrl);
+
+		$response = $client->getResponse();
+		$this->assertTrue($response->isRedirect());
+		$targetUrl = $response->headers->get('Location');
+		// Ak bol circle=1 v kontexte, hash kontextu by mal byt v nazve filtra
+		// Alebo ak by sme mali modifikator ktory meni priamo filter...
+		// V nasom pripade Controller vola RuntimeConfigGenerator s kontextom,
+		// ktory zahlti vsetky extra parametre.
+
+		$this->assertStringContainsString('preview_big_100x100', $targetUrl);
+		// Kedze context nie je prazdny (obsahuje circle=1), filterName by mal mat hash
+		$this->assertMatchesRegularExpression('/preview_big_100x100_[a-f0-9]{5}/', $targetUrl);
 	}
 }

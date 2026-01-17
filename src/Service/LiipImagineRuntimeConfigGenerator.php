@@ -30,13 +30,18 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
     /**
      * @return array{filterName: string, config: array<string, mixed>}
      */
-    public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null): array
+	public function generate(int $width, int $height, ?string $filter = null, ?string $pointInterest = null, ?int $origWidth = null, ?int $origHeight = null, array $context = []): array
     {
         $filterName = $filter ? sprintf('%s_%dx%d', $filter, $width, $height) : sprintf('%dx%d', $width, $height);
 
         if ($pointInterest) {
             $filterName .= '_'.$pointInterest;
         }
+
+		if ($context) {
+			$filterName .= '_' . substr(md5(serialize($context)), 0, 5);
+		}
+
 		if ($this->imageConfigs) {
 			$filterName .= '_' . substr(md5(serialize($this->imageConfigs)), 0, 5);
 		}
@@ -49,7 +54,7 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
             }
         }
 
-		$config = array_replace_recursive($config, $this->imageConfigs);
+		$config = array_replace_recursive($config, $this->imageConfigs, $context);
 
         if (!isset($config['filters'])) {
             $config['filters'] = [];

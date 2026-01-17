@@ -72,3 +72,56 @@ The bundle is designed so you can replace any of its parts:
 - **LoaderInterface:** Implement to load images from your own sources (e.g., external API, Azure Blob).
 - **PathResolverInterface:** Customize how logical paths map to physical files.
 - **Decorators:** Modify the final URL address (e.g., adding a CDN prefix).
+- **Modifiers:** Extend selectors with custom logic (e.g. `lg:4|circle`).
+
+---
+
+## Modifiers
+
+Modifiers allow you to extend the selector format with custom logic. This is useful when you need to pass additional parameters to your image processing pipeline (e.g.,
+LiipImagine filters or custom URL parameters).
+
+### Format
+
+```text
+breakpoint:columns@ratio|modifier1|modifier2
+```
+
+Example: `lg:4@landscape|circle|border-5`
+
+### Custom Modifier Implementation
+
+To create a custom modifier, implement `Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface` and register it as a service. If you use Symfony autoconfiguration,
+it will be automatically tagged with `progressive_image.modifier`.
+
+```php
+namespace App\Modifier;
+
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
+
+class CircleModifier implements ModifierInterface
+{
+    public function supports(string $modifier): bool
+    {
+        return $modifier === 'circle';
+    }
+
+    public function modify(string $modifier, array $context): array
+    {
+        // This will be passed to the URL generator context
+        $context['filter'] = 'circle_crop';
+        
+        return $context;
+    }
+}
+```
+
+The resulting `context` is passed to the `ResponsiveImageUrlGeneratorInterface::generateUrl` method, allowing you to influence the final URL.
+
+### Filter Modifiers
+
+The bundle includes a specialized system for image filters. You can implement `Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface` to handle specific
+filter names (like `circle`, `grayscale`, or custom ones like `border-5`).
+
+Filter modifiers support **Prioritization**. If you want to override a built-in filter, simply register your modifier with a higher priority (default is 0, built-in
+filters use -100).

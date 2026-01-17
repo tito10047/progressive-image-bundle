@@ -21,6 +21,10 @@ use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
+use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
+use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
+use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\ChainResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
@@ -163,6 +167,18 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->addTag('kernel.event_subscriber')
         ;
 
+		$container->registerForAutoconfiguration(ModifierInterface::class)
+			->addTag('progressive_image.modifier');
+
+		$container->registerForAutoconfiguration(FilterModifierInterface::class)
+			->addTag('pgi.filter_modifier');
+
+		$container->register(ModifierProvider::class)
+			->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('progressive_image.modifier'));
+
+		$container->register(BaseFilterModifier::class)
+			->addTag('progressive_image.modifier', ['priority' => -100]);
+
         if (class_exists(LiipImagineBundle::class)) {
 			$container->register(LiipImagineRuntimeConfigGenerator::class)
 				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
@@ -192,6 +208,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 				->setArgument('$retinaMultipliers', $retinaMultipliers)
                 ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
                 ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
+				->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
+				->setPublic(true)
             ;
         }
 
@@ -224,14 +242,17 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             if ('filesystem' === $resolverConfig['type']) {
                 $container->register($id, FileSystemResolver::class)
                     ->setArgument('$roots', $resolverConfig['roots'] ?? ['%kernel.project_dir%/public'])
-					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true);
+					->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true)
+					->setPublic(true);
             } elseif ('asset_mapper' === $resolverConfig['type']) {
 				$container->register($id, AssetMapperResolver::class)
-					->setArgument('$assetMapper', new Reference('asset_mapper'));
+					->setArgument('$assetMapper', new Reference('asset_mapper'))
+					->setPublic(true);
 			} elseif ('chain' === $resolverConfig['type']) {
 				$childResolvers = array_map(fn($name) => new Reference('progressive_image.resolver.' . $name), $resolverConfig['resolvers'] ?? []);
 				$container->register($id, ChainResolver::class)
-					->setArgument('$resolvers', $childResolvers);
+					->setArgument('$resolvers', $childResolvers)
+					->setPublic(true);
             }
         }
 
@@ -245,7 +266,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             $firstResolver = array_key_first($resolvers);
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$firstResolver);
         } else {
-            $container->register('progressive_image.resolver.default', FileSystemResolver::class)
+			$container->register('progressive_image.resolver.default', FileSystemResolver::class)
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])
                 ->setArgument('$allowUnresolvable', true);
         }

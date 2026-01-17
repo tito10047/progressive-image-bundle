@@ -82,8 +82,8 @@ abstract class AbstractLiipImagineControllerTestCase extends PGIWebTestCase {
 		$this->assertFileExists($absoluteFilePath);
 
 		$imageSize = getimagesize($absoluteFilePath);
-		$this->assertEquals($expectedWidth, $imageSize[0], "Image width does not match");
-		$this->assertEquals($expectedHeight, $imageSize[1], "Image height does not match");
+		$this->assertEquals($expectedWidth, $imageSize[0], 'Image width does not match');
+		$this->assertEquals($expectedHeight, $imageSize[1], 'Image height does not match');
 
 		return $redirectUrl;
 	}

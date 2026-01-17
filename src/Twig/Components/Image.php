@@ -42,7 +42,7 @@ final class Image
     public string $priority = 'high';
     public ?string $sizes = null;
     public ?string $ratio = null;
-	public ?bool $retina = null;
+	public ?bool           $retina          = null;
     /**
      * @var BreakpointAssignment[]
      */
@@ -61,7 +61,7 @@ final class Image
         private readonly ?ResponsiveAttributeGenerator $responsiveAttributeGenerator,
         private readonly PreloadCollector $preloadCollector,
 		private readonly string $framework = 'custom',
-		private readonly bool $defaultRetina = true,
+		private readonly bool   $defaultRetina = true,
     ) {
     }
 

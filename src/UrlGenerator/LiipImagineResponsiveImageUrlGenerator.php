@@ -39,7 +39,7 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
     {
         $targetH = $targetH ?? $targetW;
 		$filter = $context['filter'] ?? null;
-		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest);
+		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest, null, null, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 
@@ -62,13 +62,16 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
 
         $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
 
-        $url = $this->router->generate('progressive_image_filter', [
+		$params = [
             'path' => $path,
             'width' => $targetW,
             'height' => $targetH,
 			'filter' => $filter,
             'pointInterest' => $pointInterest,
-        ], UrlGeneratorInterface::ABSOLUTE_URL);
+		];
+		$params = array_merge($params, $context);
+
+		$url = $this->router->generate('progressive_image_filter', array_filter($params), UrlGeneratorInterface::ABSOLUTE_URL);
 
         return $this->uriSigner->sign($url);
 	}

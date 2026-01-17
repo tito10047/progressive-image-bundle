@@ -67,7 +67,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter')
+			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => []]);
 
         $this->cacheManager->expects($this->once())
@@ -95,7 +95,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter')
+			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => ['foo' => 'bar']]);
 
         $this->cacheManager->expects($this->once())
@@ -123,7 +123,6 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
                 'width' => $targetW,
                 'height' => $targetH,
                 'filter' => 'my_filter',
-                'pointInterest' => null,
             ], UrlGeneratorInterface::ABSOLUTE_URL)
             ->willReturn('http://localhost/progressive-image?path=test.jpg&width=100&height=100&filter=my_filter');
 

@@ -18,7 +18,7 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 class BreakpointAssignmentTest extends TestCase
 {
     #[DataProvider('provideBreakpointStrings')]
-	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null, ?string $expectedWidthPercent = null): void
+	public function testFromString(string $input, ?string $ratio, string $expectedBreakpoint, int $expectedColumns, ?string $expectedRatio, ?int $expectedWidth = null, ?int $expectedHeight = null, ?string $expectedWidthPercent = null, array $expectedModifiers = []): void
     {
         $assignment = BreakpointAssignment::fromSegment($input, $ratio);
 
@@ -28,6 +28,7 @@ class BreakpointAssignmentTest extends TestCase
 		$this->assertSame($expectedWidth, $assignment->width);
 		$this->assertSame($expectedHeight, $assignment->height);
 		$this->assertSame($expectedWidthPercent, $assignment->widthPercent);
+		$this->assertSame($expectedModifiers, $assignment->modifiers);
     }
 
     public static function provideBreakpointStrings(): array
@@ -52,6 +53,11 @@ class BreakpointAssignmentTest extends TestCase
 			'decimal ratio'                   => ['sm:[100%]@[0.65]', null, 'sm', 0, '0.65', null, null, '100%'],
 			'fraction ratio'                  => ['[100%]@[10/9]', null, 'default', 0, '10/9', null, null, '100%'],
 			'dimensions ratio'                => ['[100%]@[1500x700]', null, 'default', 0, '1500x700', null, null, '100%'],
+			'single modifier'                 => ['lg:4@landscape|circle', null, 'lg', 4, 'landscape', null, null, null, ['circle']],
+			'multiple modifiers'              => ['lg:4@landscape|circle|border-5', null, 'lg', 4, 'landscape', null, null, null, ['circle', 'border-5']],
+			'modifier without ratio'          => ['lg:4|circle', null, 'lg', 4, null, null, null, null, ['circle']],
+			'2xl with dimensions and modifier'  => ['2xl:[155x155]|circle', null, '2xl', 0, '155x155', 155, 155, null, ['circle']],
+			'default with dimensions and ratio' => ['default:[300]@landscape', null, 'default', 0, 'landscape', 300, null, null, []],
         ];
     }
 
@@ -85,6 +91,29 @@ class BreakpointAssignmentTest extends TestCase
         $this->assertSame('square', $results[1]->ratio);
     }
 
+	public function testParseFullSelector(): void {
+		$input   = '2xl:[155x155]|circle default:[300]@landscape';
+		$results = BreakpointAssignment::parseSegments($input, null);
+
+		$this->assertCount(2, $results);
+
+		// Segment 1: 2xl:[155x155]|circle
+		$this->assertSame('2xl', $results[0]->breakpoint);
+		$this->assertSame(0, $results[0]->columns);
+		$this->assertSame('155x155', $results[0]->ratio);
+		$this->assertSame(155, $results[0]->width);
+		$this->assertSame(155, $results[0]->height);
+		$this->assertSame(['circle'], $results[0]->modifiers);
+
+		// Segment 2: default:[300]@landscape
+		$this->assertSame('default', $results[1]->breakpoint);
+		$this->assertSame(0, $results[1]->columns);
+		$this->assertSame('landscape', $results[1]->ratio);
+		$this->assertSame(300, $results[1]->width);
+		$this->assertNull($results[1]->height);
+		$this->assertEmpty($results[1]->modifiers);
+	}
+
     #[DataProvider('provideMultipleSegments')]
     public function testParseStrongWithDifferentInputs(string $input, ?string $ratio, int $expectedCount): void
     {
@@ -96,6 +125,7 @@ class BreakpointAssignmentTest extends TestCase
     {
         return [
 			['lg:4@landscape xs:12', null, 2],
+			['2xl:[155x155]|circle default:[300]@landscape', null, 2],
 			['lg:4', null, 1],
 			['lg:4@landscape', null, 1],
 			['lg:4 xs:12', '16-9', 2],

@@ -75,8 +75,8 @@ class WebpPostProcessorTest extends PGIWebTestCase {
 					'format' => 'webp',
 				],
 				'webp'                        => [
-					'generate' => true
-				]
+					'generate' => true,
+				],
 			],
 		]);
 
@@ -100,7 +100,6 @@ class WebpPostProcessorTest extends PGIWebTestCase {
 
 		// 3. Check the file system
 		$projectDir = $container->getParameter('kernel.project_dir');
-
 
 		$files = $this->recursiveListFiles($projectDir . '/public/media/cache');
 
@@ -130,7 +129,7 @@ class WebpPostProcessorTest extends PGIWebTestCase {
 		}
 		$files = scandir($dir);
 		foreach ($files as $file) {
-			if ($file === '.' || $file === '..') {
+			if ('.' === $file || '..' === $file) {
 				continue;
 			}
 			$path = $dir . '/' . $file;
@@ -140,6 +139,7 @@ class WebpPostProcessorTest extends PGIWebTestCase {
 				$results[] = $path;
 			}
 		}
+
 		return $results;
 	}
 }

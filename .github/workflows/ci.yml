@@ -143,7 +143,7 @@ jobs:
                 run: |
                     composer create-project symfony/skeleton dummy-project
                     cd dummy-project
-                    composer config repositories.local '{"type": "path", "url": "../my-bundle"}'
+                    composer config repositories.local '{"type": "path", "url": "../my-bundle", "canonical": false, "options": {"symlink": false}}'
 
             -   name: Get Composer Cache Directory
                 id: composer-cache
@@ -166,7 +166,7 @@ jobs:
                     composer config minimum-stability dev
                     composer config prefer-stable true
                     composer require liip/imagine-bundle --no-scripts
-                    composer require tito10047/progressive-image-bundle:dev-main --no-scripts
+                    composer require tito10047/progressive-image-bundle:* --no-scripts
 
             -   name: Copy E2E Test Files
                 run: |

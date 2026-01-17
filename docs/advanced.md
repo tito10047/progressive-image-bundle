@@ -23,7 +23,7 @@ Simply add the `preload` attribute to the component:
 
 ## Responsive Rendering with `<picture>`
 
-Starting from version 2.0, the bundle uses the `<picture>` element for responsive images when multiple breakpoints are defined. This allows for better Art Direction and
+Starting from version 1.1, the bundle uses the `<picture>` element for responsive images when multiple breakpoints are defined. This allows for better Art Direction and
 ensures the browser chooses the most appropriate image source.
 
 ### HTML Output Example

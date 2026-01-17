@@ -27,7 +27,7 @@
 			{% for source in this.responsiveAttributes.sources %}
 				<source
 						{% if source.media %}media="{{ source.media }}"{% endif %}
-						srcset="{{ source.srcset }}"
+						srcset="{{ source.srcset|raw }}"
 						sizes="{{ source.sizes }}"
 				>
 			{% endfor %}
@@ -65,7 +65,7 @@
 				{{ attributes.only('fetchpriority') }}
 				{{ stimulus_action(this.controller, 'reveal', 'load') | stimulus_action(this.controller, 'handleError', 'error') }}
 				{% if this.hasResponsiveAttributes() %}
-					srcset="{{ this.responsiveAttributes.defaultSource.srcset }}"
+					srcset="{{ this.responsiveAttributes.defaultSource.srcset|raw }}"
 					sizes="{{ this.responsiveAttributes.defaultSource.sizes }}"
 				{% endif %}
 		>

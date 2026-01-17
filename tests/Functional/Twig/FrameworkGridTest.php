@@ -62,10 +62,16 @@ class FrameworkGridTest extends PGITestCase
             ]
         );
 
-        $this->assertStringContainsString('sizes="(min-width: 1400px) 13px, (min-width: 768px) 14px, 1vw"', $html);
+		$this->assertStringContainsString('<picture>', $html);
+		$this->assertStringContainsString('media="(min-width: 1400px)"', $html);
+		$this->assertStringContainsString('sizes="13px"', $html);
+		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
+		$this->assertStringContainsString('sizes="14px"', $html);
+		$this->assertStringContainsString('sizes="1vw"', $html);
         $this->assertStringContainsString('13w', $html);
         $this->assertStringContainsString('14w', $html);
         $this->assertStringContainsString('19w', $html);
+		$this->assertStringNotContainsString('&amp;', $html);
     }
 
     public function testBootstrapFrameworkGridOverride(): void
@@ -92,7 +98,9 @@ class FrameworkGridTest extends PGITestCase
             ]
         );
 
-        $this->assertStringContainsString('sizes="(min-width: 768px) 50px"', $html);
+		$this->assertStringContainsString('<picture>', $html);
+		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
+		$this->assertStringContainsString('sizes="50px"', $html);
         $this->assertStringContainsString('50w', $html);
     }
 
@@ -117,7 +125,12 @@ class FrameworkGridTest extends PGITestCase
             ]
         );
 
-        $this->assertStringContainsString('sizes="(min-width: 1536px) 38px, (min-width: 768px) 38px, 3vw"', $html);
+		$this->assertStringContainsString('<picture>', $html);
+		$this->assertStringContainsString('media="(min-width: 1536px)"', $html);
+		$this->assertStringContainsString('sizes="38px"', $html);
+		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
+		$this->assertStringContainsString('sizes="38px"', $html);
+		$this->assertStringContainsString('sizes="3vw"', $html);
         $this->assertStringContainsString('38w', $html);
         $this->assertStringContainsString('48w', $html);
     }

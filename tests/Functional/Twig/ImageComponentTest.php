@@ -202,13 +202,16 @@ class ImageComponentTest extends PGITestCase
             ]
         );
 
+		$this->assertStringContainsString('<picture>', $html);
+		$this->assertStringContainsString('media="(min-width: 1024px)"', $html);
+		$this->assertStringContainsString('sizes="100px"', $html);
         $this->assertStringContainsString('srcset="', $html);
         // original image is 100x100
 		// mobile: 12/12 * 1920 = 1920px -> reduced to 100px
         // desktop: 1/12 * 1200 = 100px -> OK
 		$this->assertStringContainsString('1920w', $html);
         $this->assertStringContainsString('100w', $html);
-        $this->assertStringContainsString('sizes="(min-width: 1024px) 100px, 100vw"', $html);
+		$this->assertStringContainsString('sizes="100vw"', $html);
 
 		$this->assertStringContainsString('--img-width: 100vw', $html);
 		$this->assertStringContainsString('--img-width-desktop: 100px', $html);
@@ -427,10 +430,13 @@ class ImageComponentTest extends PGITestCase
 			]
 		);
 
+		$this->assertStringContainsString('<picture>', $html);
+		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
+		$this->assertStringContainsString('sizes="240px"', $html);
 		$this->assertStringContainsString('--img-width: 100vw', $html);
 		$this->assertStringContainsString('--img-aspect: 1.777', $html);
 		$this->assertStringContainsString('--img-width-md: 240px', $html);
-		$this->assertStringContainsString('sizes="(min-width: 768px) 240px, 100vw"', $html);
+		$this->assertStringContainsString('sizes="100vw"', $html);
     }
 
     public function testPreloadHeaderWithSrcset(): void

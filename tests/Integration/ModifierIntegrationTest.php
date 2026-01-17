@@ -86,9 +86,10 @@ class ModifierIntegrationTest extends TestCase {
 			new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
 		], 1000, false);
 
-		$this->assertStringContainsString('circle=1', $result['srcset']);
+		$srcset = $result->getSources()[0]->getSrcset();
+		$this->assertStringContainsString('circle=1', $srcset);
 		// CoreFilterModifier ties it to 'filter' => 'circle'
-		$this->assertStringContainsString('filter=circle', $result['srcset']);
+		$this->assertStringContainsString('filter=circle', $srcset);
 	}
 
 	public function testFilterPriority(): void {
@@ -128,9 +129,10 @@ class ModifierIntegrationTest extends TestCase {
 			new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
 		], 1000, false);
 
+		$srcset = $result->getSources()[0]->getSrcset();
 		// CustomFilter should win
-		$this->assertStringContainsString('filter=custom_circle', $result['srcset']);
-		$this->assertStringNotContainsString('filter=circle&', $result['srcset']);
-		$this->assertStringNotContainsString('filter=circle"', $result['srcset']);
+		$this->assertStringContainsString('filter=custom_circle', $srcset);
+		$this->assertStringNotContainsString('filter=circle&', $srcset);
+		$this->assertStringNotContainsString('filter=circle"', $srcset);
 	}
 }

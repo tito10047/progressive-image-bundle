@@ -70,6 +70,8 @@ class ImageComponentRatioTest extends PGITestCase {
 		// sm: max_container 640. 12/12 * 640 = 640. 640 < 800 -> width=640, height=640/(16/9) = 360.
 		// default: 100vw -> 100/100 * 1920 = 1920. 1920 > 800 -> width=800, height=450.
 
+		$this->assertStringContainsString('<picture>', $html);
+
 		// Nad 800px by mali byť 800px
 		$this->assertStringContainsString('height=450&path=%2Ftest.png&width=800 1536w', $html);
 		$this->assertStringContainsString('height=450&path=%2Ftest.png&width=800 1280w', $html);
@@ -79,9 +81,11 @@ class ImageComponentRatioTest extends PGITestCase {
 		$this->assertStringContainsString('height=432&path=%2Ftest.png&width=768 768w', $html);
 		$this->assertStringContainsString('height=360&path=%2Ftest.png&width=640 640w', $html);
 
-		$this->assertStringNotContainsString('min-width=1024', $html);
-		$this->assertStringNotContainsString('min-width=768', $html);
-		$this->assertStringNotContainsString('min-width=640', $html);
+		$this->assertStringContainsString('media="(min-width: 1536px)"', $html);
+		$this->assertStringContainsString('media="(min-width: 1280px)"', $html);
+		$this->assertStringContainsString('media="(min-width: 1024px)"', $html);
+		$this->assertStringContainsString('media="(min-width: 768px)"', $html);
+		$this->assertStringContainsString('media="(min-width: 640px)"', $html);
 
 		$this->assertStringContainsString('1536w', $html);
 		$this->assertStringContainsString('1024w', $html);

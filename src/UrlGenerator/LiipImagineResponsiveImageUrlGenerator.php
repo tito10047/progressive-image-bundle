@@ -39,7 +39,7 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
     {
         $targetH = $targetH ?? $targetW;
 		$filter = $context['filter'] ?? null;
-		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest);
+		$result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest, null, null, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 

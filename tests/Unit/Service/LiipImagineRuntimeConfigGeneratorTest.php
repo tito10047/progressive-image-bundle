@@ -127,4 +127,13 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 		$this->assertEquals(75, $result['config']['quality']);
 		$this->assertEquals(['q' => 75, 'm' => 6], $result['config']['post_processors']['cwebp']);
 	}
+
+	public function testGenerateWithContext(): void {
+		$context = ['filter' => 'circle', 'foo' => 'bar'];
+		$result  = $this->generator->generate(200, 150, null, null, null, null, $context);
+
+		$this->assertStringContainsString('_', $result['filterName']);
+		$this->assertEquals('circle', $result['config']['filter']);
+		$this->assertEquals('bar', $result['config']['foo']);
+	}
 }

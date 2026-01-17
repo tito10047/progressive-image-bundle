@@ -67,7 +67,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter')
+			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => []]);
 
         $this->cacheManager->expects($this->once())
@@ -95,7 +95,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter')
+			->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => ['foo' => 'bar']]);
 
         $this->cacheManager->expects($this->once())

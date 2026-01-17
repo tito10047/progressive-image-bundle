@@ -52,6 +52,9 @@ final class LiipImagineController
     ): Response {
         $path = PathHelper::urlPathToFilePath($path);
 
+		$context = $request->query->all();
+		unset($context['path'], $context['width'], $context['height'], $context['filter'], $context['pointInterest'], $context['_hash']);
+
         $origWidth = null;
         $origHeight = null;
         if ($pointInterest) {
@@ -60,7 +63,7 @@ final class LiipImagineController
             $origHeight = $metadata->height;
         }
 
-        $result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight);
+		$result = $this->runtimeConfigGenerator->generate($width, $height, $filter, $pointInterest, $origWidth, $origHeight, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 

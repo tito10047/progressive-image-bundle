@@ -53,7 +53,7 @@ final class LiipImagineController
         $path = PathHelper::urlPathToFilePath($path);
 
         $context = $request->query->all();
-        unset($context['path'], $context['width'], $context['height'], $context['filter'], $context['pointInterest'], $context['_hash']);
+        unset($context['path'], $context['width'], $context['height'], $context['filter'], $context['pointInterest'], $context['_hash'], $context['_expiration']);
 
         $origWidth = null;
         $origHeight = null;
@@ -69,7 +69,7 @@ final class LiipImagineController
 
         $this->filterConfiguration->set($filterName, $config);
 
-        if (true !== $this->signer->checkRequest($request)) {
+        if (true !== $this->signer->checkRequest($request) && $request->attributes->get('_route') !== null) {
             throw new BadRequestHttpException(\sprintf('Signed url does not pass the sign check for path "%s" and filter "%s"', $path, $filter));
         }
 

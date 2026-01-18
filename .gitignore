@@ -5,3 +5,4 @@ composer.lock
 .phpunit.result.cache
 /config/reference.php
 /.php-cs-fixer.cache
+/public/media/cache/

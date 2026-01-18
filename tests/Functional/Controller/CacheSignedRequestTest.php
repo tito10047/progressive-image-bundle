@@ -2,6 +2,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Controller;
 
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use Symfony\Component\HttpFoundation\Request;
 use Tito10047\ProgressiveImageBundle\Controller\LiipImagineController;
@@ -12,6 +13,9 @@ class CacheSignedRequestTest extends PGITestCase
 {
     public function testSignedRequestUsesConsistentFilterName(): void
     {
+        if (!class_exists(CacheManager::class)) {
+            $this->markTestSkipped('LiipImagineBundle is not installed.');
+        }
         $kernel = self::createKernel([
             'progressive_image' => [
                 'image_configs' => [], // Ensure no global configs to have clean filter names

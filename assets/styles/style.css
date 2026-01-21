@@ -1,13 +1,13 @@
+@layer vendor {
+	.progressive-image-high-res,
+	.progressive-image-placeholder {
+		width: 100%;
+		height: 100%;
+		display: block;
+		object-fit: cover;
+		object-position: var(--img-poi, center center);
+	}
 
-.progressive-image-high-res,
-.progressive-image-placeholder {
-	width: 100%;
-	height: 100%;
-	display: block;
-	object-fit: cover;
-	object-position: var(--img-poi, center center);
-}
-@layer {
 	.progressive-image-container {
 		position: relative;
 		width: var(--img-width-sm, var(--img-width));
@@ -71,4 +71,5 @@
 		max-width: 24rem;
 		letter-spacing: -0.025em;
 	}
+
 }

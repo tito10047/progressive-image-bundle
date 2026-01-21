@@ -81,18 +81,19 @@ class GenerateCustomCssCommand extends Command
         uasort($sortedLayouts, fn ($a, $b) => $b['min_viewport'] <=> $a['min_viewport']);
 
         $content = "/* Progressive Image Container - Custom Breakpoints */\n";
-        $content .= ".progressive-image-container {\n";
-        $content .= "\tdisplay: block;\n";
+        $content = "@layer vendor {\n";
+        $content .= "\t.progressive-image-container {\n";
+        $content .= "\t\tdisplay: block;\n";
 
         // Root width variable with fallbacks
-        $content .= "\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width').";\n";
+        $content .= "\t\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width').";\n";
 
         // Root aspect-ratio variable with fallbacks
-        $content .= "\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect').";\n";
+        $content .= "\t\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect').";\n";
 
-        $content .= "\tposition: relative;\n";
-        $content .= "\toverflow: hidden;\n";
-        $content .= "}\n\n";
+        $content .= "\t\tposition: relative;\n";
+        $content .= "\t\toverflow: hidden;\n";
+        $content .= "\t}\n\n";
 
         // Media queries - sort by min_viewport ascending
         $mediaLayouts = $layouts;
@@ -105,16 +106,17 @@ class GenerateCustomCssCommand extends Command
 
             $content .= sprintf("/* %s: %dpx */\n", $name, $layout['min_viewport']);
             $content .= sprintf("@media (min-width: %dpx) {\n", $layout['min_viewport']);
-            $content .= "\t.progressive-image-container {\n";
+            $content .= "\t\t.progressive-image-container {\n";
 
             // For width
-            $content .= "\t\twidth: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'width').";\n";
+            $content .= "\t\t\twidth: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'width').";\n";
             // For aspect
-            $content .= "\t\taspect-ratio: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'aspect').";\n";
+            $content .= "\t\t\taspect-ratio: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'aspect').";\n";
 
-            $content .= "\t}\n";
-            $content .= "}\n\n";
+            $content .= "\t\t}\n";
+            $content .= "\t}\n\n";
         }
+		$content .= "}\n\n";
 
         return $content;
     }

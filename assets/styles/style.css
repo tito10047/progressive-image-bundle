@@ -8,13 +8,6 @@
 		object-position: var(--img-poi, center center);
 	}
 
-	.progressive-image-container {
-		position: relative;
-		width: var(--img-width-sm, var(--img-width));
-		aspect-ratio: var(--img-aspect-sm, var(--img-aspect));
-		overflow: hidden;
-	}
-
 	.progressive-image-placeholder,
 	.progressive-image-high-res,
 	.progressive-image-error-overlay,

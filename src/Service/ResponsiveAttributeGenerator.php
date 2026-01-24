@@ -44,13 +44,15 @@ final class ResponsiveAttributeGenerator
     /**
      * @param BreakpointAssignment[] $assignments
      */
-    public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false): ResponsiveAttributesInterface
+    public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false, int $originalHeight = 0): ResponsiveAttributesInterface
     {
         $assignments = $this->sortAssignments($assignments);
 
         $sources = [];
         $variables = [];
         $defaultSource = null;
+
+        $originalRatio = $originalHeight > 0 ? $originalWidth / $originalHeight : null;
 
         foreach ($assignments as $assignment) {
             $layout = $this->gridConfig['layouts'][$assignment->breakpoint] ?? null;
@@ -76,7 +78,7 @@ final class ResponsiveAttributeGenerator
 
             foreach ($multipliers as $multiplier) {
                 $mPixelWidth = (int) round($pixelWidth * $multiplier);
-                $url = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context);
+                $url = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context, $originalRatio);
 
                 if ($url) {
                     if ($preload && 1 === $multiplier) {
@@ -87,7 +89,7 @@ final class ResponsiveAttributeGenerator
                 }
             }
 
-            $ratio = $this->resolveRatio($assignment);
+            $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
             $suffix = 0 === $layout['min_viewport'] ? '' : '-'.$assignment->breakpoint;
             $variables['--img-width'.$suffix] = $cssValue;
             if ($ratio) {
@@ -186,8 +188,9 @@ final class ResponsiveAttributeGenerator
         int $originalWidth,
         ?string $pointInterest = null,
         array $context = [],
+        ?float $originalRatio = null,
     ): string {
-        $ratio = $this->resolveRatio($assignment);
+        $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
 
         if ($this->modifierProvider && $assignment->modifiers) {
             $context = $this->modifierProvider->applyModifiers($assignment->modifiers, $context);

@@ -110,4 +110,35 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase
         // Let's just check if it doesn't crash and generates some reasonable values.
         $this->assertNotEmpty($srcset);
     }
+
+    public function testFallbackToOriginalImageRatioWhenNoRatioProvided(): void
+    {
+        self::bootKernel([
+            'progressive_image' => [
+                'responsive_strategy' => [
+                    'grid' => [
+                        'framework' => 'bootstrap',
+                    ],
+                ],
+            ],
+        ]);
+
+        $container = self::getContainer();
+        /** @var ResponsiveAttributeGenerator $generator */
+        $generator = $container->get(ResponsiveAttributeGenerator::class);
+
+        // lg:[100%] bez @ratio
+        $assignments = BreakpointAssignment::parseSegments('lg:[100%]', null);
+
+        // Původní obrázek 1000x500 (ratio 2.0)
+        $originalWidth = 1000;
+        $originalHeight = 500;
+
+        $result = $generator->generate('test.jpg', $assignments, $originalWidth, false, null, [], false, $originalHeight);
+        $variables = $result->getVariables();
+
+        $this->assertArrayHasKey('--img-width-lg', $variables);
+        $this->assertArrayHasKey('--img-aspect-lg', $variables, '--img-aspect-lg by měl existovat s původním poměrem stran');
+        $this->assertEquals('2', $variables['--img-aspect-lg']);
+    }
 }

@@ -90,8 +90,12 @@ final class ResponsiveAttributeGenerator
             }
 
             $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
-            $suffix = 0 === $layout['min_viewport'] ? '' : '-'.$assignment->breakpoint;
+            $suffix = '-'.$assignment->breakpoint;
             $variables['--img-width'.$suffix] = $cssValue;
+            if (0 === $layout['min_viewport']) {
+                $variables['--img-width'] = $cssValue;
+				$variables['--img-aspect'] = (string) $ratio;
+            }
             if ($ratio) {
                 $variables['--img-aspect'.$suffix] = (string) $ratio;
             }

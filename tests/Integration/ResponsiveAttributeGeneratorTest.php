@@ -141,4 +141,61 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase
         $this->assertArrayHasKey('--img-aspect-lg', $variables, '--img-aspect-lg by měl existovat s původním poměrem stran');
         $this->assertEquals('2', $variables['--img-aspect-lg']);
     }
+
+    public function testBreakpointSuffixForXs(): void
+    {
+        self::bootKernel([
+            'progressive_image' => [
+                'responsive_strategy' => [
+                    'grid' => [
+                        'framework' => 'bootstrap',
+                    ],
+                    'ratios' => [
+                        'landscape' => '16/9',
+                    ],
+                ],
+            ],
+        ]);
+
+        $container = self::getContainer();
+        /** @var ResponsiveAttributeGenerator $generator */
+        $generator = $container->get(ResponsiveAttributeGenerator::class);
+
+        // xs:[100%]@0.44 sm:[100%]@0.435 md:[100%]@0.4878 lg:[100%]@landscape xl:[100%]@landscape
+        $assignments = BreakpointAssignment::parseSegments('xs:[100%]@0.44 sm:[100%]@0.435 md:[100%]@0.4878 lg:[100%]@landscape xl:[100%]@landscape', null);
+
+        $result = $generator->generate('test.jpg', $assignments, 2000, false);
+        $variables = $result->getVariables();
+
+        $this->assertArrayHasKey('--img-width-xs', $variables, 'Pre xs by mal byť vygenerovaný --img-width-xs');
+        $this->assertArrayHasKey('--img-aspect-xs', $variables, 'Pre xs by mal byť vygenerovaný --img-aspect-xs');
+        $this->assertEquals('0.44', $variables['--img-aspect-xs']);
+    }
+
+    public function testBreakpointSuffixForDefault(): void
+    {
+        self::bootKernel([
+            'progressive_image' => [
+                'responsive_strategy' => [
+                    'grid' => [
+                        'framework' => 'tailwind',
+                    ],
+                ],
+            ],
+        ]);
+
+        $container = self::getContainer();
+        /** @var ResponsiveAttributeGenerator $generator */
+        $generator = $container->get(ResponsiveAttributeGenerator::class);
+
+        // tailwind has 'default' for min_viewport 0
+        $assignments = BreakpointAssignment::parseSegments('[100%]@0.44', null);
+
+        $result = $generator->generate('test.jpg', $assignments, 2000, false);
+        $variables = $result->getVariables();
+
+        $this->assertArrayHasKey('--img-width', $variables, 'Pre default by mal byť vygenerovaný --img-width');
+        $this->assertArrayHasKey('--img-aspect', $variables, 'Pre default by mal byť vygenerovaný --img-aspect');
+        $this->assertEquals('0.44', $variables['--img-aspect']);
+    }
 }

@@ -76,31 +76,49 @@ class GenerateCustomCssCommand extends Command
     {
         $layouts = $this->gridConfig['layouts'];
 
-        // Sort layouts by min_viewport descending for the root .progressive-image-container nested variables
-        $sortedLayouts = $layouts;
-        uasort($sortedLayouts, fn ($a, $b) => $b['min_viewport'] <=> $a['min_viewport']);
+        // Sort layouts by min_viewport ascending to easily find the next breakpoint
+        $mediaLayouts = $layouts;
+        uasort($mediaLayouts, fn ($a, $b) => $a['min_viewport'] <=> $b['min_viewport']);
 
         $content = "/* Progressive Image Container - Custom Breakpoints */\n";
         $content = "@layer vendor {\n";
         $content .= "\t.progressive-image-container {\n";
         $content .= "\t\tdisplay: block;\n";
 
+        // Sort layouts by min_viewport descending for the root .progressive-image-container nested variables
+        $sortedLayouts = $layouts;
+        uasort($sortedLayouts, fn ($a, $b) => $b['min_viewport'] <=> $a['min_viewport']);
+
         // Root width variable with fallbacks
-        $content .= "\t\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width').";\n";
+        $content .= "\t\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width', false).";\n";
 
         // Root aspect-ratio variable with fallbacks
-        $content .= "\t\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect').";\n";
+        $content .= "\t\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect', false).";\n";
 
         $content .= "\t\tposition: relative;\n";
         $content .= "\t\toverflow: hidden;\n";
         $content .= "\t}\n\n";
 
-        // Media queries - sort by min_viewport ascending
-        $mediaLayouts = $layouts;
-        uasort($mediaLayouts, fn ($a, $b) => $a['min_viewport'] <=> $b['min_viewport']);
-
+        $layoutNames = array_keys($mediaLayouts);
+        $i = 0;
         foreach ($mediaLayouts as $name => $layout) {
+            $nextBreakpoint = isset($layoutNames[$i + 1]) ? $mediaLayouts[$layoutNames[$i + 1]] : null;
+
+            if (0 === $layout['min_viewport'] && $nextBreakpoint) {
+                $content .= sprintf("/* %s: %dpx */\n", $name, $layout['min_viewport']);
+                $content .= sprintf("@media (max-width: %dpx) {\n", $nextBreakpoint['min_viewport']);
+                $content .= "\t\t.progressive-image-container {\n";
+                $content .= sprintf("\t\t\twidth: var(--img-width-%s);\n", $name);
+                $content .= sprintf("\t\t\taspect-ratio: var(--img-aspect-%s);\n", $name);
+                $content .= "\t\t}\n";
+                $content .= "\t}\n\n";
+
+                $i++;
+                continue;
+            }
+
             if (0 === $layout['min_viewport']) {
+                $i++;
                 continue;
             }
 
@@ -115,17 +133,23 @@ class GenerateCustomCssCommand extends Command
 
             $content .= "\t\t}\n";
             $content .= "\t}\n\n";
+
+            $i++;
         }
-		$content .= "}\n\n";
+        $content .= "}\n\n";
 
         return $content;
     }
 
-    private function generateVariableFallback(array $sortedLayouts, string $type): string
+    private function generateVariableFallback(array $sortedLayouts, string $type, bool $includeGeneric = true): string
     {
         $variables = [];
         foreach ($sortedLayouts as $name => $layout) {
             $variables[] = sprintf('var(--img-%s-%s', $type, $name);
+        }
+
+        if ($includeGeneric) {
+            $variables[] = sprintf('var(--img-%s', $type);
         }
 
         $result = implode(",\n\t\t\t", $variables);
@@ -148,14 +172,6 @@ class GenerateCustomCssCommand extends Command
         $variables = [];
         foreach ($filteredLayouts as $name => $layout) {
             $variables[] = sprintf('var(--img-%s-%s', $type, $name);
-        }
-
-        // Add legacy fallback for min_viewport 0
-        foreach ($filteredLayouts as $name => $layout) {
-            if (0 === $layout['min_viewport']) {
-                $variables[] = sprintf('var(--img-%s', $type);
-                break;
-            }
         }
 
         $result = implode(', ', $variables);

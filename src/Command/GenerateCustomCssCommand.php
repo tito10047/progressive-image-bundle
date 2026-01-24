@@ -125,8 +125,7 @@ class GenerateCustomCssCommand extends Command
     {
         $variables = [];
         foreach ($sortedLayouts as $name => $layout) {
-            $suffix = 0 === $layout['min_viewport'] ? '' : '-'.$name;
-            $variables[] = sprintf('var(--img-%s%s', $type, $suffix);
+            $variables[] = sprintf('var(--img-%s-%s', $type, $name);
         }
 
         $result = implode(",\n\t\t\t", $variables);
@@ -148,8 +147,15 @@ class GenerateCustomCssCommand extends Command
 
         $variables = [];
         foreach ($filteredLayouts as $name => $layout) {
-            $suffix = 0 === $layout['min_viewport'] ? '' : '-'.$name;
-            $variables[] = sprintf('var(--img-%s%s', $type, $suffix);
+            $variables[] = sprintf('var(--img-%s-%s', $type, $name);
+        }
+
+        // Add legacy fallback for min_viewport 0
+        foreach ($filteredLayouts as $name => $layout) {
+            if (0 === $layout['min_viewport']) {
+                $variables[] = sprintf('var(--img-%s', $type);
+                break;
+            }
         }
 
         $result = implode(', ', $variables);

@@ -76,7 +76,7 @@ class GenerateCustomCssCommandTest extends PGITestCase
         $this->assertStringContainsString('var(--img-width)));', $content);
 
         // Check media query content
-        $this->assertStringContainsString('width: var(--img-width-sm, var(--img-width));', $content);
-        $this->assertStringContainsString('width: var(--img-width-md, var(--img-width-sm, var(--img-width)));', $content);
+        $this->assertStringContainsString('width: var(--img-width-sm, var(--img-width-default, var(--img-width)));', $content);
+        $this->assertStringContainsString('width: var(--img-width-md, var(--img-width-sm, var(--img-width-default, var(--img-width))));', $content);
     }
 }

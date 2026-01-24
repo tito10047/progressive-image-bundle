@@ -113,6 +113,23 @@ class ImageComponentTest extends PGITestCase
         $this->assertStringContainsString("data-{$stimulus}-target=\"errorOverlay\"", $html);
     }
 
+    public function testRenderNullSrc(): void
+    {
+        $this->bootKernel();
+
+        $html = $this->renderTwigComponent(
+            name: 'pgi:Image',
+            data: [
+                'src' => null,
+                'alt' => 'test image',
+            ]
+        );
+
+        $stimulus = ProgressiveImageBundle::STIMULUS_CONTROLLER;
+
+        $this->assertStringContainsString("data-{$stimulus}-target=\"errorOverlay\"", $html);
+    }
+
     public function testPreloadHeader(): void
     {
         if (!class_exists(CacheManager::class)) {

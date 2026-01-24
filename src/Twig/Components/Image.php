@@ -35,7 +35,7 @@ final class Image
      */
     public array $context = [];
     private ?ImageMetadata $metadata = null;
-    private string $decoratedSrc;
+    private ?string $decoratedSrc = null;
     private ?int $decoratedWidth = null;
     private ?int $decoratedHeight = null;
     public bool $preload = false;
@@ -69,6 +69,10 @@ final class Image
     {
         if (null === $this->retina) {
             $this->retina = $this->defaultRetina;
+        }
+
+        if (!$this->src) {
+            return;
         }
 
         $this->decoratedSrc = $this->src;
@@ -153,7 +157,7 @@ final class Image
         return $this->responsiveAttributes?->getVariables() ?? [];
     }
 
-    public function getDecoratedSrc(): string
+    public function getDecoratedSrc(): ?string
     {
         return $this->decoratedSrc ?? $this->src;
     }

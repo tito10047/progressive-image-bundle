@@ -50,12 +50,17 @@ class GenerateCustomCssResponsiveTest extends PGITestCase
         $commandTester->assertCommandIsSuccessful();
         $content = file_get_contents($this->tempDir.'/progressive-image-custom.css');
 
+        // Root variables with fallbacks including generic
+        $this->assertStringContainsString('width: var(--img-width-sm,', $content);
+        $this->assertStringContainsString('var(--img-width-xs,', $content);
+        $this->assertStringContainsString('var(--img-width)));', $content);
+
         // Check xs breakpoint with max-width
-        $expectedXs = "/* xs: 0px */\n@media (max-width: 640px) {\n\t\t.progressive-image-container {\n\t\t\twidth: var(--img-width-xs);\n\t\t\taspect-ratio: var(--img-aspect-xs);\n\t\t}\n\t}";
+        $expectedXs = "/* xs: 0px */\n@media (max-width: 640px) {\n\t\t.progressive-image-container {\n\t\t\twidth: var(--img-width-xs, var(--img-width));\n\t\t\taspect-ratio: var(--img-aspect-xs, var(--img-aspect));\n\t\t}\n\t}";
         $this->assertStringContainsString($expectedXs, $content);
 
-        // Check sm breakpoint with fallback to xs
-        $expectedSm = "/* sm: 640px */\n@media (min-width: 640px) {\n\t\t.progressive-image-container {\n\t\t\twidth: var(--img-width-sm, var(--img-width-xs));\n\t\t\taspect-ratio: var(--img-aspect-sm, var(--img-aspect-xs));\n\t\t}\n\t}";
+        // Check sm breakpoint with fallback to xs and generic
+        $expectedSm = "/* sm: 640px */\n@media (min-width: 640px) {\n\t\t.progressive-image-container {\n\t\t\twidth: var(--img-width-sm, var(--img-width-xs, var(--img-width)));\n\t\t\taspect-ratio: var(--img-aspect-sm, var(--img-aspect-xs, var(--img-aspect)));\n\t\t}\n\t}";
         $this->assertStringContainsString($expectedSm, $content);
     }
 }

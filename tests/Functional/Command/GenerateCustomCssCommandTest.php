@@ -73,11 +73,12 @@ class GenerateCustomCssCommandTest extends PGITestCase
         // Check nested variables in root
         $this->assertStringContainsString('width: var(--img-width-md,', $content);
         $this->assertStringContainsString('var(--img-width-sm,', $content);
-        $this->assertStringContainsString('var(--img-width-default));', $content);
+        $this->assertStringContainsString('var(--img-width-default,', $content);
+        $this->assertStringContainsString('var(--img-width)));', $content);
 
         // Check media query content
-        $this->assertStringContainsString('width: var(--img-width-sm, var(--img-width-default));', $content);
-        $this->assertStringContainsString('width: var(--img-width-md, var(--img-width-sm, var(--img-width-default)));', $content);
+        $this->assertStringContainsString('width: var(--img-width-sm, var(--img-width-default, var(--img-width)));', $content);
+        $this->assertStringContainsString('width: var(--img-width-md, var(--img-width-sm, var(--img-width-default, var(--img-width))));', $content);
         $this->assertStringContainsString('@media (max-width: 640px)', $content);
     }
 }

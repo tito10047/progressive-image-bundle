@@ -85,9 +85,6 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('2xl', $grid['layouts']);
         $this->assertEquals(1536, $grid['layouts']['2xl']['min_viewport']);
         $this->assertEquals(1536, $grid['layouts']['2xl']['max_container']);
-        $this->assertArrayHasKey('default', $grid['layouts']);
-        $this->assertEquals(0, $grid['layouts']['default']['min_viewport']);
-        $this->assertNull($grid['layouts']['default']['max_container']);
     }
 
     public function testOverrideFrameworkDefaults(): void

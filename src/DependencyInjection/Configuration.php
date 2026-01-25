@@ -129,7 +129,7 @@ final class Configuration implements ConfigurationInterface
                                                 'lg' => ['min_viewport' => 1024, 'max_container' => 1024],
                                                 'md' => ['min_viewport' => 768, 'max_container' => 768],
                                                 'sm' => ['min_viewport' => 640, 'max_container' => 640],
-                                                'default' => ['min_viewport' => 0, 'max_container' => null],
+                                                'xs' => ['min_viewport' => 0, 'max_container' => null],
                                             ],
                                         ];
                                     }

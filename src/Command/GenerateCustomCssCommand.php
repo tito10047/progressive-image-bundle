@@ -78,7 +78,12 @@ class GenerateCustomCssCommand extends Command
 
         // Sort layouts by min_viewport ascending to easily find the next breakpoint
         $mediaLayouts = $layouts;
-        uasort($mediaLayouts, fn ($a, $b) => $a['min_viewport'] <=> $b['min_viewport']);
+        uksort($mediaLayouts, function ($a, $b) use ($mediaLayouts) {
+            if ($mediaLayouts[$a]['min_viewport'] === $mediaLayouts[$b]['min_viewport']) {
+                return 0;
+            }
+            return $mediaLayouts[$a]['min_viewport'] < $mediaLayouts[$b]['min_viewport'] ? -1 : 1;
+        });
 
         $content = "/* Progressive Image Container - Custom Breakpoints */\n";
         $content = "@layer vendor {\n";
@@ -87,13 +92,18 @@ class GenerateCustomCssCommand extends Command
 
         // Sort layouts by min_viewport descending for the root .progressive-image-container nested variables
         $sortedLayouts = $layouts;
-        uasort($sortedLayouts, fn ($a, $b) => $b['min_viewport'] <=> $a['min_viewport']);
+        uksort($sortedLayouts, function ($a, $b) use ($sortedLayouts) {
+            if ($sortedLayouts[$a]['min_viewport'] === $sortedLayouts[$b]['min_viewport']) {
+                return strcmp($b, $a);
+            }
+            return $sortedLayouts[$a]['min_viewport'] > $sortedLayouts[$b]['min_viewport'] ? -1 : 1;
+        });
 
         // Root width variable with fallbacks
-        $content .= "\t\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width', false).";\n";
+        $content .= "\t\twidth: ".$this->generateVariableFallback($sortedLayouts, 'width', true).";\n";
 
         // Root aspect-ratio variable with fallbacks
-        $content .= "\t\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect', false).";\n";
+        $content .= "\t\taspect-ratio: ".$this->generateVariableFallback($sortedLayouts, 'aspect', true).";\n";
 
         $content .= "\t\tposition: relative;\n";
         $content .= "\t\toverflow: hidden;\n";
@@ -108,8 +118,8 @@ class GenerateCustomCssCommand extends Command
                 $content .= sprintf("/* %s: %dpx */\n", $name, $layout['min_viewport']);
                 $content .= sprintf("@media (max-width: %dpx) {\n", $nextBreakpoint['min_viewport']);
                 $content .= "\t\t.progressive-image-container {\n";
-                $content .= sprintf("\t\t\twidth: var(--img-width-%s);\n", $name);
-                $content .= sprintf("\t\t\taspect-ratio: var(--img-aspect-%s);\n", $name);
+                $content .= sprintf("\t\t\twidth: %s;\n", $this->generateVariableFallbackForBreakpoint($name, $layouts, 'width'));
+                $content .= sprintf("\t\t\taspect-ratio: %s;\n", $this->generateVariableFallbackForBreakpoint($name, $layouts, 'aspect'));
                 $content .= "\t\t}\n";
                 $content .= "\t}\n\n";
 
@@ -167,12 +177,19 @@ class GenerateCustomCssCommand extends Command
         // Get all layouts with min_viewport <= current min_viewport, sorted descending
         $currentMinViewport = $allLayouts[$currentBreakpoint]['min_viewport'];
         $filteredLayouts = array_filter($allLayouts, fn ($l) => $l['min_viewport'] <= $currentMinViewport);
-        uasort($filteredLayouts, fn ($a, $b) => $b['min_viewport'] <=> $a['min_viewport']);
+        uksort($filteredLayouts, function ($a, $b) use ($filteredLayouts) {
+            if ($filteredLayouts[$a]['min_viewport'] === $filteredLayouts[$b]['min_viewport']) {
+                return strcmp($b, $a);
+            }
+            return $filteredLayouts[$a]['min_viewport'] > $filteredLayouts[$b]['min_viewport'] ? -1 : 1;
+        });
 
         $variables = [];
         foreach ($filteredLayouts as $name => $layout) {
             $variables[] = sprintf('var(--img-%s-%s', $type, $name);
         }
+
+        $variables[] = sprintf('var(--img-%s', $type);
 
         $result = implode(', ', $variables);
         if (count($variables) > 1) {

@@ -193,7 +193,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
                 ->setArgument('$requestStack', new Reference('request_stack'))
                 ->setArgument('$cache', $imageCacheServiceReference)
-                ->setArgument('$webpGenerate', new Parameter('liip_imagine.webp.generate'))
+                ->setArgument('$formatNegotiator', new Reference('liip_imagine.format_negotiator'))
+                ->setArgument('$alternativeFormats', new Parameter('liip_imagine.alternative_formats'))
                 ->setPublic(true);
 
             $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);

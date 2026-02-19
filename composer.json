@@ -33,7 +33,7 @@
     "require-dev": {
         "ext-imagick": "*",
         "friendsofphp/php-cs-fixer": "^3.92",
-        "liip/imagine-bundle": "^2.16",
+        "liip/imagine-bundle": "dev-avif",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-symfony": "^2.0",
         "symfony/asset-mapper": "^6.4|^7.4|^8.0",

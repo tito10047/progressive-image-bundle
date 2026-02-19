@@ -19,6 +19,7 @@ use Liip\ImagineBundle\Imagine\Cache\Helper\PathHelper;
 use Liip\ImagineBundle\Imagine\Data\DataManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
 use Liip\ImagineBundle\Service\FilterService;
+use Liip\ImagineBundle\Service\FormatNegotiator;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,6 +40,8 @@ final class LiipImagineController
         private readonly ControllerConfig $controllerConfig,
         private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
         private readonly MetadataReaderInterface $metadataReader,
+        private readonly ?FormatNegotiator $formatNegotiator = null,
+        private readonly array $alternativeFormats = [],
     ) {
     }
 
@@ -78,14 +81,19 @@ final class LiipImagineController
                 $path,
                 $filterName,
                 null,
-                $this->isWebpSupported($request)
+                false,
+                $this->getAlternativeFormats($request)
             );
         }, $path, $filterName);
     }
 
-    private function isWebpSupported(Request $request): bool
+    private function getAlternativeFormats(Request $request): array
     {
-        return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
+        if (null === $this->formatNegotiator) {
+            return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp') ? ['webp'] : [];
+        }
+
+        return $this->formatNegotiator->negotiate($request, $this->alternativeFormats);
     }
 
     private function createRedirectResponse(\Closure $url, string $path, string $filter): RedirectResponse

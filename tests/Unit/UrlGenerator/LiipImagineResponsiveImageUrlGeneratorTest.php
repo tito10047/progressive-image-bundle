@@ -55,7 +55,8 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             $this->filterConfiguration,
             $this->requestStack,
             $this->cache,
-            false
+            null,
+            []
         );
     }
 

@@ -41,6 +41,12 @@
         "symfony/test-pack": "^1.2",
         "symfony/yaml": "^6.4|^7.4|^8.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tito10047/LiipImagineBundle"
+        }
+    ],
     "config": {
         "sort-packages": true,
         "allow-plugins": {

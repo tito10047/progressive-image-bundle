@@ -43,8 +43,8 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/tito10047/LiipImagineBundle"
+            "type": "path",
+            "url": "~/phpProjects/contrib/LiipImagineBundle"
         }
     ],
     "config": {

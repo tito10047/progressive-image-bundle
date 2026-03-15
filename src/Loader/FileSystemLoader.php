@@ -20,14 +20,16 @@ final class FileSystemLoader implements LoaderInterface
      */
     private $file;
 
-    public function load(string $path)
-    {
-        if (!file_exists($path) || !is_file($path)) {
-            throw new PathResolutionException("Path $path does not exist or is not a file.");
-        }
+	public function load(string $path)
+	{
+		$realPath = realpath($path) ?: $path;
 
-        return $this->file = fopen($path, 'r');
-    }
+		if (!file_exists($realPath) || !is_file($realPath)) {
+			throw new PathResolutionException("Path $realPath does not exist (original: $path)");
+		}
+
+		return $this->file = fopen($realPath, 'r');
+	}
 
     public function __destruct()
     {

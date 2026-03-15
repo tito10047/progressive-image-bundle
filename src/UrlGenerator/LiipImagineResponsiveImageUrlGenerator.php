@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
+use Liip\ImagineBundle\Service\FormatNegotiator;
 
 final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
 {
@@ -31,7 +32,8 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         private readonly FilterConfiguration $filterConfiguration,
         private readonly RequestStack $requestStack,
         private readonly ?TagAwareCacheInterface $cache,
-        private readonly bool $webpGenerate = false,
+        private readonly ?FormatNegotiator $formatNegotiator = null,
+        private readonly array $alternativeFormats = [],
     ) {
     }
 
@@ -50,14 +52,20 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
             $this->filterConfiguration->set($filterName, $config);
         }
 
-        $isWebpSupported = $this->isWebpSupported();
-        $finalPath = $path;
-        if ($this->webpGenerate && $isWebpSupported) {
-            $finalPath = $path.'.webp';
+        // Try to return already stored alternative format matching current request preferences
+        $request = $this->requestStack->getCurrentRequest();
+        if (null !== $request && null !== $this->formatNegotiator) {
+            $supported = $this->formatNegotiator->negotiate($request, $this->alternativeFormats);
+            foreach ($supported as $format) {
+                $altPath = $path.'.'.$format;
+                if ($this->cacheManager->isStored($altPath, $filterName)) {
+                    return $this->cacheManager->resolve($altPath, $filterName);
+                }
+            }
         }
 
-        if ($this->cacheManager->isStored($finalPath, $filterName)) {
-            return $this->cacheManager->resolve($finalPath, $filterName);
+        if ($this->cacheManager->isStored($path, $filterName)) {
+            return $this->cacheManager->resolve($path, $filterName);
         }
 
         $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
@@ -76,13 +84,4 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         return $this->uriSigner->sign($url);
     }
 
-    private function isWebpSupported(): bool
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
-            return false;
-        }
-
-        return false !== mb_stripos($request->headers->get('accept', ''), 'image/webp');
-    }
 }

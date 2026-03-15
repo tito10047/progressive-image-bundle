@@ -80,6 +80,8 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$controllerConfig', service('liip_imagine.controller.config'))
             ->arg('$runtimeConfigGenerator', service(LiipImagineRuntimeConfigGenerator::class))
             ->arg('$metadataReader', service(MetadataReader::class))
+            ->arg('$formatNegotiator', service('liip_imagine.format_negotiator')->nullOnInvalid())
+            ->arg('$alternativeFormats', new Parameter('liip_imagine.alternative_formats'))
             ->public()
         ;
     }

@@ -30,7 +30,6 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
         private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
         private readonly FilterConfiguration $filterConfiguration,
         private readonly RequestStack $requestStack,
-        private readonly ?TagAwareCacheInterface $cache,
         private readonly bool $webpGenerate = false,
     ) {
     }
@@ -38,8 +37,13 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
     public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null, array $context = []): string
     {
         $targetH = $targetH ?? $targetW;
-        $filter = $context['filter'] ?? null;
-        $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $filter, $pointInterest, null, null, $context);
+        $orgFilter = null;
+		if (array_key_exists('filter', $context)) {
+			$orgFilter = (string)$context['filter'];
+			unset($context['filter']);
+		}
+//		dd($targetW, $targetH, $orgFilter, $pointInterest, null, null, $context);
+        $result = $this->runtimeConfigGenerator->generate($targetW, $targetH, $orgFilter, $pointInterest, null, null, $context);
         $filterName = $result['filterName'];
         $config = $result['config'];
 
@@ -60,16 +64,14 @@ final class LiipImagineResponsiveImageUrlGenerator implements ResponsiveImageUrl
             return $this->cacheManager->resolve($finalPath, $filterName);
         }
 
-        $this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
 
         $params = [
             'path' => $path,
             'width' => $targetW,
             'height' => $targetH,
-            'filter' => $filter,
+            'filter' => $orgFilter,
             'pointInterest' => $pointInterest,
         ];
-        $params = array_merge($params, $context);
 
         $url = $this->router->generate('progressive_image_filter', array_filter($params), UrlGeneratorInterface::ABSOLUTE_URL);
 

@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 
@@ -39,6 +40,7 @@ final class LiipImagineController
         private readonly ControllerConfig $controllerConfig,
         private readonly LiipImagineRuntimeConfigGeneratorInterface $runtimeConfigGenerator,
         private readonly MetadataReaderInterface $metadataReader,
+		private readonly ?TagAwareCacheInterface $cache,
     ) {
     }
 
@@ -68,6 +70,7 @@ final class LiipImagineController
         $config = $result['config'];
 
         $this->filterConfiguration->set($filterName, $config);
+		$this->cache?->invalidateTags(['pgi_tag_'.md5($path)]);
 
         if (true !== $this->signer->checkRequest($request) && $request->attributes->get('_route') !== null) {
             throw new BadRequestHttpException(\sprintf('Signed url does not pass the sign check for path "%s" and filter "%s"', $path, $filter));

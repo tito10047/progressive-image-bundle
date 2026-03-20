@@ -72,15 +72,7 @@ return static function (ContainerConfigurator $container): void {
             ->public()
             ->lazy()
             ->alias(UriSigner::class, 'uri_signer');
-        $services->set(LiipImagineController::class)
-            ->arg('$signer', service('uri_signer'))
-            ->arg('$filterService', service('liip_imagine.service.filter'))
-            ->arg('$dataManager', service('liip_imagine.data.manager'))
-            ->arg('$filterConfiguration', service('liip_imagine.filter.configuration'))
-            ->arg('$controllerConfig', service('liip_imagine.controller.config'))
-            ->arg('$runtimeConfigGenerator', service(LiipImagineRuntimeConfigGenerator::class))
-            ->arg('$metadataReader', service(MetadataReader::class))
-            ->public()
+
         ;
     }
 

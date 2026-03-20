@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
+use Tito10047\ProgressiveImageBundle\Controller\LiipImagineController;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
 use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
@@ -192,9 +193,18 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
                 ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
                 ->setArgument('$requestStack', new Reference('request_stack'))
-                ->setArgument('$cache', $imageCacheServiceReference)
                 ->setArgument('$webpGenerate', new Parameter('liip_imagine.webp.generate'))
                 ->setPublic(true);
+			$container->register(LiipImagineController::class)
+				->setArgument('$signer', new Reference('uri_signer'))
+				->setArgument('$filterService', new Reference('liip_imagine.service.filter'))
+				->setArgument('$dataManager', new Reference('liip_imagine.data.manager'))
+				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
+				->setArgument('$controllerConfig', new Reference('liip_imagine.controller.config'))
+				->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
+				->setArgument('$metadataReader', new Reference(MetadataReader::class))
+				->setArgument('$cache', $imageCacheServiceReference)
+				->setPublic(true);
 
             $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);
             $container->setAlias(LiipImagineRuntimeConfigGeneratorInterface::class, LiipImagineRuntimeConfigGenerator::class)->setPublic(true);

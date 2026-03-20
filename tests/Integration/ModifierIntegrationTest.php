@@ -91,7 +91,7 @@ class ModifierIntegrationTest extends TestCase
         ], 1000, false);
 
         $srcset = $result->getSources()[0]->getSrcset();
-        $this->assertStringContainsString('circle=1', $srcset);
+        $this->assertStringContainsString('circle', $srcset);
         // CoreFilterModifier ties it to 'filter' => 'circle'
         $this->assertStringContainsString('filter=circle', $srcset);
     }

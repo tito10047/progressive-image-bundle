@@ -54,7 +54,6 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
             $this->runtimeConfigGenerator,
             $this->filterConfiguration,
             $this->requestStack,
-            $this->cache,
             false
         );
     }
@@ -67,7 +66,7 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
+            ->with($targetW, $targetH, 'my_filter', null, null, null, [])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => []]);
 
         $this->cacheManager->expects($this->once())
@@ -95,17 +94,13 @@ class LiipImagineResponsiveImageUrlGeneratorTest extends TestCase
 
         $this->runtimeConfigGenerator->expects($this->once())
             ->method('generate')
-            ->with($targetW, $targetH, 'my_filter', null, null, null, ['filter' => 'my_filter'])
+            ->with($targetW, $targetH, 'my_filter', null, null, null, [])
             ->willReturn(['filterName' => 'my_filter_100x100', 'config' => ['foo' => 'bar']]);
 
         $this->cacheManager->expects($this->once())
             ->method('isStored')
             ->with($path, 'my_filter_100x100')
             ->willReturn(false);
-
-        $this->cache->expects($this->once())
-            ->method('invalidateTags')
-            ->with(['pgi_tag_'.md5($path)]);
 
         $this->filterConfiguration->expects($this->once())
             ->method('get')

@@ -107,7 +107,7 @@ Place an image in any Twig template. The bundle generates all required sizes aut
 
 ```twig
 <twig:pgi:Image 
-    src="images/hero.jpg" 
+    src="{{ asset(images/hero.jpg) }}" 
     sizes="sm:12 md:6@landscape lg:4@square"
     alt="Responsive hero image" 
 />

@@ -38,11 +38,11 @@ and generates all necessary variants on the fly.
 
 ```twig
 {# Basic usage - everything is automatic #}
-<twig:pgi:Image src="images/hero.jpg" alt="Beautiful landscape" />
+<twig:pgi:Image src="{{ asset(images/hero.jpg) }}" alt="Beautiful landscape" />
 
 {# With Tailwind-like selectors for perfect responsiveness #}
 <twig:pgi:Image 
-    src="images/hero.jpg" 
+    src="{{ asset(images/hero.jpg) }}" 
     sizes="sm:12 md:6@landscape lg:4@square"
     alt="Responsive image" 
 />

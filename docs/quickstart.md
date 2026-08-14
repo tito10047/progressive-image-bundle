@@ -62,6 +62,21 @@ progressive_image:
     retina:
         enabled: true
         multipliers: [1, 2]
+    resolvers:
+        my_path_resolver:
+            type: "filesystem"
+            roots: [ '%kernel.project_dir%/public' ]
+            allowUnresolvable: true
+        my_asset_mapper_resolver:
+            type: "asset_mapper"
+        chain_resolver:
+            type: "chain"
+            resolvers:
+                - 'my_path_resolver'
+                - 'my_asset_mapper_resolver'
+when@dev:
+    progressive_image:
+        resolver: chain_resolver
 ```
 
 ## 6. Generate the responsive CSS

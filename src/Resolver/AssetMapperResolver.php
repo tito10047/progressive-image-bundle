@@ -23,12 +23,12 @@ final class AssetMapperResolver implements PathResolverInterface
 
     public function resolve(string $path): string
     {
-        $path = '/'.mb_ltrim($path, '/');
-        foreach ($this->assetMapper->allAssets() as $assetCandidate) {
-            if ($path === $assetCandidate->publicPath) {
-                return $assetCandidate->sourcePath;
-            }
-        }
+		$path = mb_ltrim($path, '/');
+		foreach ($this->assetMapper->allAssets() as $assetCandidate) {
+			if ($path === mb_ltrim($assetCandidate->logicalPath, '/')) {
+				return $assetCandidate->sourcePath;
+			}
+		}
         throw new PathResolutionException(\sprintf('Asset with public path "%s" not found.', $path));
     }
 }

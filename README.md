@@ -10,7 +10,7 @@
 [![Symfony Style](https://img.shields.io/badge/code%20style-symfony-black?logo=symfony)](https://symfony.com/)
 [![Coverage Status](https://coveralls.io/repos/github/tito10047/progressive-image-bundle/badge.svg?branch=main)](https://coveralls.io/github/tito10047/progressive-image-bundle?branch=main)
 
-### High-performance, Zero-config, Fully Responsive Images for Symfony.
+### High-performance, Fully Responsive Images for Symfony.
 
 This bundle handles everything you need for modern image management. From **fully responsive images** with Tailwind-like selectors, to **blur placeholders**, to **automatic generation of all required sizes** on local or network storage.
 
@@ -20,7 +20,6 @@ This bundle handles everything you need for modern image management. From **full
 
 ## ✨ Key Features
 
-- 🚀 **Zero Configuration:** Install and use. Most features work out of the box.
 - 🎨 **Blur & Error Placeholders:** Users see a beautiful Blurhash placeholder while loading. If an image is not found, the bundle automatically displays a stylish error
   placeholder.
 - 🖼️ **Responsive via `<picture>`:** Uses the modern `<picture>` element with multiple `<source>` tags for optimal browser selection and performance.

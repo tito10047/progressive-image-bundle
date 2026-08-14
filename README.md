@@ -126,8 +126,11 @@ MIT License. See [LICENSE](LICENSE) for more information.
 
 ## 📚 Documentation
 
-For detailed guides, configuration, and advanced features, check out our full documentation:
+**New here? Start with the [Quick Start guide](docs/quickstart.md)** — get your first responsive image working in under 5 minutes.
 
+For detailed guides, configuration, and advanced features, check out the full documentation:
+
+- [**Quick Start**](docs/quickstart.md)
 - [**Introduction**](docs/index.md)
 - [**Installation**](docs/installation.md)
 - [**Configuration**](docs/configuration.md)

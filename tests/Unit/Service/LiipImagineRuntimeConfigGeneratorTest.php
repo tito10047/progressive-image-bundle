@@ -74,12 +74,11 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
         $this->filterConfiguration->expects($this->never())
             ->method('get');
 
-        // PoI 50x50 on 1000x1000 image, target 200x100
-        // center is 500x500
+        // POI at pixel (500, 500) on 1000x1000 image, target 200x100
         // start should be 500 - (200/2) = 400, 500 - (100/2) = 450
-        $result = $this->generator->generate(200, 100, null, '50x50', 1000, 1000);
+        $result = $this->generator->generate(200, 100, null, '500x500', 1000, 1000);
 
-        $this->assertEquals('200x100_50x50', $result['filterName']);
+        $this->assertEquals('200x100_500x500', $result['filterName']);
         $this->assertEquals([
             'filters' => [
                 'crop' => [
@@ -96,18 +95,16 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
     public function testGenerateWithPointInterestAtEdges(): void
     {
-        // PoI 0x0 (upper left corner) on 1000x1000, target 200x100
-        // center is 0x0
-        // start should be 0 - 100 = -100, 0 - 50 = -50 -> cropped to 0x0
+        // POI at pixel (0, 0) — upper-left corner, 1000x1000, target 200x100
+        // start = (0-100, 0-50) = (-100, -50) → clamped to (0, 0)
         $result = $this->generator->generate(200, 100, null, '0x0', 1000, 1000);
 
         $this->assertEquals([0, 0], $result['config']['filters']['crop']['start']);
 
-        // PoI 100x100 (lower right corner)
-        // center is 1000x1000
-        // start should be 1000 - 100 = 900, 1000 - 50 = 950
-        // but max start is orig - target: 1000 - 200 = 800, 1000 - 100 = 900
-        $result = $this->generator->generate(200, 100, null, '100x100', 1000, 1000);
+        // POI at pixel (1000, 1000) — lower-right corner
+        // start = (1000-100, 1000-50) = (900, 950)
+        // max start: (1000-200, 1000-100) = (800, 900) → clamped to (800, 900)
+        $result = $this->generator->generate(200, 100, null, '1000x1000', 1000, 1000);
 
         $this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);
     }

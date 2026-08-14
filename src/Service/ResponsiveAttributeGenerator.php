@@ -75,18 +75,22 @@ final class ResponsiveAttributeGenerator
 
             $multipliers = $retina ? $this->retinaMultipliers : [1];
             $srcsetParts = [];
+            $firstUrl = null;
 
             foreach ($multipliers as $multiplier) {
                 $mPixelWidth = (int) round($pixelWidth * $multiplier);
                 $url = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context, $originalRatio);
 
                 if ($url) {
-                    if ($preload && 1 === $multiplier) {
-                        $this->preloadCollector->add($url, 'image', 'high', "{$mPixelWidth}w", $size);
+                    if (null === $firstUrl) {
+                        $firstUrl = $url;
                     }
-
                     $srcsetParts[] = $url." {$mPixelWidth}w";
                 }
+            }
+
+            if ($preload && $firstUrl && $srcsetParts) {
+                $this->preloadCollector->add($firstUrl, 'image', 'high', implode(', ', $srcsetParts), $size);
             }
 
             $ratio = $this->resolveRatio($assignment) ?? $originalRatio;

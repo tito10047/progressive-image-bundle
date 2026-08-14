@@ -112,6 +112,34 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
         $this->assertEquals([1000, 500], $result['config']['filters']['crop']['size']);
     }
 
+    public function testCropFilterPrecedesThumbnailWhenImageConfigsHasThumbnail(): void
+    {
+        // If imageConfigs already contains filters.thumbnail, PHP keeps that key at its
+        // original position when we later assign $config['filters']['thumbnail'] = [...].
+        // LiipImagine applies filters in array-insertion order, so thumbnail before crop
+        // means it centers on the image centre rather than the POI.
+        $imageConfigs = [
+            'filters' => [
+                'thumbnail' => ['size' => [100, 100], 'mode' => 'outbound'],
+            ],
+        ];
+        $generator = new LiipImagineRuntimeConfigGenerator($this->filterConfiguration, $imageConfigs);
+
+        $result = $generator->generate(200, 100, null, '500x500', 1000, 1000);
+
+        $filterKeys = array_keys($result['config']['filters']);
+        $cropIndex = array_search('crop', $filterKeys);
+        $thumbnailIndex = array_search('thumbnail', $filterKeys);
+
+        $this->assertNotFalse($cropIndex, 'crop filter must exist');
+        $this->assertNotFalse($thumbnailIndex, 'thumbnail filter must exist');
+        $this->assertLessThan(
+            $thumbnailIndex,
+            $cropIndex,
+            'crop filter must come before thumbnail — if thumbnail is first, LiipImagine centers on image centre instead of POI'
+        );
+    }
+
     public function testGenerateWithExtraConfig(): void
     {
         $imageConfigs = [

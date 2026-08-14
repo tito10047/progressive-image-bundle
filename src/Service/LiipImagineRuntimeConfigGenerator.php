@@ -66,6 +66,10 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
                 $width, $height,
                 $origWidth, $origHeight
             );
+            // Unset both before reassigning — PHP keeps existing keys at their original
+            // position, which would put thumbnail before crop if imageConfigs already
+            // contained a thumbnail filter. LiipImagine applies filters in array order.
+            unset($config['filters']['crop'], $config['filters']['thumbnail']);
             $config['filters']['crop'] = [
                 'start' => $cropStart,
                 'size' => $cropSize,

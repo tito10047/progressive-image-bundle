@@ -55,7 +55,7 @@ final class CheckCacheInterfacePass implements CompilerPassInterface
         }
 
         if ($class && !is_subclass_of($class, TagAwareCacheInterface::class) && TagAwareCacheInterface::class !== $class) {
-            throw new \LogicException(sprintf('Cache service "%1$s" (class: %2$s) must implement TagAwareCacheInterface to be used in ProgressiveImageBundle. Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId, $class));
+            throw new \LogicException(sprintf('Cache service "%1$s" (class: %2$s) must implement TagAwareCacheInterface to be used in ProgressiveImageBundle. Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: tags: true } } } }', $cacheServiceId, $class));
         }
 
         // Special check for Symfony cache pools that don't have a class set immediately,
@@ -64,7 +64,7 @@ final class CheckCacheInterfacePass implements CompilerPassInterface
             if (!$definition->hasTag('cache.taggable')) {
                 // If it doesn't have the cache.taggable tag and the class is not TagAware, we throw an error.
                 // Symfony TagAwareAdapter has the class set to TagAwareAdapter.
-                throw new \LogicException(sprintf('Cache service "%1$s" is not "tag aware". Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: cache.adapter.redis_tag_aware, tags: true } } } }', $cacheServiceId));
+                throw new \LogicException(sprintf('Cache service "%1$s" is not "tag aware". Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: tags: true } } } }', $cacheServiceId));
             }
         }
     }

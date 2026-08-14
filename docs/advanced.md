@@ -64,9 +64,15 @@ The bundle offers transparent caching of the resulting HTML:
 ### Configuration:
 
 ```yaml
+framework:
+    cache:
+        pools:
+            cache.my_cache:
+                tags: true
+
 progressive_image:
     image_cache_enabled: true
-    image_cache_service: 'cache.app'
+    image_cache_service: 'cache.my_cache'
     ttl: 86400
 ```
 

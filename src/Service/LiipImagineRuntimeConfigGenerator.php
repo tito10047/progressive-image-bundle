@@ -61,16 +61,25 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
 
         if ($pointInterest && $origWidth && $origHeight) {
             [$poiX, $poiY] = explode('x', $pointInterest);
+            [$cropStart, $cropSize] = $this->calculateAspectCrop(
+                (int) $poiX, (int) $poiY,
+                $width, $height,
+                $origWidth, $origHeight
+            );
             $config['filters']['crop'] = [
-                'start' => $this->calculateCropStart((int) $poiX, (int) $poiY, $width, $height, $origWidth, $origHeight),
+                'start' => $cropStart,
+                'size' => $cropSize,
+            ];
+            $config['filters']['thumbnail'] = [
                 'size' => [$width, $height],
+                'mode' => 'inset',
+            ];
+        } else {
+            $config['filters']['thumbnail'] = [
+                'size' => [$width, $height],
+                'mode' => 'outbound',
             ];
         }
-
-        $config['filters']['thumbnail'] = [
-            'size' => [$width, $height],
-            'mode' => 'outbound',
-        ];
 
         return [
             'filterName' => $filterName,
@@ -79,18 +88,30 @@ final class LiipImagineRuntimeConfigGenerator implements LiipImagineRuntimeConfi
     }
 
     /**
-     * @return array{int, int}
+     * Finds the largest region in the original image that matches the target aspect ratio,
+     * centres it on the POI pixel, and returns [start, size] for a LiipImagine crop filter.
+     * The caller should follow this crop with a thumbnail/inset to scale to the target size.
+     *
+     * @return array{array{int,int}, array{int,int}}
      */
-    private function calculateCropStart(int $poiX, int $poiY, int $targetWidth, int $targetHeight, int $origWidth, int $origHeight): array
+    private function calculateAspectCrop(int $poiX, int $poiY, int $targetWidth, int $targetHeight, int $origWidth, int $origHeight): array
     {
-        // POI is expressed in pixel coordinates of the original image.
-        $startX = $poiX - (int) ($targetWidth / 2);
-        $startY = $poiY - (int) ($targetHeight / 2);
+        if ($origWidth / $origHeight > $targetWidth / $targetHeight) {
+            // Original is wider than target → constrain by height, crop excess width
+            $cropHeight = $origHeight;
+            $cropWidth = (int) round($origHeight * $targetWidth / $targetHeight);
+        } else {
+            // Original is taller than target → constrain by width, crop excess height
+            $cropWidth = $origWidth;
+            $cropHeight = (int) round($origWidth * $targetHeight / $targetWidth);
+        }
 
-        // Clamp so the crop window stays within the original image.
-        $startX = max(0, min($startX, $origWidth - $targetWidth));
-        $startY = max(0, min($startY, $origHeight - $targetHeight));
+        $startX = $poiX - (int) ($cropWidth / 2);
+        $startY = $poiY - (int) ($cropHeight / 2);
 
-        return [$startX, $startY];
+        $startX = max(0, min($startX, $origWidth - $cropWidth));
+        $startY = max(0, min($startY, $origHeight - $cropHeight));
+
+        return [[$startX, $startY], [$cropWidth, $cropHeight]];
     }
 }

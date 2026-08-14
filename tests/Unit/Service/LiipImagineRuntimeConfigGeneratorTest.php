@@ -74,20 +74,21 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
         $this->filterConfiguration->expects($this->never())
             ->method('get');
 
-        // POI at pixel (500, 500) on 1000x1000 image, target 200x100
-        // start should be 500 - (200/2) = 400, 500 - (100/2) = 450
+        // POI at pixel (500, 500) on a 1000x1000 image, target 200x100.
+        // origRatio=1.0 < targetRatio=2.0 → constrain by width, crop height.
+        // cropW=1000, cropH=500; startX=0, startY=250.
         $result = $this->generator->generate(200, 100, null, '500x500', 1000, 1000);
 
         $this->assertEquals('200x100_500x500', $result['filterName']);
         $this->assertEquals([
             'filters' => [
                 'crop' => [
-                    'start' => [400, 450],
-                    'size' => [200, 100],
+                    'start' => [0, 250],
+                    'size' => [1000, 500],
                 ],
                 'thumbnail' => [
                     'size' => [200, 100],
-                    'mode' => 'outbound',
+                    'mode' => 'inset',
                 ],
             ],
         ], $result['config']);
@@ -95,18 +96,20 @@ class LiipImagineRuntimeConfigGeneratorTest extends TestCase
 
     public function testGenerateWithPointInterestAtEdges(): void
     {
-        // POI at pixel (0, 0) — upper-left corner, 1000x1000, target 200x100
-        // start = (0-100, 0-50) = (-100, -50) → clamped to (0, 0)
+        // POI at pixel (0, 0) — upper-left corner, 1000x1000, target 200x100.
+        // cropW=1000, cropH=500; start clamped to (0, 0).
         $result = $this->generator->generate(200, 100, null, '0x0', 1000, 1000);
 
         $this->assertEquals([0, 0], $result['config']['filters']['crop']['start']);
+        $this->assertEquals([1000, 500], $result['config']['filters']['crop']['size']);
 
-        // POI at pixel (1000, 1000) — lower-right corner
-        // start = (1000-100, 1000-50) = (900, 950)
-        // max start: (1000-200, 1000-100) = (800, 900) → clamped to (800, 900)
+        // POI at pixel (1000, 1000) — lower-right corner.
+        // startX = 1000-500=500, clamped to max (1000-1000=0) → 0.
+        // startY = 1000-250=750, clamped to max (1000-500=500) → 500.
         $result = $this->generator->generate(200, 100, null, '1000x1000', 1000, 1000);
 
-        $this->assertEquals([800, 900], $result['config']['filters']['crop']['start']);
+        $this->assertEquals([0, 500], $result['config']['filters']['crop']['start']);
+        $this->assertEquals([1000, 500], $result['config']['filters']['crop']['size']);
     }
 
     public function testGenerateWithExtraConfig(): void

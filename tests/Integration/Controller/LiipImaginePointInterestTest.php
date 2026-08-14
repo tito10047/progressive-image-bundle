@@ -26,13 +26,19 @@ class LiipImaginePointInterestTest extends AbstractLiipImagineControllerTestCase
 
     public function testPointInterestCropping(): void
     {
-        // 1. Create a black 100x100 image with one white pixel at 75, 25
-        $origW = 100;
+        // Landscape 200x100 image, black background, white pixel at (150, 50).
+        // POI at pixel (150, 50), target 100x100 (square).
+        //
+        // origRatio=2.0 > targetRatio=1.0 → constrain by height, crop width.
+        // cropH=100, cropW=100; startX=max(0,min(100,100))=100, startY=0.
+        // Crop: (100,0) size 100x100 → thumbnail inset 100x100 (scale factor=1, no-op).
+        // White pixel maps to crop-space (150-100, 50-0)=(50,50) → output (50,50). ✓
+        $origW = 200;
         $origH = 100;
-        $poiX_percent = 75;
-        $poiY_percent = 25;
-        $pixelX = (int) ($poiX_percent / 100 * $origW); // 75
-        $pixelY = (int) ($poiY_percent / 100 * $origH); // 25
+        $pixelX = 150;
+        $pixelY = 50;
+        $targetW = 100;
+        $targetH = 100;
 
         $img = imagecreatetruecolor($origW, $origH);
         $black = imagecolorallocate($img, 0, 0, 0);
@@ -47,37 +53,35 @@ class LiipImaginePointInterestTest extends AbstractLiipImagineControllerTestCase
         $client = $this->createLiipClient();
         $signer = $this->getUriSigner($client);
 
-        $targetW = 50;
-        $targetH = 50;
-        $poi = "{$poiX_percent}x{$poiY_percent}"; // "75x25"
+        $poi = "{$pixelX}x{$pixelY}"; // "150x50" — pixel coordinates
 
         $url = sprintf('/progressive-image?path=%s&width=%d&height=%d&pointInterest=%s', 'poi_test.png', $targetW, $targetH, $poi);
         $signedUrl = $signer->sign('http://localhost'.$url);
 
         $client->request('GET', $signedUrl);
 
-        $redirectUrl = $this->assertImageRedirectAndProperties($client, '/media/cache/50x50_75x25/', 50, 50);
+        $redirectUrl = $this->assertImageRedirectAndProperties($client, '/media/cache/100x100_150x50/', $targetW, $targetH);
 
         $container = $client->getContainer();
         $projectDir = $container->getParameter('kernel.project_dir');
         $relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
         $absoluteFilePath = $projectDir.'/public'.$relativeFilePath;
 
-        // 2. Check if the white pixel is in the center of the resulting 50x50 image
-        // Center of 50x50 is 25, 25
         $resultImg = imagecreatefrompng($absoluteFilePath);
-        $rgb = imagecolorat($resultImg, 25, 25);
+
+        // White pixel should be at (50, 50) of the 100x100 output (no scaling, exact pixel).
+        $rgb = imagecolorat($resultImg, 50, 50);
         $r = ($rgb >> 16) & 0xFF;
         $g = ($rgb >> 8) & 0xFF;
         $b = $rgb & 0xFF;
 
-        $this->assertEquals(255, $r, 'Middle pixel should be white (R)');
-        $this->assertEquals(255, $g, 'Middle pixel should be white (G)');
-        $this->assertEquals(255, $b, 'Middle pixel should be white (B)');
+        $this->assertEquals(255, $r, 'Pixel (50,50) should be white (R)');
+        $this->assertEquals(255, $g, 'Pixel (50,50) should be white (G)');
+        $this->assertEquals(255, $b, 'Pixel (50,50) should be white (B)');
 
-        // Check some other pixel if it is black
-        $rgbBlack = imagecolorat($resultImg, 0, 0);
-        $this->assertEquals(0, $rgbBlack & 0xFF, 'Corner pixel should be black');
+        // Corner (0,0) is from the left half of the original — should be black background.
+        $rgbCorner = imagecolorat($resultImg, 0, 0);
+        $this->assertEquals(0, $rgbCorner & 0xFF, 'Corner pixel should be black');
 
         imagedestroy($resultImg);
     }

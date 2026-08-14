@@ -33,17 +33,19 @@ automatically wraps the image in a `<picture>` element with corresponding `<sour
 
 ## Point of Interest (PoI)
 
-If you need a specific object to always remain visible when cropping, use the `pointInterest` attribute.
+If you need a specific subject to stay in frame regardless of the target aspect ratio, use the `pointInterest` attribute.
 
 ```twig
 <twig:pgi:Image 
     src="images/team.jpg" 
-    pointInterest="75x25" 
+    pointInterest="544x320" 
     sizes="sm:12@square md:6@landscape" 
 />
 ```
 
-*The value `75x25` means 75% width and 25% height from the top-left corner.*
+The value `544x320` is the **pixel coordinate** of the focal point in the original image — `544` pixels from the left edge and `320` pixels from the top.
+
+**How it works:** the bundle finds the largest region of the original image whose aspect ratio matches the requested output. It centres that region on the focal point (clamping at the edges), crops it, and then scales the result down to the final target size. This means the image is always scaled — never just sliced at original resolution — and the focal point stays as close to the centre of the output as the image edges allow.
 
 ## Other Attributes
 
@@ -55,7 +57,7 @@ If you need a specific object to always remain visible when cropping, use the `p
 | `ratio`         | Default aspect ratio for the entire image.                |
 | `retina`        | Enable/disable retina for this image (overrides global).  |
 | `preload`       | If present, the image is added to preload (LCP).          |
-| `pointInterest` | Focal point for cropping (e.g., `50x50`).                 |
+| `pointInterest` | Focal point — pixel coordinates in the original image (e.g., `544x320`). |
 | `class`         | CSS classes for the `<img>` tag.                          |
 | `context`       | Array of additional data (e.g., filters for LiipImagine). |
 

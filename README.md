@@ -12,8 +12,9 @@
 
 ### High-performance, Zero-config, Fully Responsive Images for Symfony.
 
-This bundle handles everything you need for modern image management. From **fully responsive images** with Tailwind-like selectors, to **blur placeholders**, to *
-*automatic generation of all required sizes** on local or network storage.
+This bundle handles everything you need for modern image management. From **fully responsive images** with Tailwind-like selectors, to **blur placeholders**, to **automatic generation of all required sizes** on local or network storage.
+
+> 🌍 **Production Ready:** This bundle is successfully deployed and running in production on live websites such as [mostka.sk](https://mostka.sk/) and [vsetkosada.sk](https://vsetkosada.sk/).
 
 ---
 
@@ -72,7 +73,7 @@ dimensions based on the container width defined by your CSS framework (Bootstrap
 
 ### Point of Interest (PoI) Cropping
 
-Define a focal point (e.g., `75x25`) so the most important object remains in frame regardless of the crop.
+Define a focal point as **pixel coordinates in the original image** (e.g., `pointInterest="544x320"`) so the most important subject stays in frame regardless of the target aspect ratio. The bundle finds the largest region of the original that matches the target ratio, centres it on the focal point, and scales the result — never slicing at original resolution.
 
 ### Smart Upscaling Protection
 

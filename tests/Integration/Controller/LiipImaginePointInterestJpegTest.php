@@ -5,13 +5,22 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration\Controller;
 
 /**
- * Tests POI cropping with a synthetic image:
- *   - white background, 976×1734 px (same as the real fixture)
+ * Tests POI cropping with a synthetic image (same dimensions as the original fixture):
+ *   - 976×1734 px, white background
  *   - black circle (radius 30) centred at pixel (544, 594) — the POI
  *
- * The system receives POI as pixel coordinates "544x594".
- * After the crop the pixel at the output centre (180, 240) must be
- * dark (inside the circle), and a corner pixel must be white.
+ * The correct algorithm:
+ *   origRatio=0.563 < targetRatio=0.75  → constrain by width, crop excess height
+ *   cropW=976, cropH=round(976*480/360)=1301
+ *   startX=max(0,min(544-488, 0))=0, startY=max(0,min(594-650, 433))=0
+ *   Crop: (0,0) size 976×1301, then scale to 360×480.
+ *
+ * POI in output:
+ *   outPoiX = round(544 * 360/976) = 201
+ *   outPoiY = round(594 * 480/1301) = 219
+ *
+ * Pixel at (201,219) must be dark (inside the circle).
+ * Pixel at (0,0) must be white (background — top-left of the crop is also background).
  */
 class LiipImaginePointInterestJpegTest extends AbstractLiipImagineControllerTestCase
 {
@@ -32,17 +41,12 @@ class LiipImaginePointInterestJpegTest extends AbstractLiipImagineControllerTest
         );
     }
 
-    /**
-     * The crop must be centred on the POI pixel (544, 594).
-     * Expected crop window: start (364, 354), size 360×480.
-     * Output centre (180, 240) must be black (inside the circle).
-     */
     public function testPoiCropCentresOnSubject(): void
     {
         $client = $this->createLiipClient();
         $signer = $this->getUriSigner($client);
 
-        $poi = self::POI_PIXEL_X.'x'.self::POI_PIXEL_Y; // "544x594" — pixel coordinates
+        $poi = self::POI_PIXEL_X.'x'.self::POI_PIXEL_Y;
 
         $url = sprintf(
             '/progressive-image?path=%s&width=%d&height=%d&pointInterest=%s',
@@ -64,46 +68,65 @@ class LiipImaginePointInterestJpegTest extends AbstractLiipImagineControllerTest
 
         $container = $client->getContainer();
         $projectDir = $container->getParameter('kernel.project_dir');
-        $relativeFilePath = parse_url($redirectUrl, PHP_URL_PATH);
-        $absoluteFilePath = $projectDir.'/public'.$relativeFilePath;
+        $absoluteFilePath = $projectDir.'/public'.parse_url($redirectUrl, PHP_URL_PATH);
 
         $outImg = imagecreatefromjpeg($absoluteFilePath);
         $this->assertNotFalse($outImg, 'Could not load output JPEG');
 
-        // Centre of output must be dark (the black circle)
-        $outCentreX = (int) (self::TARGET_W / 2);
-        $outCentreY = (int) (self::TARGET_H / 2);
+        // Calculate expected POI position in output based on the aspect-crop algorithm.
+        [$outPoiX, $outPoiY] = $this->expectedOutputPoi();
 
-        $rgb = imagecolorat($outImg, $outCentreX, $outCentreY);
+        $rgb = imagecolorat($outImg, $outPoiX, $outPoiY);
         $r = ($rgb >> 16) & 0xFF;
         $g = ($rgb >> 8) & 0xFF;
         $b = $rgb & 0xFF;
 
-        // Corner of output must be white (background)
+        // Corner (0,0): the crop starts at (0,0) in the original — background is white.
         $cornerRgb = imagecolorat($outImg, 0, 0);
         $cornerR = ($cornerRgb >> 16) & 0xFF;
 
         imagedestroy($outImg);
 
-        // Allow JPEG compression artefacts
         $this->assertLessThan(
-            50,
-            $r,
+            50, $r,
             sprintf(
-                'Output centre (%d,%d) should be dark (inside the circle at POI %d,%d), got R=%d. '.
-                'The crop is likely at the wrong position.',
-                $outCentreX, $outCentreY,
-                self::POI_PIXEL_X, self::POI_PIXEL_Y,
-                $r
+                'Output pixel at POI (%d,%d) should be dark (inside the circle), got R=%d.',
+                $outPoiX, $outPoiY, $r
             )
         );
-        $this->assertLessThan(50, $g, "Output centre G=$g should be dark");
-        $this->assertLessThan(50, $b, "Output centre B=$b should be dark");
+        $this->assertLessThan(50, $g, "POI pixel G=$g should be dark");
+        $this->assertLessThan(50, $b, "POI pixel B=$b should be dark");
 
         $this->assertGreaterThan(
-            200,
-            $cornerR,
+            200, $cornerR,
             "Output corner should be white (background), got R=$cornerR"
         );
+    }
+
+    /**
+     * Computes where the POI pixel appears in the output after the aspect-crop + scale.
+     *
+     * @return array{int, int}
+     */
+    private function expectedOutputPoi(): array
+    {
+        $targetRatio = self::TARGET_W / self::TARGET_H;
+        $origRatio = self::ORIG_W / self::ORIG_H;
+
+        if ($origRatio > $targetRatio) {
+            $cropH = self::ORIG_H;
+            $cropW = (int) round(self::ORIG_H * $targetRatio);
+        } else {
+            $cropW = self::ORIG_W;
+            $cropH = (int) round(self::ORIG_W / $targetRatio);
+        }
+
+        $startX = max(0, min(self::POI_PIXEL_X - (int) ($cropW / 2), self::ORIG_W - $cropW));
+        $startY = max(0, min(self::POI_PIXEL_Y - (int) ($cropH / 2), self::ORIG_H - $cropH));
+
+        return [
+            (int) round((self::POI_PIXEL_X - $startX) * self::TARGET_W / $cropW),
+            (int) round((self::POI_PIXEL_Y - $startY) * self::TARGET_H / $cropH),
+        ];
     }
 }

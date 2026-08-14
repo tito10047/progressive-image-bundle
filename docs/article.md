@@ -176,14 +176,13 @@ your cache. The next time someone visits the page, PGI serves the cached HTML in
 
 ### Point of Interest (PoI) Cropping
 
-One of the coolest features is "Smart Cropping." Instead of blindly cropping from the center, you can define a Point of Interest:
+One of the coolest features is "Smart Cropping." Instead of blindly cropping from the centre, you can define a Point of Interest as pixel coordinates in the original image:
 
 ```twig
-<twig:pgi:Image src="team.jpg" pointInterest="75x25" sizes="md:6@square" />
+<twig:pgi:Image src="team.jpg" pointInterest="544x320" sizes="md:6@square" />
 ```
 
-This ensures that the most important part of the image (like a person's face) stays in the frame, regardless of whether it's being cropped to a square, portrait, or
-landscape ratio.
+`544x320` means 544 pixels from the left and 320 pixels from the top of the original image. The bundle finds the largest region that matches the requested output ratio, centres it on that point, and scales the result down — so a person's face, for example, stays in frame regardless of whether the output is square, portrait, or landscape.
 
 ## Why PGI Belongs in Your Next Project
 

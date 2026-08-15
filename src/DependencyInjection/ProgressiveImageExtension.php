@@ -226,6 +226,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
             ->setArgument('$defaultRetina', $retina)
+            ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
             ->setShared(false)
             ->addTag('twig.component')
             ->setPublic(true);

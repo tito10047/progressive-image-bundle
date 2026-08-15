@@ -54,6 +54,14 @@ class PreloadCollector
         }
 
         $linkProvider = $request->attributes->get('_links', new GenericLinkProvider());
+        foreach ($linkProvider->getLinks() as $existingLink) {
+            // $this->urls above is keyed by $url, so a repeated add() for the same URL is a
+            // replace, not an append — mirror that here instead of leaving the old Link
+            // object (with stale attributes) alongside the new one.
+            if ($existingLink->getHref() === $url) {
+                $linkProvider = $linkProvider->withoutLink($existingLink);
+            }
+        }
         $request->attributes->set('_links', $linkProvider->withLink($link));
     }
 

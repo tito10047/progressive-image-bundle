@@ -137,6 +137,13 @@ class ImageComponentTest extends PGITestCase
             ],
         ]);
 
+        // PreloadCollector::add() attaches its WebLink provider to the RequestStack's
+        // current request — a real request is always current while rendering a real page,
+        // so push one here too (renderTwigComponent() alone doesn't).
+        $requestStack = self::getContainer()->get('request_stack');
+        $request = new Request();
+        $requestStack->push($request);
+
         $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [
@@ -155,15 +162,19 @@ class ImageComponentTest extends PGITestCase
         $expectedUrl = 'http://localhost/media/cache/resolve/preview_big/test.png';
         $this->assertArrayHasKey($expectedUrl, $urls);
 
+        // The Link header is symfony/web-link's responsibility (via PreloadCollector's
+        // GenericLinkProvider registration on the request), not KernelResponseEventListener's
+        // — dispatch both real listeners, as the real kernel.response event does, to prove
+        // the header still comes out correctly end-to-end.
         $eventListener = self::getContainer()->get(KernelResponseEventListener::class);
-        $request = new Request();
         $response = new \Symfony\Component\HttpFoundation\Response();
         $event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
 
         $eventListener($event);
+        (new \Symfony\Component\WebLink\EventListener\AddLinkHeaderListener())->onKernelResponse($event);
 
         $this->assertTrue($response->headers->has('Link'));
-        $this->assertStringContainsString('<'.$expectedUrl.'>; rel=preload; as=image; fetchpriority=high', $response->headers->get('Link'));
+        $this->assertStringContainsString('<'.$expectedUrl.'>; rel="preload"; as="image"; fetchpriority="high"', $response->headers->get('Link'));
     }
 
     public function testRenderWithResponsiveStrategy(): void
@@ -443,6 +454,13 @@ class ImageComponentTest extends PGITestCase
             ],
         ]);
 
+        // PreloadCollector::add() attaches its WebLink provider to the RequestStack's
+        // current request — a real request is always current while rendering a real page,
+        // so push one here too (renderTwigComponent() alone doesn't).
+        $requestStack = self::getContainer()->get('request_stack');
+        $request = new Request();
+        $requestStack->push($request);
+
         $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [
@@ -454,17 +472,17 @@ class ImageComponentTest extends PGITestCase
         );
 
         $eventListener = self::getContainer()->get(KernelResponseEventListener::class);
-        $request = new Request();
         $response = new \Symfony\Component\HttpFoundation\Response();
         $response->setContent('<html><head></head><body></body></html>');
         $event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
 
         $eventListener($event);
+        (new \Symfony\Component\WebLink\EventListener\AddLinkHeaderListener())->onKernelResponse($event);
 
         $this->assertTrue($response->headers->has('Link'));
         $linkHeader = $response->headers->get('Link');
-        $this->assertStringContainsString('rel=preload', $linkHeader);
-        $this->assertStringContainsString('as=image', $linkHeader);
+        $this->assertStringContainsString('rel="preload"', $linkHeader);
+        $this->assertStringContainsString('as="image"', $linkHeader);
         $this->assertStringContainsString('imagesrcset="', $linkHeader);
         $this->assertStringContainsString('1920w', $linkHeader);
         $this->assertStringContainsString('imagesizes="100vw"', $linkHeader);

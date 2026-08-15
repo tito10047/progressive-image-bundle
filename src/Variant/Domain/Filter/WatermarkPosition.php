@@ -17,7 +17,9 @@ enum WatermarkPosition: string
 {
     case TopLeft = 'top_left';
     case TopRight = 'top_right';
+	case Top = 'top';
     case BottomLeft = 'bottom_left';
     case BottomRight = 'bottom_right';
+	case Bottom = 'bottom';
     case Center = 'center';
 }

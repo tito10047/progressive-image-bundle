@@ -41,4 +41,12 @@ final class OutputFormatTest extends TestCase
         yield 'webp' => [OutputFormat::Webp, 'image/webp', 'webp'];
         yield 'avif' => [OutputFormat::Avif, 'image/avif', 'avif'];
     }
+
+    public function testOnlyPngDoesNotUseQuality(): void
+    {
+        self::assertTrue(OutputFormat::Jpeg->usesQuality());
+        self::assertFalse(OutputFormat::Png->usesQuality());
+        self::assertTrue(OutputFormat::Webp->usesQuality());
+        self::assertTrue(OutputFormat::Avif->usesQuality());
+    }
 }

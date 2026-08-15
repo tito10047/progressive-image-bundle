@@ -32,7 +32,10 @@ final readonly class VariantSpec
         return [
             'filters' => $this->filters->canonical(),
             'format' => $this->format->value,
-            'quality' => $this->quality->value,
+            // Normalized to a constant for formats whose encoder ignores quality (PNG), so
+            // two specs that only differ in a setting with no effect on the actual output
+            // don't hash to different VariantIds and get generated/stored twice.
+            'quality' => $this->format->usesQuality() ? $this->quality->value : 0,
         ];
     }
 }

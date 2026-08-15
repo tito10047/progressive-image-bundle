@@ -57,4 +57,28 @@ final class VariantSpecTest extends TestCase
             $spec->canonical()
         );
     }
+
+    /**
+     * PngEncoder has no quality parameter (verified in InterventionImageManipulator) — two
+     * PNG VariantSpecs that differ only in "quality" produce byte-identical output, so their
+     * canonical() (and therefore their VariantId) must be identical too, or the same image
+     * gets generated and stored twice under different hashes for no reason.
+     */
+    public function testCanonicalIgnoresQualityForPngSinceItHasNoEffectOnTheOutput(): void
+    {
+        $filters = FilterChain::of(Thumbnail::outbound(new Dimensions(200, 200)));
+        $spec1 = new VariantSpec($filters, OutputFormat::Png, new Quality(60));
+        $spec2 = new VariantSpec($filters, OutputFormat::Png, new Quality(95));
+
+        self::assertSame($spec1->canonical(), $spec2->canonical());
+    }
+
+    public function testCanonicalStillDistinguishesQualityForFormatsThatSupportIt(): void
+    {
+        $filters = FilterChain::of(Thumbnail::outbound(new Dimensions(200, 200)));
+        $spec1 = new VariantSpec($filters, OutputFormat::Webp, new Quality(60));
+        $spec2 = new VariantSpec($filters, OutputFormat::Webp, new Quality(95));
+
+        self::assertNotSame($spec1->canonical(), $spec2->canonical());
+    }
 }

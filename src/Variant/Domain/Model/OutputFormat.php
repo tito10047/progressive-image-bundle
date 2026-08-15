@@ -39,4 +39,13 @@ enum OutputFormat: string
             self::Avif => 'avif',
         };
     }
+
+    /**
+     * Whether encoding this format actually honours a quality setting. PngEncoder (see
+     * InterventionImageManipulator::encoderFor()) has no quality parameter at all.
+     */
+    public function usesQuality(): bool
+    {
+        return self::Png !== $this;
+    }
 }

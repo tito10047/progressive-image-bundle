@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Tito10047\ProgressiveImageBundle\DependencyInjection\CheckCacheInterfacePass;
 use Tito10047\ProgressiveImageBundle\DependencyInjection\ProgressiveImageExtension;
+use Tito10047\ProgressiveImageBundle\DependencyInjection\ValidateFilterSetsPass;
 
 /**
  * @see https://symfony.com/doc/current/bundles/best_practices.html
@@ -30,6 +31,7 @@ final class ProgressiveImageBundle extends AbstractBundle
     {
         parent::build($container);
         $container->addCompilerPass(new CheckCacheInterfacePass());
+        $container->addCompilerPass(new ValidateFilterSetsPass());
     }
 
     public function getContainerExtension(): ExtensionInterface

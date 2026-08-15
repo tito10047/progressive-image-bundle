@@ -56,23 +56,21 @@ return static function (ContainerConfigurator $container): void {
     $services->set('progressive_image.resolver.filesystem', FileSystemResolver::class);
     $services->set('progressive_image.resolver.asset_mapper', AssetMapperResolver::class);
 
+    $services->set('uri_signer', UriSigner::class)
+        ->args([
+            new Parameter('kernel.secret'),
+            '_hash',
+            '_expiration',
+            service('clock')->nullOnInvalid(),
+        ])
+        ->public()
+        ->lazy()
+        ->alias(UriSigner::class, 'uri_signer');
+
     if (class_exists(LiipImagineBundle::class)) {
         $services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
             ->arg('$cache', service('liip_imagine.cache.manager'))
             ->arg('$configuration', service('liip_imagine.filter.configuration'))
-        ;
-
-        $services->set('uri_signer', UriSigner::class)
-            ->args([
-                new Parameter('kernel.secret'),
-                '_hash',
-                '_expiration',
-                service('clock')->nullOnInvalid(),
-            ])
-            ->public()
-            ->lazy()
-            ->alias(UriSigner::class, 'uri_signer');
-
         ;
     }
 

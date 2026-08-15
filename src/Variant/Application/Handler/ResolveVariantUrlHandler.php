@@ -45,7 +45,7 @@ final class ResolveVariantUrlHandler
         private readonly PendingGenerationTracker $tracker,
         private readonly GenerationDispatcher $dispatcher,
         private readonly OriginalUrlResolver $originalUrlResolver,
-        private readonly PendingUrlBuilder $pendingUrlBuilder,
+        private readonly ?PendingUrlBuilder $pendingUrlBuilder,
         private readonly UrlSigner $urlSigner,
         private readonly PendingFallbackStrategy $fallback,
     ) {
@@ -84,7 +84,10 @@ final class ResolveVariantUrlHandler
 
         $url = match ($this->fallback) {
             PendingFallbackStrategy::Original => $this->originalUrlResolver->resolve($variant->source),
-            PendingFallbackStrategy::Wait => $this->urlSigner->sign($this->pendingUrlBuilder->build($variant->source, $variant->spec)),
+            PendingFallbackStrategy::Wait => $this->urlSigner->sign(
+                ($this->pendingUrlBuilder ?? throw new \LogicException('fallback_while_pending is "wait" but no PendingUrlBuilder was configured.'))
+                    ->build($variant->source, $variant->spec)
+            ),
         };
 
         return new ResolvedUrl($url, true);

@@ -123,4 +123,62 @@ class ConfigurationTest extends TestCase
         // Added custom
         $this->assertEquals(2000, $grid['layouts']['custom']['min_viewport']);
     }
+
+    public function testVariantContextDefaults(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        $this->assertNull($config['secret']);
+        $this->assertNull($config['variant_store']['storage']);
+        $this->assertSame('', $config['variant_store']['prefix']);
+        $this->assertSame('/media/pgi', $config['variant_store']['public_url_prefix']);
+        $this->assertSame(300, $config['variant_store']['fail_marker_ttl']);
+        $this->assertSame('async', $config['generation']['strategy']);
+        $this->assertSame('async_images', $config['generation']['transport']);
+        $this->assertSame('original', $config['generation']['fallback_while_pending']);
+        $this->assertNull($config['generation']['lock_store']);
+        $this->assertSame('jpeg', $config['formats']['default']);
+        $this->assertSame(85, $config['formats']['default_quality']);
+        $this->assertSame([], $config['filter_sets']);
+    }
+
+    public function testVariantContextOverrides(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'secret' => 'my-secret',
+                'variant_store' => [
+                    'storage' => 'oneup_flysystem.pgi_storage',
+                    'public_url_prefix' => 'https://cdn.example.com/pgi',
+                ],
+                'generation' => [
+                    'strategy' => 'sync',
+                    'fallback_while_pending' => 'wait',
+                ],
+                'filter_sets' => [
+                    'thumbnail_square' => [
+                        'filters' => ['thumbnail' => ['size' => [200, 200], 'mode' => 'outbound']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('my-secret', $config['secret']);
+        $this->assertSame('oneup_flysystem.pgi_storage', $config['variant_store']['storage']);
+        $this->assertSame('https://cdn.example.com/pgi', $config['variant_store']['public_url_prefix']);
+        $this->assertSame('sync', $config['generation']['strategy']);
+        $this->assertSame('wait', $config['generation']['fallback_while_pending']);
+        $this->assertArrayHasKey('thumbnail_square', $config['filter_sets']);
+    }
 }

@@ -11,14 +11,22 @@
 
 namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
 use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
+use Symfony\Component\Lock\Store\StoreFactory;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
 use Tito10047\ProgressiveImageBundle\Controller\LiipImagineController;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
@@ -38,6 +46,40 @@ use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Command\GenerateVariant;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\GenerateVariantHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantUrlHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Port\DomainEventBus;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Port\GenerationDispatcher;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Port\OriginalUrlResolver;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Port\UrlSigner;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Query\PendingFallbackStrategy;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterFactory;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterSetRegistry;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Service\PendingGenerationTracker;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Service\VariantSpecFactory;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Quality;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\Clock;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\GenerationLock;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\ImageManipulator;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\PostProcessor;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\VariantIdHasher;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Flysystem\FlysystemVariantStorage;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Intervention\InterventionImageManipulator;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Lock\SymfonyGenerationLock;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\GenerateVariantMessageHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\MessengerGenerationDispatcher;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\ResolverChainSourceReader;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\DefaultOriginalUrlResolver;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\SymfonyDomainEventBus;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\SymfonyUriSigner;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\SystemClock;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Sync\SyncGenerationDispatcher;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Terminate\TerminateGenerationDispatcher;
 
 final class ProgressiveImageExtension extends Extension implements PrependExtensionInterface
 {
@@ -119,6 +161,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $loader->load('services.php');
 
         $this->configureResolvers($configs, $container);
+        $this->configureVariantContext($configs, $container);
 
         $driver = $configs['driver'] ?? 'gd';
         $analyzerId = match ($driver) {
@@ -277,7 +320,12 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $resolver = $config['resolver'] ?? 'default';
 
         if (isset($resolvers[$resolver])) {
-            $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
+            // A resolver literally named "default" is already registered under
+            // "progressive_image.resolver.default" by the loop above — aliasing it to
+            // itself would be a circular reference.
+            if ('default' !== $resolver) {
+                $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
+            }
         } elseif (in_array($resolver, ['filesystem', 'asset_mapper'])) {
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
         } elseif (!empty($resolvers) && 'default' === $resolver) {
@@ -288,5 +336,192 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])
                 ->setArgument('$allowUnresolvable', true);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function configureVariantContext(array $configs, ContainerBuilder $container): void
+    {
+        $container->setParameter('progressive_image.variant.filter_sets', $configs['filter_sets'] ?? []);
+
+        $storageId = $configs['variant_store']['storage'] ?? null;
+        if (null === $storageId) {
+            // Not opted into the new pipeline yet — filter_sets is still validated above so
+            // a typo is caught even before variant_store.storage is configured.
+            return;
+        }
+
+        $secret = $configs['secret'] ?? '%kernel.secret%';
+        $defaultFormat = OutputFormat::from($configs['formats']['default'] ?? 'jpeg');
+        $fallback = $this->fallbackStrategy($configs);
+
+        // Domain
+        $container->register(VariantIdHasher::class)
+            ->setArgument('$secret', $secret);
+        $container->register(AspectCropCalculator::class);
+        // A Quality instance can't be a literal service argument — Symfony's debug
+        // container dumper only supports scalars/arrays/enums as literal values, not
+        // arbitrary value objects — so it's its own tiny service instead.
+        $container->register('progressive_image.variant.default_quality', Quality::class)
+            ->setArgument('$value', $configs['formats']['default_quality'] ?? 85);
+
+        // Application
+        $container->register(FilterFactory::class);
+        $container->register(FilterSetRegistry::class)
+            ->setArgument('$rawFilterSets', new Parameter('progressive_image.variant.filter_sets'))
+            ->setArgument('$filterFactory', new Reference(FilterFactory::class));
+        $container->register(VariantSpecFactory::class)
+            ->setArgument('$filterSets', new Reference(FilterSetRegistry::class))
+            ->setArgument('$filterFactory', new Reference(FilterFactory::class))
+            ->setArgument('$cropCalculator', new Reference(AspectCropCalculator::class))
+            ->setArgument('$imageConfigs', $configs['image_configs'] ?? [])
+            ->setArgument('$defaultFormat', $defaultFormat)
+            ->setArgument('$defaultQuality', new Reference('progressive_image.variant.default_quality'));
+        $container->register(PendingGenerationTracker::class)
+            ->addTag('kernel.reset', ['method' => 'reset']);
+
+        $this->configureVariantStorage($configs, $container, $storageId);
+        $this->configureVariantLock($configs, $container);
+        $this->configureVariantDispatcher($configs, $container);
+
+        $container->register(ResolverChainSourceReader::class)
+            ->setArgument('$resolver', new Reference('progressive_image.resolver.default'))
+            ->setArgument('$loader', new Reference('progressive_image.filesystem.loader'));
+        $container->setAlias(SourceReader::class, ResolverChainSourceReader::class);
+
+        $driverClass = 'imagick' === ($configs['driver'] ?? 'gd') ? ImagickDriver::class : GdDriver::class;
+        $container->register('progressive_image.variant.image_manager', ImageManager::class)
+            ->setArgument('$driver', $driverClass);
+        $container->register(InterventionImageManipulator::class)
+            ->setArgument('$imageManager', new Reference('progressive_image.variant.image_manager'))
+            ->setArgument('$sourceReader', new Reference(SourceReader::class));
+        $container->setAlias(ImageManipulator::class, InterventionImageManipulator::class);
+
+        $container->register(SymfonyUriSigner::class)
+            ->setArgument('$signer', new Reference('uri_signer'));
+        $container->setAlias(UrlSigner::class, SymfonyUriSigner::class);
+
+        $container->register(SymfonyDomainEventBus::class)
+            ->setArgument('$dispatcher', new Reference('event_dispatcher'));
+        $container->setAlias(DomainEventBus::class, SymfonyDomainEventBus::class);
+
+        $container->register(SystemClock::class);
+        $container->setAlias(Clock::class, SystemClock::class);
+
+        $container->register(DefaultOriginalUrlResolver::class);
+        $container->setAlias(OriginalUrlResolver::class, DefaultOriginalUrlResolver::class);
+
+        $container->register(GenerateVariantHandler::class)
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$lock', new Reference(GenerationLock::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$sourceReader', new Reference(SourceReader::class))
+            ->setArgument('$manipulator', new Reference(ImageManipulator::class))
+            ->setArgument('$postProcessors', new TaggedIteratorArgument('progressive_image.variant.post_processor'))
+            ->setArgument('$eventBus', new Reference(DomainEventBus::class))
+            ->setArgument('$clock', new Reference(Clock::class))
+            ->setArgument('$failMarkerTtlSeconds', $configs['variant_store']['fail_marker_ttl'] ?? 300);
+
+        if (PendingFallbackStrategy::Wait === $fallback) {
+            throw new \LogicException('progressive_image.generation.fallback_while_pending: "wait" is not implemented yet — it needs the Presentation-layer serve controller/route, which does not exist in this version. Use "original" for now.');
+        }
+
+        $container->register(ResolveVariantUrlHandler::class)
+            ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$tracker', new Reference(PendingGenerationTracker::class))
+            ->setArgument('$dispatcher', new Reference(GenerationDispatcher::class))
+            ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
+            ->setArgument('$pendingUrlBuilder', null)
+            ->setArgument('$urlSigner', new Reference(UrlSigner::class))
+            ->setArgument('$fallback', $fallback)
+            ->setPublic(true)
+            ->setShared(false);
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function fallbackStrategy(array $configs): PendingFallbackStrategy
+    {
+        return 'wait' === ($configs['generation']['fallback_while_pending'] ?? 'original')
+            ? PendingFallbackStrategy::Wait
+            : PendingFallbackStrategy::Original;
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function configureVariantStorage(array $configs, ContainerBuilder $container, string $storageId): void
+    {
+        $container->register(FlysystemVariantStorage::class)
+            ->setArgument('$filesystem', new Reference($storageId))
+            ->setArgument('$prefix', $configs['variant_store']['prefix'] ?? '')
+            ->setArgument('$publicUrlPrefix', $configs['variant_store']['public_url_prefix'] ?? '/media/pgi');
+        $container->setAlias(VariantStorage::class, FlysystemVariantStorage::class);
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function configureVariantLock(array $configs, ContainerBuilder $container): void
+    {
+        $lockStoreDsn = $configs['generation']['lock_store'] ?? null;
+
+        if (null === $lockStoreDsn) {
+            $container->register('progressive_image.variant.lock_store', FlockStore::class)
+                ->setArgument('$lockPath', '%kernel.cache_dir%/pgi-locks');
+        } else {
+            $container->register('progressive_image.variant.lock_store', StoreFactory::class)
+                ->setFactory([StoreFactory::class, 'createStore'])
+                ->setArguments([$lockStoreDsn]);
+        }
+
+        $container->register('progressive_image.variant.lock_factory', LockFactory::class)
+            ->setArgument('$store', new Reference('progressive_image.variant.lock_store'));
+
+        $container->register(SymfonyGenerationLock::class)
+            ->setArgument('$lockFactory', new Reference('progressive_image.variant.lock_factory'));
+        $container->setAlias(GenerationLock::class, SymfonyGenerationLock::class);
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function configureVariantDispatcher(array $configs, ContainerBuilder $container): void
+    {
+        $strategy = $configs['generation']['strategy'] ?? 'async';
+
+        if ('sync' === $strategy) {
+            $container->register(SyncGenerationDispatcher::class)
+                ->setArgument('$handler', new Reference(GenerateVariantHandler::class));
+            $container->setAlias(GenerationDispatcher::class, SyncGenerationDispatcher::class);
+
+            return;
+        }
+
+        if ('terminate' === $strategy) {
+            $container->register(TerminateGenerationDispatcher::class)
+                ->setArgument('$handler', new Reference(GenerateVariantHandler::class))
+                ->addTag('kernel.event_listener', ['event' => 'kernel.terminate', 'method' => 'onTerminate']);
+            $container->setAlias(GenerationDispatcher::class, TerminateGenerationDispatcher::class);
+
+            return;
+        }
+
+        if (!interface_exists(MessageBusInterface::class)) {
+            throw new \LogicException('progressive_image.generation.strategy is "async" but symfony/messenger is not installed. Run "composer require symfony/messenger", or set the strategy to "sync" or "terminate".');
+        }
+
+        $container->register(MessengerGenerationDispatcher::class)
+            ->setArgument('$bus', new Reference('message_bus'))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class));
+        $container->setAlias(GenerationDispatcher::class, MessengerGenerationDispatcher::class);
+
+        $container->register(GenerateVariantMessageHandler::class)
+            ->setArgument('$handler', new Reference(GenerateVariantHandler::class))
+            ->addTag('messenger.message_handler', ['handles' => GenerateVariant::class]);
     }
 }

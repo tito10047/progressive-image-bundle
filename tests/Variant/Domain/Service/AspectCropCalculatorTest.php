@@ -75,4 +75,33 @@ final class AspectCropCalculatorTest extends TestCase
         // -> constrain by height, cropHeight=200, cropWidth=round(200*50/100)=100.
         yield 'POI at top-left corner clamps to zero' => [0, 0, 50, 100, 200, 200, 0, 0, 100, 200];
     }
+
+    /**
+     * Guards against round() (see class docblock — its exact behaviour is intentionally
+     * ported verbatim and must not be "cleaned up") ever pushing a computed crop dimension
+     * 1px past the original's actual size due to floating-point imprecision in the ratio
+     * comparison/division, which would otherwise make CropBox::within() throw instead of
+     * clamping to the full original dimension. Sweeps a wide range of original/target
+     * dimension combinations, including several deliberately awkward (non-integer-ratio,
+     * large, prime) ones chosen to stress floating-point rounding.
+     */
+    public function testCropNeverExceedsTheOriginalDimensionsAcrossAWideDimensionSweep(): void
+    {
+        $calculator = new AspectCropCalculator();
+        $targets = [[100, 100], [16, 9], [4, 3], [21, 9], [3, 7], [1, 1]];
+        $originals = [[199, 97], [1920, 1081], [10007, 6007], [3, 1000000], [999999, 3], [4001, 4001]];
+
+        foreach ($targets as [$targetWidth, $targetHeight]) {
+            foreach ($originals as [$origWidth, $origHeight]) {
+                $box = $calculator->calculate(
+                    new PointOfInterest(intdiv($origWidth, 2), intdiv($origHeight, 2)),
+                    new Dimensions($targetWidth, $targetHeight),
+                    new Dimensions($origWidth, $origHeight)
+                );
+
+                self::assertLessThanOrEqual($origWidth, $box->size->width, "cropWidth exceeded original width for target {$targetWidth}x{$targetHeight}, original {$origWidth}x{$origHeight}");
+                self::assertLessThanOrEqual($origHeight, $box->size->height, "cropHeight exceeded original height for target {$targetWidth}x{$targetHeight}, original {$origWidth}x{$origHeight}");
+            }
+        }
+    }
 }

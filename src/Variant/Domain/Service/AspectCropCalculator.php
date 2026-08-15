@@ -39,6 +39,14 @@ final readonly class AspectCropCalculator
             $cropHeight = (int) round($original->width * $target->height / $target->width);
         }
 
+        // Ported rounding is otherwise untouched (see class docblock) — this only guards
+        // against the theoretical case where floating-point imprecision in the ratio
+        // comparison/division above lets round() push a computed dimension 1px past the
+        // original's actual size, which would otherwise make CropBox::within() below throw
+        // instead of simply clamping to the full original dimension.
+        $cropWidth = min($cropWidth, $original->width);
+        $cropHeight = min($cropHeight, $original->height);
+
         $startX = $poi->x - (int) ($cropWidth / 2);
         $startY = $poi->y - (int) ($cropHeight / 2);
 

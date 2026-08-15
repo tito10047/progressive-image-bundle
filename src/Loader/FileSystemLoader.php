@@ -26,6 +26,10 @@ final class FileSystemLoader implements LoaderInterface
             throw new PathResolutionException("Path $path does not exist or is not a file.");
         }
 
+        if (is_resource($this->file)) {
+            fclose($this->file);
+        }
+
         return $this->file = fopen($path, 'r');
     }
 

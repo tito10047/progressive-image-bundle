@@ -48,4 +48,22 @@ class FileSystemLoaderTest extends TestCase
         $this->expectException(PathResolutionException::class);
         $loader->load('/non/existent/path/image.jpg');
     }
+
+    public function testLoadClosesThePreviousHandleWhenReusedForAnotherFile(): void
+    {
+        $secondTempFile = tempnam(sys_get_temp_dir(), 'test_image_2');
+        file_put_contents($secondTempFile, 'more data');
+
+        try {
+            $loader = new FileSystemLoader();
+            $first = $loader->load($this->tempFile);
+            $this->assertIsResource($first);
+
+            $loader->load($secondTempFile);
+
+            $this->assertFalse(is_resource($first), 'The previous file handle must be closed before opening a new one.');
+        } finally {
+            unlink($secondTempFile);
+        }
+    }
 }

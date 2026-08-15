@@ -14,7 +14,7 @@ Nálezy zoradené podľa toho, ako boli objavené (adresár po adresári). Form�
 
 ## src/Loader
 
-- **FileSystemLoader.php:29** — `load()` pri každom volaní prepíše `$this->file` novým resource bez zatvorenia predchádzajúceho handlu. Pri opakovanom použití tej istej inštancie v rámci jedného procesu (napr. dlhobežiaci Messenger worker spracúvajúci viac variant-jobov, alebo `InterventionImageManipulator::watermark()` volajúce `SourceReader` druhýkrát v rámci toho istého generovania cez zdieľaný `progressive_image.filesystem.loader` singleton) sa predchádzajúci file handle nezatvára deterministicky cez `fclose()`, len implicitne cez refcounting/GC — riziko vyčerpania file descriptorov pri intenzívnom opakovanom použití.
+- [OPRAVENÉ] **FileSystemLoader.php:29** — `load()` pri každom volaní prepíše `$this->file` novým resource bez zatvorenia predchádzajúceho handlu. Pri opakovanom použití tej istej inštancie v rámci jedného procesu (napr. dlhobežiaci Messenger worker spracúvajúci viac variant-jobov, alebo `InterventionImageManipulator::watermark()` volajúce `SourceReader` druhýkrát v rámci toho istého generovania cez zdieľaný `progressive_image.filesystem.loader` singleton) sa predchádzajúci file handle nezatvára deterministicky cez `fclose()`, len implicitne cez refcounting/GC — riziko vyčerpania file descriptorov pri intenzívnom opakovanom použití. *(Fix: `load()` teraz zavolá `fclose($this->file)` na predchádzajúci handle, ak je ešte otvorený, pred otvorením nového; pokryté testom `testLoadClosesThePreviousHandleWhenReusedForAnotherFile`.)*
 
 ## src/Command
 

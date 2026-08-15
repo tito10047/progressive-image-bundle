@@ -22,17 +22,6 @@ final class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
-            ->beforeNormalization()
-                ->ifArray()
-                ->then(function ($v) {
-                    if (isset($v['resolver']) && !isset($v['resolvers'][$v['resolver']]) && !in_array($v['resolver'], ['chain', 'filesystem', 'asset_mapper'])) {
-                        // Possibility to automatically create a default resolver if necessary,
-                        // or leave for validation later.
-                    }
-
-                    return $v;
-                })
-            ->end()
             ->children()
                 ->arrayNode('resolvers')
                     ->useAttributeAsKey('name')
@@ -43,12 +32,12 @@ final class Configuration implements ConfigurationInterface
                                 ->values(['filesystem', 'asset_mapper', 'chain'])
                                 ->isRequired()
                             ->end()
-            // for filesystem resolver
+                            // for filesystem resolver
                             ->arrayNode('roots')
                                 ->scalarPrototype()->end()
                             ->end()
                             ->booleanNode('allowUnresolvable')->defaultFalse()->end()
-            // for chain resolver
+                            // for chain resolver
                             ->arrayNode('resolvers')
                                 ->scalarPrototype()->end()
                             ->end()
@@ -72,7 +61,7 @@ final class Configuration implements ConfigurationInterface
                     ->defaultValue('gd')
                 ->end()
                 ->scalarNode('loader')->defaultNull()->end()
-            ->scalarNode('resolver')->defaultValue('default')->end()
+                ->scalarNode('resolver')->defaultValue('default')->end()
                 ->scalarNode('cache')->defaultNull()->end()
                 ->scalarNode('image_cache_service')->defaultValue('cache.app')->end()
                 ->arrayNode('hash_resolution')
@@ -85,16 +74,16 @@ final class Configuration implements ConfigurationInterface
                 ->scalarNode('fallback_image')->defaultNull()->end()
                 ->booleanNode('image_cache_enabled')->defaultFalse()->end()
                 ->integerNode('ttl')->defaultNull()->end()
-            ->arrayNode('retina')
-				->addDefaultsIfNotSet()
-				->children()
-					->booleanNode('enabled')->defaultTrue()->end()
-					->arrayNode('multipliers')
-						->integerPrototype()->end()
-						->defaultValue([1, 2])
-					->end()
-				->end()
-            ->end()
+                ->arrayNode('retina')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->arrayNode('multipliers')
+                            ->integerPrototype()->end()
+                            ->defaultValue([1, 2])
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('responsive_strategy')
                     ->addDefaultsIfNotSet()
                     ->children()
@@ -170,9 +159,9 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('path_decorators')
                     ->scalarPrototype()->end()
                 ->end()
-            ->arrayNode('image_configs')
-            ->variablePrototype()->end()
-            ->end()
+                ->arrayNode('image_configs')
+                    ->variablePrototype()->end()
+                ->end()
                 ->scalarNode('secret')->defaultNull()->end()
                 ->arrayNode('variant_store')
                     ->addDefaultsIfNotSet()

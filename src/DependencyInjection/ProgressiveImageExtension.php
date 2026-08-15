@@ -186,7 +186,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->addTag('pgi.filter_modifier');
 
         $container->register(ModifierProvider::class)
-            ->setArgument('$modifiers', new \Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument('progressive_image.modifier'));
+            ->setArgument('$modifiers', new TaggedIteratorArgument('progressive_image.modifier'));
 
         $container->register(BaseFilterModifier::class)
             ->addTag('progressive_image.modifier', ['priority' => -100]);
@@ -194,25 +194,35 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $responsiveConfig = $configs['responsive_strategy'] ?? [];
         $generatorId = $responsiveConfig['generator'] ?? null;
 
-        if ($generatorId || isset($responsiveConfig['grid'])) {
-            if (!$generatorId) {
-                // Fallback URL generator when nothing else (a custom generator, or the
-                // Variant pipeline via variant_store.storage) claims the alias.
-                $container->register('progressive_image.url_generator.default', DefaultResponsiveImageUrlGenerator::class)
-                    ->setPublic(true);
-                $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, 'progressive_image.url_generator.default')->setPublic(true);
-            }
-
-            $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
-                ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
-                ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
-                ->setArgument('$retinaMultipliers', $retinaMultipliers)
-                ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
-                ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
-                ->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
-                ->setPublic(true)
-            ;
+        // responsive_strategy.grid always has a value here: both `responsive_strategy` and
+        // its `grid` child use addDefaultsIfNotSet() in Configuration, so this array key is
+        // always present after processConfiguration() — there is no "unconfigured" state to
+        // gate on. ResponsiveAttributeGenerator (and Image's use of it, below) is therefore
+        // always registered.
+        //
+        // ResponsiveImageUrlGeneratorInterface is public and always aliased to whichever
+        // generator is actually in effect (explicit generator > Variant pipeline > default),
+        // so any code fetching the interface directly from the container — not just
+        // ResponsiveAttributeGenerator's own constructor argument below — sees the same
+        // generator. The Variant-pipeline-wins branch further down may still overwrite this
+        // alias when no explicit generator is configured.
+        if ($generatorId) {
+            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, $generatorId)->setPublic(true);
+        } else {
+            $container->register('progressive_image.url_generator.default', DefaultResponsiveImageUrlGenerator::class)
+                ->setPublic(true);
+            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, 'progressive_image.url_generator.default')->setPublic(true);
         }
+
+        $container->register(ResponsiveAttributeGenerator::class, ResponsiveAttributeGenerator::class)
+            ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
+            ->setArgument('$ratioConfig', $responsiveConfig['ratios'] ?? [])
+            ->setArgument('$retinaMultipliers', $retinaMultipliers)
+            ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
+            ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
+            ->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
+            ->setPublic(true)
+        ;
 
         $container->register(GenerateCustomCssCommand::class)
             ->setArgument('$gridConfig', $responsiveConfig['grid'] ?? [])
@@ -222,7 +232,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(Image::class, Image::class)
             ->setArgument('$analyzer', new Reference(MetadataReader::class))
             ->setArgument('$pathDecorator', array_map(fn ($id) => new Reference($id), $configs['path_decorators'] ?? []))
-            ->setArgument('$responsiveAttributeGenerator', $generatorId || isset($responsiveConfig['grid']) ? new Reference(ResponsiveAttributeGenerator::class) : null)
+            ->setArgument('$responsiveAttributeGenerator', new Reference(ResponsiveAttributeGenerator::class))
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
             ->setArgument('$defaultRetina', $retina)
@@ -231,9 +241,11 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->addTag('twig.component')
             ->setPublic(true);
 
-        // The Variant pipeline, when configured, always wins over the default/custom URL
-        // generator — opting into variant_store.storage is an explicit signal to use it.
-        if (null !== ($configs['variant_store']['storage'] ?? null)) {
+        // The Variant pipeline, when configured, wins over the default URL generator — but
+        // an explicit responsive_strategy.generator (a user opting into their own
+        // implementation) must still win over the Variant pipeline, matching this option's
+        // own ->info() description ("Overrides the default/Variant-pipeline generator").
+        if (!$generatorId && null !== ($configs['variant_store']['storage'] ?? null)) {
             $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, VariantResponsiveImageUrlGenerator::class)->setPublic(true);
         }
     }
@@ -275,9 +287,19 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             }
         } elseif (in_array($resolver, ['filesystem', 'asset_mapper'])) {
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$resolver);
-        } elseif (!empty($resolvers) && 'default' === $resolver) {
-            $firstResolver = array_key_first($resolvers);
-            $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$firstResolver);
+        } elseif (1 === count($resolvers) && 'default' === $resolver) {
+            // Exactly one resolver is configured and none of it is literally named
+            // "default": there's no ambiguity in picking it. With two or more resolvers
+            // and no "default" among them, silently picking array_key_first() would make
+            // the effective resolver depend on YAML key order — fail fast instead below.
+            $onlyResolver = array_key_first($resolvers);
+            $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$onlyResolver);
+        } elseif (count($resolvers) > 1 && 'default' === $resolver) {
+            throw new \LogicException(sprintf(
+                'Multiple "resolvers" are configured (%s) but none is named "default" and no explicit "resolver" option was set. '
+                .'Either name one of them "default", or set progressive_image.resolver to the one that should be used.',
+                implode(', ', array_map(static fn ($name) => sprintf('"%s"', $name), array_keys($resolvers)))
+            ));
         } else {
             $container->register('progressive_image.resolver.default', FileSystemResolver::class)
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])

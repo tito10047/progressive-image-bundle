@@ -12,6 +12,7 @@
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImageAnalyzerInterface;
@@ -46,7 +47,7 @@ class MetadataReaderTest extends TestCase
 
         $this->cache->expects($this->once())
             ->method('get')
-            ->with(md5($src))
+            ->with('pgi_meta_'.md5($src))
             ->willReturn($metadata);
 
         $reader = new MetadataReader(
@@ -131,6 +132,84 @@ class MetadataReaderTest extends TestCase
             3600,
             null
         );
+
+        $this->expectException(PathResolutionException::class);
+        $reader->getMetadata($src);
+    }
+
+    public function testFallbackMetadataIsComputedOnceAndSharedAcrossDifferentBrokenSources(): void
+    {
+        $fallbackPath = 'fallback.jpg';
+        $resolvedFallbackPath = '/absolute/path/fallback.jpg';
+        $metadata = new ImageMetadata('hash', 1, 1);
+
+        $this->pathResolver->method('resolve')->willReturnCallback(
+            function (string $path) use ($fallbackPath, $resolvedFallbackPath) {
+                if ($fallbackPath === $path) {
+                    return $resolvedFallbackPath;
+                }
+
+                throw new PathResolutionException();
+            }
+        );
+
+        // The expensive analysis of the shared fallback image must only run once, even
+        // though it's reached via two different unresolvable original sources.
+        $this->analyzer->expects($this->once())
+            ->method('analyze')
+            ->with($this->loader, $resolvedFallbackPath)
+            ->willReturn($metadata);
+
+        $reader = new MetadataReader(
+            $this->dispatcher,
+            new ArrayAdapter(),
+            $this->analyzer,
+            $this->loader,
+            $this->pathResolver,
+            3600,
+            $fallbackPath
+        );
+
+        $result1 = $reader->getMetadata('broken-one.jpg');
+        $result2 = $reader->getMetadata('broken-two.jpg');
+
+        // ArrayAdapter deep-clones cached objects on read, so the two results are equal
+        // (same underlying analysis) but not the same instance.
+        $this->assertEquals($metadata, $result1);
+        $this->assertEquals($metadata, $result2);
+    }
+
+    public function testUnresolvableSourceWithoutFallbackIsNegativelyCachedAndDoesNotRetryResolution(): void
+    {
+        $src = 'permanently-missing.jpg';
+
+        // Resolution (and the resulting event dispatch) must only happen once: the second
+        // request for the same permanently-broken source should be served from a cached
+        // negative result instead of retrying resolve().
+        $this->pathResolver->expects($this->once())
+            ->method('resolve')
+            ->with($src)
+            ->willThrowException(new PathResolutionException());
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ImageNotFoundEvent::class), ImageNotFoundEvent::NAME);
+
+        $reader = new MetadataReader(
+            $this->dispatcher,
+            new ArrayAdapter(),
+            $this->analyzer,
+            $this->loader,
+            $this->pathResolver,
+            3600,
+            null
+        );
+
+        try {
+            $reader->getMetadata($src);
+            $this->fail('Expected a PathResolutionException.');
+        } catch (PathResolutionException) {
+        }
 
         $this->expectException(PathResolutionException::class);
         $reader->getMetadata($src);

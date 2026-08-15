@@ -26,11 +26,15 @@ class PGITestCase extends KernelTestCase
         return new ProgressiveImageTestingKernel($options);
     }
 
-    protected static function bootKernel(array $options = []): KernelInterface
+    protected static function bootKernel(array $options = [], ?\Closure $customConfiguration = null): KernelInterface
     {
         static::ensureKernelShutdown();
 
+        /** @var ProgressiveImageTestingKernel $kernel */
         $kernel = static::createKernel($options);
+        if (null !== $customConfiguration) {
+            $kernel->setCustomConfiguration($customConfiguration);
+        }
         $kernel->boot();
         static::$kernel = $kernel;
         static::$booted = true;

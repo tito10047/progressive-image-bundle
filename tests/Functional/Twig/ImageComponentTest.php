@@ -17,7 +17,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -132,22 +131,11 @@ class ImageComponentTest extends PGITestCase
 
     public function testPreloadHeader(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->expects($this->once())
-            ->method('getBrowserPath')
-            ->with('/test.png', 'preview_big')
-            ->willReturn('http://localhost/media/cache/resolve/preview_big/test.png');
-
         $this->_bootKernel([
             'progressive_image' => [
-                'path_decorators' => ['progressive_image.decorator.liip_imagine'],
+                'path_decorators' => ['test.fake_filter_path_decorator'],
             ],
         ]);
-
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
 
         $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -180,15 +168,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithResponsiveStrategy(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function ($path, $filter) {
-                return 'http://localhost/media/cache/resolve/'.$filter.$path;
-            });
-
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -208,8 +187,6 @@ class ImageComponentTest extends PGITestCase
                 ],
             ],
         ]);
-
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
 
         $html = $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -236,9 +213,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithMultipleBreakpoints(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -273,9 +247,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithLocalRetinaOverride(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -312,9 +283,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithRetina(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -353,9 +321,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithGlobalRetinaDefault(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -390,9 +355,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithGlobalRetinaDisabled(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -428,9 +390,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithOmittedBreakpoint(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -464,18 +423,8 @@ class ImageComponentTest extends PGITestCase
 
     public function testPreloadHeaderWithSrcset(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function ($path, $filter) {
-                return 'http://localhost/media/cache/resolve/'.$filter.$path;
-            });
-
         $this->_bootKernel([
             'progressive_image' => [
-                'path_decorators' => ['progressive_image.decorator.liip_imagine'],
                 'responsive_strategy' => [
                     'grid' => [
                         'columns' => 12,
@@ -494,8 +443,6 @@ class ImageComponentTest extends PGITestCase
             ],
         ]);
 
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
-
         $this->renderTwigComponent(
             name: 'pgi:Image',
             data: [
@@ -505,13 +452,6 @@ class ImageComponentTest extends PGITestCase
                 'priority' => 'high',
             ]
         );
-
-        $preloadCollector = self::getContainer()->get(PreloadCollector::class);
-        $urls = $preloadCollector->getUrls();
-
-        $expectedUrl = 'http://localhost/test.png';
-        // LiipImagineDecorator might be used, let's check what URL we got
-        $actualUrl = array_key_first($urls);
 
         $eventListener = self::getContainer()->get(KernelResponseEventListener::class);
         $request = new Request();

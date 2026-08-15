@@ -20,7 +20,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveVariantUrl
 /**
  * Encodes the original query as explicit, readable route parameters — not a serialized
  * blob — so ImageVariantController can rebuild the exact same VariantSpec via
- * VariantSpecFactory::create(), the same way this bundle's old Liip-based controller
+ * VariantSpecFactory::create(), the same way this bundle's old runtime-filter controller
  * rebuilt its filter config from named query parameters.
  */
 final readonly class QueryPendingUrlBuilder implements PendingUrlBuilder

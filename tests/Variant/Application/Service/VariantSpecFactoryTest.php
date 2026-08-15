@@ -77,7 +77,7 @@ final class VariantSpecFactoryTest extends TestCase
     }
 
     /**
-     * Pixel-parity golden case ported from LiipImagineRuntimeConfigGeneratorTest::testGenerateWithPointInterest.
+     * Pixel-parity golden case ported from the old runtime-filter generator's test suite.
      * POI (500,500) on a 1000x1000 image, target 200x100 → crop (0,250) size (1000,500), then thumbnail inset.
      */
     public function testCreateWithPointInterestProducesCropThenInsetThumbnail(): void
@@ -98,7 +98,7 @@ final class VariantSpecFactoryTest extends TestCase
     }
 
     /**
-     * Ported from LiipImagineRuntimeConfigGeneratorTest::testGenerateWithPointInterestAtEdges.
+     * Ported from the old runtime-filter generator's edge-clamping test.
      */
     public function testCreateWithPointInterestAtEdgesClampsCropStart(): void
     {

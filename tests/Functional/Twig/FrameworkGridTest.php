@@ -11,7 +11,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
@@ -25,9 +24,6 @@ class FrameworkGridTest extends PGITestCase
 
     protected function setUp(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->fs = new Filesystem();
         $this->tempDir = sys_get_temp_dir().'/progressive_image_test_framework_'.uniqid();
         $this->fs->mkdir($this->tempDir);

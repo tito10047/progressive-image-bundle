@@ -11,7 +11,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 
@@ -19,12 +18,10 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase
 {
     public function testRatioFromConfiguration(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         self::bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
+                    'generator' => 'test.fake_dimensions_url_generator',
                     'grid' => [
                         'framework' => 'bootstrap',
                     ],
@@ -66,12 +63,10 @@ class ResponsiveAttributeGeneratorTest extends PGITestCase
 
     public function testNewRatioFormats(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         self::bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
+                    'generator' => 'test.fake_dimensions_url_generator',
                     'grid' => [
                         'framework' => 'bootstrap',
                     ],

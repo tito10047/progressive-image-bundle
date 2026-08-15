@@ -8,19 +8,15 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Tito10047\ProgressiveImageBundle\Analyzer\GdImageAnalyzer;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImagickAnalyzer;
-use Tito10047\ProgressiveImageBundle\Controller\LiipImagineController;
-use Tito10047\ProgressiveImageBundle\Decorators\LiipImagineDecorator;
 use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
 use Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 
@@ -66,13 +62,6 @@ return static function (ContainerConfigurator $container): void {
         ->public()
         ->lazy()
         ->alias(UriSigner::class, 'uri_signer');
-
-    if (class_exists(LiipImagineBundle::class)) {
-        $services->set('progressive_image.decorator.liip_imagine', LiipImagineDecorator::class)
-            ->arg('$cache', service('liip_imagine.cache.manager'))
-            ->arg('$configuration', service('liip_imagine.filter.configuration'))
-        ;
-    }
 
     $services->set(PreloadCollector::class)
         ->arg('$requestStack', service('request_stack'))

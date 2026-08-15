@@ -20,16 +20,14 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\PointOfInterest;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator;
 
 /**
- * Pixel-parity dataset ported from the pre-existing Liip integration tests
- * (tests/Integration/Controller/LiipImaginePointInterestTest.php and
- * LiipImagineRuntimeConfigGeneratorTest.php) — same inputs, same expected
- * crop box, so the visual output of the new pipeline is byte-identical
- * to the old one for these scenarios.
+ * Pixel-parity dataset ported from the pre-existing runtime-filter integration tests —
+ * same inputs, same expected crop box, so the visual output of the new pipeline is
+ * byte-identical to the old one for these scenarios.
  */
 final class AspectCropCalculatorTest extends TestCase
 {
     #[DataProvider('cropProvider')]
-    public function testCalculatesSameCropBoxAsLegacyLiipImplementation(
+    public function testCalculatesSameCropBoxAsLegacyImplementation(
         int $poiX,
         int $poiY,
         int $targetWidth,

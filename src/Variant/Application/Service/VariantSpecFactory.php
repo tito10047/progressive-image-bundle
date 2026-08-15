@@ -25,8 +25,8 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator;
 
 /**
- * Replaces LiipImagineRuntimeConfigGenerator. Merge order is unchanged from the legacy
- * generator — filter set, then imageConfigs, then per-call context, each overriding the
+ * Replaces the bundle's old runtime filter-config generator. Merge order is unchanged from
+ * that legacy generator — filter set, then imageConfigs, then per-call context, each overriding the
  * previous recursively — but the merged raw arrays are turned into a typed FilterChain
  * instead of staying a flat array, and the sizing crop/thumbnail is always the chain's
  * own construction, never a leftover from the merge (see the crop-before-thumbnail note

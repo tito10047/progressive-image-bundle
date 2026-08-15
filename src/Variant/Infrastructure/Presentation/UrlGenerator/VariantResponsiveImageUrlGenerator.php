@@ -27,13 +27,12 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
  * Implements the existing ResponsiveImageUrlGeneratorInterface — the anti-corruption seam
  * from the DDD plan's context map. The Rendering context (Twig component,
  * ResponsiveAttributeGenerator) is completely unaware this now runs the Variant pipeline
- * instead of Liip.
+ * instead of the old runtime-filter pipeline.
  *
- * The interface doesn't carry original dimensions, so — unlike the old
- * LiipImagineResponsiveImageUrlGenerator, which silently never ran its POI crop math
- * because it always passed null for them — this reads them via MetadataReader, and only
- * when a pointInterest is actually given (an extra cache lookup would otherwise run on
- * every single image).
+ * The interface doesn't carry original dimensions, so — unlike the previous generator,
+ * which silently never ran its POI crop math because it always passed null for them —
+ * this reads them via MetadataReader, and only when a pointInterest is actually given
+ * (an extra cache lookup would otherwise run on every single image).
  *
  * Format negotiation (formats.negotiate in the bundle config) also lives here rather than
  * in VariantSpecFactory: it just sets context['format']/context['quality'], the same

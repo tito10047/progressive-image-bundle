@@ -30,7 +30,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
  * Translates the raw, YAML-shaped filter config (name => options, as authored in
  * filter_sets / imageConfigs / Twig context) into typed Filter value objects.
  * Unknown filter names or malformed options fail loudly (InvalidFilterDefinition)
- * instead of being silently ignored, as the legacy Liip-backed generator did.
+ * instead of being silently ignored, as the legacy generator did.
  */
 final readonly class FilterFactory
 {

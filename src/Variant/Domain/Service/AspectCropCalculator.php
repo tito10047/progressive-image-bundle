@@ -22,10 +22,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\PointOfInterest;
  * centres it on the POI pixel, and returns the resulting CropBox. The caller is expected
  * to follow this crop with a Thumbnail::inset() to scale down to the exact target size.
  *
- * Ported verbatim (including integer rounding behaviour) from the pre-DDD
- * LiipImagineRuntimeConfigGenerator::calculateAspectCrop() to preserve pixel parity —
- * do not "clean up" the rounding without re-running the AspectCropCalculatorTest golden
- * dataset against the old Liip pipeline output.
+ * Ported verbatim (including integer rounding behaviour) from the pre-DDD runtime
+ * config generator's calculateAspectCrop() to preserve pixel parity — do not "clean up"
+ * the rounding without re-running the AspectCropCalculatorTest golden dataset against
+ * the old pipeline's output.
  */
 final readonly class AspectCropCalculator
 {

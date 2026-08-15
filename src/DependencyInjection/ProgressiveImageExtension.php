@@ -14,7 +14,6 @@ namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
-use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -28,7 +27,6 @@ use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Lock\Store\StoreFactory;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
-use Tito10047\ProgressiveImageBundle\Controller\LiipImagineController;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
 use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
@@ -37,14 +35,12 @@ use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\ChainResolver;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGenerator;
-use Tito10047\ProgressiveImageBundle\Service\LiipImagineRuntimeConfigGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use Tito10047\ProgressiveImageBundle\Twig\TransparentCacheExtension;
-use Tito10047\ProgressiveImageBundle\UrlGenerator\LiipImagineResponsiveImageUrlGenerator;
+use Tito10047\ProgressiveImageBundle\UrlGenerator\DefaultResponsiveImageUrlGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Command\GenerateVariant;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\GenerateVariantHandler;
@@ -114,48 +110,6 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ],
             ],
         ]);
-
-        $configs = $builder->getExtensionConfig($this->getAlias());
-        $configs = $this->processConfiguration(new Configuration(), $configs);
-
-        if (isset($configs['responsive_strategy']['breakpoints'])) {
-            $breakpoints = $configs['responsive_strategy']['breakpoints'];
-            $liipConfigs = $builder->getExtensionConfig('liip_imagine');
-
-            $newFilterSets = [];
-            foreach ($liipConfigs as $liipConfig) {
-                if (isset($liipConfig['filter_sets'])) {
-                    foreach ($liipConfig['filter_sets'] as $setName => $setConfig) {
-                        foreach ($breakpoints as $breakpointName => $width) {
-                            $newSetName = $setName.'_'.$breakpointName;
-                            if (isset($newFilterSets[$newSetName])) {
-                                continue;
-                            }
-                            $newSetConfig = $setConfig;
-
-                            if (isset($newSetConfig['filters']['thumbnail']['size'])) {
-                                [$origWidth, $origHeight] = $newSetConfig['filters']['thumbnail']['size'];
-                                if ($origWidth > 0 && $origHeight > 0) {
-                                    $ratio = $origHeight / $origWidth;
-                                    $newHeight = (int) round($width * $ratio);
-                                    $newSetConfig['filters']['thumbnail']['size'] = [$width, $newHeight];
-                                } else {
-                                    $newSetConfig['filters']['thumbnail']['size'] = [$width, $width];
-                                }
-                            }
-
-                            $newFilterSets[$newSetName] = $newSetConfig;
-                        }
-                    }
-                }
-            }
-
-            if (!empty($newFilterSets)) {
-                $builder->prependExtensionConfig('liip_imagine', [
-                    'filter_sets' => $newFilterSets,
-                ]);
-            }
-        }
     }
 
     public function load(array $configs, ContainerBuilder $container): void
@@ -237,41 +191,14 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(BaseFilterModifier::class)
             ->addTag('progressive_image.modifier', ['priority' => -100]);
 
-        if (class_exists(LiipImagineBundle::class)) {
-            $container->register(LiipImagineRuntimeConfigGenerator::class)
-                ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
-                ->setArgument('$imageConfigs', new Parameter('progressive_image.image_configs'));
-
-            $container->register(LiipImagineResponsiveImageUrlGenerator::class)
-                ->setArgument('$cacheManager', new Reference('liip_imagine.cache.manager'))
-                ->setArgument('$router', new Reference('router'))
-                ->setArgument('$uriSigner', new Reference('uri_signer'))
-                ->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
-                ->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
-                ->setArgument('$requestStack', new Reference('request_stack'))
-                ->setArgument('$webpGenerate', new Parameter('liip_imagine.webp.generate'))
-                ->setPublic(true);
-			$container->register(LiipImagineController::class)
-				->setArgument('$signer', new Reference('uri_signer'))
-				->setArgument('$filterService', new Reference('liip_imagine.service.filter'))
-				->setArgument('$dataManager', new Reference('liip_imagine.data.manager'))
-				->setArgument('$filterConfiguration', new Reference('liip_imagine.filter.configuration'))
-				->setArgument('$controllerConfig', new Reference('liip_imagine.controller.config'))
-				->setArgument('$runtimeConfigGenerator', new Reference(LiipImagineRuntimeConfigGenerator::class))
-				->setArgument('$metadataReader', new Reference(MetadataReader::class))
-				->setArgument('$cache', $imageCacheServiceReference)
-				->setPublic(true);
-
-            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, LiipImagineResponsiveImageUrlGenerator::class)->setPublic(true);
-            $container->setAlias(LiipImagineRuntimeConfigGeneratorInterface::class, LiipImagineRuntimeConfigGenerator::class)->setPublic(true);
-        }
         $responsiveConfig = $configs['responsive_strategy'] ?? [];
         $generatorId = $responsiveConfig['generator'] ?? null;
 
-        if ($generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid'])) {
-            if (!$generatorId && !class_exists(LiipImagineBundle::class)) {
-                // We need some default URL generator if LiipImagine is not present but we want to use ResponsiveAttributeGenerator
-                $container->register('progressive_image.url_generator.default', \Tito10047\ProgressiveImageBundle\UrlGenerator\DefaultResponsiveImageUrlGenerator::class)
+        if ($generatorId || isset($responsiveConfig['grid'])) {
+            if (!$generatorId) {
+                // Fallback URL generator when nothing else (a custom generator, or the
+                // Variant pipeline via variant_store.storage) claims the alias.
+                $container->register('progressive_image.url_generator.default', DefaultResponsiveImageUrlGenerator::class)
                     ->setPublic(true);
                 $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, 'progressive_image.url_generator.default')->setPublic(true);
             }
@@ -295,7 +222,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(Image::class, Image::class)
             ->setArgument('$analyzer', new Reference(MetadataReader::class))
             ->setArgument('$pathDecorator', array_map(fn ($id) => new Reference($id), $configs['path_decorators'] ?? []))
-            ->setArgument('$responsiveAttributeGenerator', $generatorId || class_exists(LiipImagineBundle::class) || isset($responsiveConfig['grid']) ? new Reference(ResponsiveAttributeGenerator::class) : null)
+            ->setArgument('$responsiveAttributeGenerator', $generatorId || isset($responsiveConfig['grid']) ? new Reference(ResponsiveAttributeGenerator::class) : null)
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setArgument('$framework', $configs['responsive_strategy']['grid']['framework'] ?? 'custom')
             ->setArgument('$defaultRetina', $retina)
@@ -303,8 +230,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->addTag('twig.component')
             ->setPublic(true);
 
-        // The Variant pipeline, when configured, always wins over Liip/default URL
-        // generation — opting into variant_store.storage is an explicit signal to use it.
+        // The Variant pipeline, when configured, always wins over the default/custom URL
+        // generator — opting into variant_store.storage is an explicit signal to use it.
         if (null !== ($configs['variant_store']['storage'] ?? null)) {
             $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, VariantResponsiveImageUrlGenerator::class)->setPublic(true);
         }

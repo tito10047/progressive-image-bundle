@@ -31,12 +31,18 @@ class GenerateCustomCssCommand extends Command
      *         min_viewport: int,
      *         max_container: int|null
      *     }>,
-     *     columns: int
-     * } $gridConfig
+     *     columns?: int,
+     *     gutter?: int
+     * } $gridConfig The full responsive_strategy.grid config array. `columns`/`gutter`
+     *               are accepted here because they are part of that shared config node,
+     *               but this command doesn't need them: it only emits `var()` fallback
+     *               chains, not pixel widths. `columns` is consumed by
+     *               ResponsiveAttributeGenerator, which does the per-breakpoint pixel math.
      */
     public function __construct(
         private readonly array $gridConfig,
         private readonly string $projectDir,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
         parent::__construct();
     }
@@ -52,20 +58,25 @@ class GenerateCustomCssCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $path = $input->getArgument('path');
 
+        if (str_contains($path, '..')) {
+            $io->error(sprintf('The path "%s" must not contain ".." segments.', $path));
+
+            return Command::FAILURE;
+        }
+
         if (!str_starts_with($path, '/')) {
             $path = $this->projectDir.'/'.$path;
         }
 
-        $filesystem = new Filesystem();
-        if (!$filesystem->exists($path)) {
-            $filesystem->mkdir($path);
+        if (!$this->filesystem->exists($path)) {
+            $this->filesystem->mkdir($path);
         }
 
         $filePath = $path.'/progressive-image-custom.css';
 
         $cssContent = $this->generateCssContent();
 
-        $filesystem->dumpFile($filePath, $cssContent);
+        $this->filesystem->dumpFile($filePath, $cssContent);
 
         $io->success(sprintf('CSS file generated at %s', $filePath));
 
@@ -86,7 +97,7 @@ class GenerateCustomCssCommand extends Command
         });
 
         $content = "/* Progressive Image Container - Custom Breakpoints */\n";
-        $content = "@layer vendor {\n";
+        $content .= "@layer vendor {\n";
         $content .= "\t.progressive-image-container {\n";
         $content .= "\t\tdisplay: block;\n";
 
@@ -120,6 +131,9 @@ class GenerateCustomCssCommand extends Command
                 $content .= "\t\t.progressive-image-container {\n";
                 $content .= sprintf("\t\t\twidth: %s;\n", $this->generateVariableFallbackForBreakpoint($name, $layouts, 'width'));
                 $content .= sprintf("\t\t\taspect-ratio: %s;\n", $this->generateVariableFallbackForBreakpoint($name, $layouts, 'aspect'));
+                if (null !== $layout['max_container']) {
+                    $content .= sprintf("\t\t\tmax-width: %dpx;\n", $layout['max_container']);
+                }
                 $content .= "\t\t}\n";
                 $content .= "\t}\n\n";
 
@@ -140,6 +154,9 @@ class GenerateCustomCssCommand extends Command
             $content .= "\t\t\twidth: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'width').";\n";
             // For aspect
             $content .= "\t\t\taspect-ratio: ".$this->generateVariableFallbackForBreakpoint($name, $layouts, 'aspect').";\n";
+            if (null !== $layout['max_container']) {
+                $content .= sprintf("\t\t\tmax-width: %dpx;\n", $layout['max_container']);
+            }
 
             $content .= "\t\t}\n";
             $content .= "\t}\n\n";
@@ -153,23 +170,7 @@ class GenerateCustomCssCommand extends Command
 
     private function generateVariableFallback(array $sortedLayouts, string $type, bool $includeGeneric = true): string
     {
-        $variables = [];
-        foreach ($sortedLayouts as $name => $layout) {
-            $variables[] = sprintf('var(--img-%s-%s', $type, $name);
-        }
-
-        if ($includeGeneric) {
-            $variables[] = sprintf('var(--img-%s', $type);
-        }
-
-        $result = implode(",\n\t\t\t", $variables);
-        if (count($variables) > 1) {
-            $result .= str_repeat(')', count($variables));
-        } else {
-            $result .= ')';
-        }
-
-        return $result;
+        return $this->buildVariableFallbackChain(array_keys($sortedLayouts), $type, $includeGeneric, ",\n\t\t\t");
     }
 
     private function generateVariableFallbackForBreakpoint(string $currentBreakpoint, array $allLayouts, string $type): string
@@ -184,14 +185,27 @@ class GenerateCustomCssCommand extends Command
             return $filteredLayouts[$a]['min_viewport'] > $filteredLayouts[$b]['min_viewport'] ? -1 : 1;
         });
 
+        return $this->buildVariableFallbackChain(array_keys($filteredLayouts), $type, true, ', ');
+    }
+
+    /**
+     * Shared by generateVariableFallback() and generateVariableFallbackForBreakpoint()
+     * so a future formatting fix only has to be made in one place.
+     *
+     * @param array<int, string> $layoutNames
+     */
+    private function buildVariableFallbackChain(array $layoutNames, string $type, bool $includeGeneric, string $separator): string
+    {
         $variables = [];
-        foreach ($filteredLayouts as $name => $layout) {
+        foreach ($layoutNames as $name) {
             $variables[] = sprintf('var(--img-%s-%s', $type, $name);
         }
 
-        $variables[] = sprintf('var(--img-%s', $type);
+        if ($includeGeneric) {
+            $variables[] = sprintf('var(--img-%s', $type);
+        }
 
-        $result = implode(', ', $variables);
+        $result = implode($separator, $variables);
         if (count($variables) > 1) {
             $result .= str_repeat(')', count($variables));
         } else {

@@ -40,7 +40,10 @@ final class WatermarkTest extends TestCase
         $watermark = new Watermark(new SourcePath('logos/brand.png'), WatermarkPosition::Center, 40);
 
         self::assertSame(40, $watermark->opacity);
-        self::assertSame('center', $watermark->canonical()['watermark']['position']);
+        self::assertSame(
+            ['watermark' => ['image' => 'logos/brand.png', 'position' => 'center', 'opacity' => 40]],
+            $watermark->canonical()
+        );
     }
 
     #[DataProvider('invalidOpacityProvider')]

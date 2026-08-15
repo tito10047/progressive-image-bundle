@@ -485,12 +485,15 @@ class ImageComponentTest extends PGITestCase
         $this->assertStringContainsString('as="image"', $linkHeader);
         $this->assertStringContainsString('imagesrcset="', $linkHeader);
         $this->assertStringContainsString('1920w', $linkHeader);
-        $this->assertStringContainsString('imagesizes="100vw"', $linkHeader);
+        // A single preload hint now carries the combined sizes across ALL breakpoints
+        // (mobile's plain "100vw" and desktop's media-conditioned fragment), not just one
+        // breakpoint's fragment from whichever assignment happened to be processed.
+        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px, 100vw"', $linkHeader);
 
         $content = $response->getContent();
         $this->assertStringContainsString('<link rel="preload"', $content);
         $this->assertStringContainsString('imagesrcset="', $content);
-        $this->assertStringContainsString('imagesizes="100vw"', $content);
+        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px, 100vw"', $content);
     }
 
     public function testRenderFrameworkAttribute(): void

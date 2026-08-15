@@ -275,6 +275,141 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $this->assertEqualsWithDelta(2.142857, (float) $result3->getVariables()['--img-aspect'], 0.00001);
     }
 
+    public function testPreloadIsAddedOnceWithCombinedSrcsetAndSizesAcrossAllBreakpoints(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('xs', 12, 'square'),
+            new BreakpointAssignment('md', 6, 'landscape'),
+        ];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturnMap([
+            [$path, 360, 240, null, [], 'url-360'],
+            [$path, 1920, 1920, null, [], 'url-1920'],
+        ]);
+
+        $this->preloadCollector->expects($this->once())
+            ->method('add')
+            ->with(
+                $this->logicalOr('url-360', 'url-1920'),
+                'image',
+                'high',
+                $this->logicalAnd(
+                    $this->stringContains('url-360 360w'),
+                    $this->stringContains('url-1920 1920w'),
+                ),
+                $this->logicalAnd(
+                    $this->stringContains('(min-width: 768px) 360px'),
+                    $this->stringContains('100vw'),
+                ),
+            );
+
+        $this->generator->generate($path, $assignments, $originalWidth, true);
+    }
+
+    public function testPreloadIsNotAddedWhenDisabled(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [new BreakpointAssignment('md', 6, 'landscape')];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-360');
+
+        $this->preloadCollector->expects($this->never())->method('add');
+
+        $this->generator->generate($path, $assignments, $originalWidth, false);
+    }
+
+    public function testImgAspectVariableIsNotSetWhenRatioCannotBeResolved(): void
+    {
+        $path = 'test.jpg';
+        // 'default' breakpoint (min_viewport 0), no explicit ratio and no original
+        // height passed in, so resolveRatio() and $originalRatio are both null.
+        $assignments = [new BreakpointAssignment('default', 12, null)];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url');
+
+        $result = $this->generator->generate($path, $assignments, $originalWidth, false);
+
+        $this->assertArrayNotHasKey('--img-aspect', $result->getVariables());
+    }
+
+    public function testModifiersAreOnlyAppliedOncePerBreakpointNotPerRetinaMultiplier(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
+        ];
+        $originalWidth = 2000;
+
+        $modifier = $this->createMock(ModifierInterface::class);
+        $modifier->method('supports')->with('circle')->willReturn(true);
+        $modifier->expects($this->once())->method('modify')->with('circle', [])->willReturn(['circle' => true]);
+
+        $modifierProvider = new ModifierProvider([$modifier]);
+        // retina with 2 multipliers: without the fix, modify() would run once per multiplier.
+        $generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator, $modifierProvider);
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-circle');
+
+        $generator->generate($path, $assignments, $originalWidth, false, null, [], true);
+    }
+
+    public function testFluidMaxWidthIsConfigurableInsteadOfHardcoded1920(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [new BreakpointAssignment('default', 12, null)];
+        $originalWidth = 3000;
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            null,
+            null,
+            2560,
+        );
+
+        $this->urlGenerator->expects($this->once())
+            ->method('generateUrl')
+            ->with($path, 2560, null, null, [])
+            ->willReturn('url-2560');
+
+        $generator->generate($path, $assignments, $originalWidth, false);
+    }
+
+    public function testWarnsWhenNoBreakpointProducesADefaultSource(): void
+    {
+        $path = 'test.jpg';
+        // Only a non-zero min_viewport breakpoint — nothing maps to the <img> fallback
+        // source (media === null).
+        $assignments = [new BreakpointAssignment('md', 6, 'landscape')];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-360');
+
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            null,
+            $logger,
+        );
+
+        $result = $generator->generate($path, $assignments, $originalWidth, false);
+
+        $this->assertSame('', $result->getDefaultSource()->getSrcset());
+    }
+
     public function testGenerateWithModifiers(): void
     {
         $path = 'test.jpg';

@@ -221,6 +221,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$preloadCollector', new Reference(PreloadCollector::class))
             ->setArgument('$urlGenerator', $generatorId ? new Reference($generatorId) : new Reference(ResponsiveImageUrlGeneratorInterface::class))
             ->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
+            ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
+            ->setArgument('$fluidMaxWidth', $responsiveConfig['fluid_max_width'] ?? 1920)
             ->setPublic(true)
         ;
 

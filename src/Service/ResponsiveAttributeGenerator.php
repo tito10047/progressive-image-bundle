@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Service;
 
+use Psr\Log\LoggerInterface;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\DTO\ResponsiveAttributes;
 use Tito10047\ProgressiveImageBundle\DTO\ResponsiveAttributesInterface;
@@ -38,6 +39,8 @@ final class ResponsiveAttributeGenerator
         private readonly PreloadCollector $preloadCollector,
         private ResponsiveImageUrlGeneratorInterface $urlGenerator,
         private readonly ?ModifierProvider $modifierProvider = null,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly int $fluidMaxWidth = 1920,
     ) {
     }
 
@@ -51,6 +54,13 @@ final class ResponsiveAttributeGenerator
         $sources = [];
         $variables = [];
         $defaultSource = null;
+
+        // Collected across all breakpoints and sent as a single preload hint after the
+        // loop, mirroring how a real <img srcset sizes> combines every candidate/condition
+        // into one attribute pair instead of one <link rel=preload> per breakpoint.
+        $preloadUrl = null;
+        $preloadSrcsetParts = [];
+        $preloadSizeParts = [];
 
         $originalRatio = $originalHeight > 0 ? $originalWidth / $originalHeight : null;
 
@@ -73,13 +83,18 @@ final class ResponsiveAttributeGenerator
 
             $size = $this->formatSizePart($layout['min_viewport'], $sizeValue);
 
+            $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
+            $assignmentContext = ($this->modifierProvider && $assignment->modifiers)
+                ? $this->modifierProvider->applyModifiers($assignment->modifiers, $context)
+                : $context;
+
             $multipliers = $retina ? $this->retinaMultipliers : [1];
             $srcsetParts = [];
             $firstUrl = null;
 
             foreach ($multipliers as $multiplier) {
                 $mPixelWidth = (int) round($pixelWidth * $multiplier);
-                $url = $this->generateUrl($path, $assignment, $mPixelWidth, $originalWidth, $pointInterest, $context, $originalRatio);
+                $url = $this->generateUrl($path, $mPixelWidth, $originalWidth, $pointInterest, $assignmentContext, $ratio);
 
                 if ($url) {
                     if (null === $firstUrl) {
@@ -90,15 +105,18 @@ final class ResponsiveAttributeGenerator
             }
 
             if ($preload && $firstUrl && $srcsetParts) {
-                $this->preloadCollector->add($firstUrl, 'image', 'high', implode(', ', $srcsetParts), $size);
+                $preloadUrl ??= $firstUrl;
+                array_push($preloadSrcsetParts, ...$srcsetParts);
+                $preloadSizeParts[] = $size;
             }
 
-            $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
             $suffix = '-'.$assignment->breakpoint;
             $variables['--img-width'.$suffix] = $cssValue;
             if (0 === $layout['min_viewport']) {
                 $variables['--img-width'] = $cssValue;
-				$variables['--img-aspect'] = (string) $ratio;
+                if ($ratio) {
+                    $variables['--img-aspect'] = (string) $ratio;
+                }
             }
             if ($ratio) {
                 $variables['--img-aspect'.$suffix] = (string) $ratio;
@@ -115,7 +133,12 @@ final class ResponsiveAttributeGenerator
             }
         }
 
+        if ($preloadUrl) {
+            $this->preloadCollector->add($preloadUrl, 'image', 'high', implode(', ', $preloadSrcsetParts), implode(', ', $preloadSizeParts));
+        }
+
         if (null === $defaultSource) {
+            $this->logger?->warning('No breakpoint with min_viewport 0 resolved for image "{path}": the <img> fallback source will have an empty srcset/sizes.', ['path' => $path]);
             $defaultSource = new ResponsiveSource(null, '', '');
         }
 
@@ -158,7 +181,7 @@ final class ResponsiveAttributeGenerator
             if ($maxContainer) {
                 $pixelWidth = ($percentValue / 100) * $maxContainer;
             } else {
-                $pixelWidth = ($percentValue / 100) * 1920;
+                $pixelWidth = ($percentValue / 100) * $this->fluidMaxWidth;
             }
 
             return [$pixelWidth, round($pixelWidth).'px', $cssValue];
@@ -182,8 +205,9 @@ final class ResponsiveAttributeGenerator
             // Fluid (null) -> width in vw
             $vwWidth = ($assignment->columns / $totalCols) * 100;
             $sizeValue = round($vwWidth).'vw';
-            // For URL calculation we estimate px width from some reasonable max-width (e.g. 1920)
-            $pixelWidth = ($vwWidth / 100) * 1920;
+            // For URL calculation we estimate px width from a configurable assumed max
+            // viewport width (see $fluidMaxWidth).
+            $pixelWidth = ($vwWidth / 100) * $this->fluidMaxWidth;
         }
 
         return [$pixelWidth, $sizeValue, $sizeValue];
@@ -191,28 +215,19 @@ final class ResponsiveAttributeGenerator
 
     private function generateUrl(
         string $path,
-        BreakpointAssignment $assignment,
         int $basePixelWidth,
         int $originalWidth,
-        ?string $pointInterest = null,
-        array $context = [],
-        ?float $originalRatio = null,
+        ?string $pointInterest,
+        array $context,
+        ?float $ratio,
     ): string {
-        $ratio = $this->resolveRatio($assignment) ?? $originalRatio;
-
-        if ($this->modifierProvider && $assignment->modifiers) {
-            $context = $this->modifierProvider->applyModifiers($assignment->modifiers, $context);
-        }
-
-        $requestedWidth = $basePixelWidth;
         if ($originalWidth > 0 && $basePixelWidth > $originalWidth) {
             $basePixelWidth = $originalWidth;
         }
 
         $targetH = $ratio ? (int) round($basePixelWidth / $ratio) : null;
-        $url = $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
 
-        return $url;
+        return $this->urlGenerator->generateUrl($path, $basePixelWidth, $targetH, $pointInterest, $context);
     }
 
     private function resolveRatio(BreakpointAssignment $assignment): ?float

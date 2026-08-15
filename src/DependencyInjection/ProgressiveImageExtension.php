@@ -74,6 +74,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Intervention\Interve
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Lock\SymfonyGenerationLock;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\GenerateVariantMessageHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\MessengerGenerationDispatcher;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\AvifencPostProcessor;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\CwebpPostProcessor;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\JpegoptimPostProcessor;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\PngquantPostProcessor;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\EventListener\ResponseCacheOverrideListener;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\QueryPendingUrlBuilder;
@@ -359,6 +363,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
     private function configureVariantContext(array $configs, ContainerBuilder $container): void
     {
         $container->setParameter('progressive_image.variant.filter_sets', $configs['filter_sets'] ?? []);
+        $this->configurePostProcessors($configs, $container);
 
         $storageId = $configs['variant_store']['storage'] ?? null;
         if (null === $storageId) {
@@ -458,6 +463,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(VariantResponsiveImageUrlGenerator::class)
             ->setArgument('$resolveHandler', new Reference(ResolveVariantUrlHandler::class))
             ->setArgument('$metadataReader', new Reference(MetadataReader::class))
+            ->setArgument('$requestStack', new Reference('request_stack'))
+            ->setArgument('$negotiateFormats', $configs['formats']['negotiate'] ?? [])
+            ->setArgument('$qualityByFormat', $configs['formats']['quality'] ?? [])
             ->setPublic(true);
 
         $container->register(ImageVariantController::class)
@@ -483,6 +491,38 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         return 'wait' === ($configs['generation']['fallback_while_pending'] ?? 'original')
             ? PendingFallbackStrategy::Wait
             : PendingFallbackStrategy::Original;
+    }
+
+    /**
+     * @param array<string, mixed> $configs
+     */
+    private function configurePostProcessors(array $configs, ContainerBuilder $container): void
+    {
+        $processors = [
+            'jpegoptim' => JpegoptimPostProcessor::class,
+            'pngquant' => PngquantPostProcessor::class,
+            'cwebp' => CwebpPostProcessor::class,
+            'avifenc' => AvifencPostProcessor::class,
+        ];
+
+        foreach ($processors as $name => $class) {
+            $config = $configs['post_processors'][$name] ?? ['enabled' => false, 'bin' => $name];
+            $enabled = (bool) ($config['enabled'] ?? false);
+            $bin = (string) ($config['bin'] ?? $name);
+
+            // ValidatePostProcessorBinariesPass reads these at compile time — a missing
+            // binary must break cache:clear, not surface as a generation failure later.
+            $container->setParameter('progressive_image.post_processors.'.$name.'.enabled', $enabled);
+            $container->setParameter('progressive_image.post_processors.'.$name.'.bin', $bin);
+
+            if (!$enabled) {
+                continue;
+            }
+
+            $container->register($class)
+                ->setArgument('$bin', $bin)
+                ->addTag('progressive_image.variant.post_processor');
+        }
     }
 
     /**

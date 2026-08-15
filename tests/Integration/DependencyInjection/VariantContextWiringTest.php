@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Process\ExecutableFinder;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\ProgressiveImageTestingKernel;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantUrlHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveVariantUrl;
@@ -96,6 +97,62 @@ final class VariantContextWiringTest extends TestCase
         $hit = $secondResolveHandler($query);
         self::assertFalse($hit->pending, 'second resolve, against a fresh handler instance, must be a storage hit');
         self::assertStringStartsWith('/media/pgi/', $hit->url);
+
+        $kernel->shutdown();
+    }
+
+    public function testEnabledPostProcessorRunsDuringGeneration(): void
+    {
+        $bin = (new ExecutableFinder())->find('jpegoptim');
+        if (null === $bin) {
+            self::markTestSkipped('jpegoptim binary is not installed.');
+        }
+
+        $this->storageRoot = sys_get_temp_dir().'/pgi-wiring-'.bin2hex(random_bytes(8));
+        mkdir($this->storageRoot);
+
+        $kernel = new ProgressiveImageTestingKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => [__DIR__.'/../../Functional/Fixtures/images']],
+                ],
+                'variant_store' => [
+                    'storage' => 'test.variant_storage',
+                ],
+                'generation' => [
+                    'strategy' => 'sync',
+                ],
+                'formats' => [
+                    'default' => 'jpeg',
+                ],
+                'post_processors' => [
+                    'jpegoptim' => ['enabled' => true, 'bin' => $bin],
+                ],
+            ],
+        ]);
+
+        $storageRoot = $this->storageRoot;
+        $kernel->setCustomConfiguration(function (ContainerBuilder $container) use ($storageRoot): void {
+            $container->register('test.variant_storage.adapter', LocalFilesystemAdapter::class)
+                ->setArgument('$location', $storageRoot);
+            $container->register('test.variant_storage', Filesystem::class)
+                ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))
+                ->setPublic(true);
+        });
+
+        $kernel->boot();
+        $container = $kernel->getContainer();
+
+        $resolveHandler = $container->get(ResolveVariantUrlHandler::class);
+        $resolveHandler(new ResolveVariantUrl(new SourcePath('test.png'), 40, 40));
+
+        $files = glob($this->storageRoot.'/jpeg/*/*/*.jpg');
+        self::assertNotFalse($files);
+        self::assertCount(1, $files, 'sync generation must have written exactly one jpeg variant');
+
+        $info = getimagesize($files[0]);
+        self::assertIsArray($info, 'the post-processed bytes must still be a valid, decodable JPEG');
+        self::assertSame('image/jpeg', $info['mime']);
 
         $kernel->shutdown();
     }

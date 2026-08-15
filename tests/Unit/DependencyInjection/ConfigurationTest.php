@@ -146,7 +146,64 @@ class ConfigurationTest extends TestCase
         $this->assertNull($config['generation']['lock_store']);
         $this->assertSame('jpeg', $config['formats']['default']);
         $this->assertSame(85, $config['formats']['default_quality']);
+        $this->assertSame([], $config['formats']['negotiate']);
+        $this->assertSame(['jpeg' => 85, 'webp' => 82, 'avif' => 60, 'png' => 90], $config['formats']['quality']);
         $this->assertSame([], $config['filter_sets']);
+    }
+
+    public function testFormatsNegotiateAndQualityAreConfigurable(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'negotiate' => ['avif', 'webp'],
+                    'quality' => ['avif' => 55],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['avif', 'webp'], $config['formats']['negotiate']);
+        $this->assertSame(55, $config['formats']['quality']['avif']);
+        $this->assertSame(82, $config['formats']['quality']['webp'], 'unspecified formats keep their own defaults');
+    }
+
+    public function testPostProcessorsDefaultToDisabledWithTheirNameAsTheBinary(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        foreach (['jpegoptim', 'pngquant', 'cwebp', 'avifenc'] as $name) {
+            $this->assertFalse($config['post_processors'][$name]['enabled']);
+            $this->assertSame($name, $config['post_processors'][$name]['bin']);
+        }
+    }
+
+    public function testPostProcessorsCanBeEnabledWithACustomBinaryPath(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'post_processors' => [
+                    'jpegoptim' => ['enabled' => true, 'bin' => '/usr/local/bin/jpegoptim'],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['post_processors']['jpegoptim']['enabled']);
+        $this->assertSame('/usr/local/bin/jpegoptim', $config['post_processors']['jpegoptim']['bin']);
     }
 
     public function testVariantContextOverrides(): void

@@ -18,6 +18,7 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpFoundation\Request;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\ProgressiveImageTestingKernel;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantUrlHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveVariantUrl;
@@ -95,6 +96,60 @@ final class VariantContextWiringTest extends TestCase
         $hit = $secondResolveHandler($query);
         self::assertFalse($hit->pending, 'second resolve, against a fresh handler instance, must be a storage hit');
         self::assertStringStartsWith('/media/pgi/', $hit->url);
+
+        $kernel->shutdown();
+    }
+
+    /**
+     * Full round trip for the "wait" fallback: resolve produces a signed URL to
+     * pgi_variant_serve, and dispatching that exact URL through the real HTTP kernel
+     * (routing + #[MapQueryParameter] argument resolution + the controller) generates the
+     * variant and redirects to its public path.
+     */
+    public function testWaitFallbackUrlIsServableByTheRealHttpKernel(): void
+    {
+        $this->storageRoot = sys_get_temp_dir().'/pgi-wiring-'.bin2hex(random_bytes(8));
+        mkdir($this->storageRoot);
+
+        $kernel = new ProgressiveImageTestingKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => [__DIR__.'/../../Functional/Fixtures/images']],
+                ],
+                'variant_store' => [
+                    'storage' => 'test.variant_storage',
+                ],
+                'generation' => [
+                    'strategy' => 'terminate',
+                    'fallback_while_pending' => 'wait',
+                ],
+            ],
+        ]);
+
+        $storageRoot = $this->storageRoot;
+        $kernel->setCustomConfiguration(function (ContainerBuilder $container) use ($storageRoot): void {
+            $container->register('test.variant_storage.adapter', LocalFilesystemAdapter::class)
+                ->setArgument('$location', $storageRoot);
+            $container->register('test.variant_storage', Filesystem::class)
+                ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))
+                ->setPublic(true);
+        });
+
+        $kernel->boot();
+        $container = $kernel->getContainer();
+
+        $resolveHandler = $container->get(ResolveVariantUrlHandler::class);
+        self::assertInstanceOf(ResolveVariantUrlHandler::class, $resolveHandler);
+
+        $resolved = $resolveHandler(new ResolveVariantUrl(new SourcePath('test.png'), 40, 40));
+        self::assertTrue($resolved->pending);
+        self::assertStringContainsString('/media/pgi/wait', $resolved->url);
+
+        $request = Request::create($resolved->url);
+        $response = $kernel->handle($request);
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertStringStartsWith('/media/pgi/', (string) $response->headers->get('Location'));
 
         $kernel->shutdown();
     }

@@ -52,6 +52,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantU
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\DomainEventBus;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\GenerationDispatcher;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\OriginalUrlResolver;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Port\PendingUrlBuilder;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\UrlSigner;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Query\PendingFallbackStrategy;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterFactory;
@@ -73,6 +74,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Intervention\Interve
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Lock\SymfonyGenerationLock;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\GenerateVariantMessageHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\MessengerGenerationDispatcher;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\EventListener\ResponseCacheOverrideListener;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\QueryPendingUrlBuilder;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\ResolverChainSourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\DefaultOriginalUrlResolver;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\SymfonyDomainEventBus;
@@ -204,6 +209,10 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$cache', $imageCacheServiceReference)
             ->addTag('twig.extension')
         ;
+        if (null !== ($configs['variant_store']['storage'] ?? null)) {
+            $container->getDefinition(TransparentCacheExtension::class)
+                ->setArgument('$tracker', new Reference(PendingGenerationTracker::class));
+        }
 
         $container->register(TransparentImageCacheSubscriber::class)
             ->setArgument('$enabled', new Parameter('progressive_image.image_cache_enabled'))
@@ -289,6 +298,12 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setShared(false)
             ->addTag('twig.component')
             ->setPublic(true);
+
+        // The Variant pipeline, when configured, always wins over Liip/default URL
+        // generation — opting into variant_store.storage is an explicit signal to use it.
+        if (null !== ($configs['variant_store']['storage'] ?? null)) {
+            $container->setAlias(ResponsiveImageUrlGeneratorInterface::class, VariantResponsiveImageUrlGenerator::class)->setPublic(true);
+        }
     }
 
     /**
@@ -412,6 +427,10 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(DefaultOriginalUrlResolver::class);
         $container->setAlias(OriginalUrlResolver::class, DefaultOriginalUrlResolver::class);
 
+        $container->register(QueryPendingUrlBuilder::class)
+            ->setArgument('$urlGenerator', new Reference('router'));
+        $container->setAlias(PendingUrlBuilder::class, QueryPendingUrlBuilder::class);
+
         $container->register(GenerateVariantHandler::class)
             ->setArgument('$hasher', new Reference(VariantIdHasher::class))
             ->setArgument('$lock', new Reference(GenerationLock::class))
@@ -423,10 +442,6 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$clock', new Reference(Clock::class))
             ->setArgument('$failMarkerTtlSeconds', $configs['variant_store']['fail_marker_ttl'] ?? 300);
 
-        if (PendingFallbackStrategy::Wait === $fallback) {
-            throw new \LogicException('progressive_image.generation.fallback_while_pending: "wait" is not implemented yet — it needs the Presentation-layer serve controller/route, which does not exist in this version. Use "original" for now.');
-        }
-
         $container->register(ResolveVariantUrlHandler::class)
             ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
             ->setArgument('$hasher', new Reference(VariantIdHasher::class))
@@ -434,11 +449,30 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$tracker', new Reference(PendingGenerationTracker::class))
             ->setArgument('$dispatcher', new Reference(GenerationDispatcher::class))
             ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
-            ->setArgument('$pendingUrlBuilder', null)
+            ->setArgument('$pendingUrlBuilder', new Reference(PendingUrlBuilder::class))
             ->setArgument('$urlSigner', new Reference(UrlSigner::class))
             ->setArgument('$fallback', $fallback)
             ->setPublic(true)
             ->setShared(false);
+
+        $container->register(VariantResponsiveImageUrlGenerator::class)
+            ->setArgument('$resolveHandler', new Reference(ResolveVariantUrlHandler::class))
+            ->setArgument('$metadataReader', new Reference(MetadataReader::class))
+            ->setPublic(true);
+
+        $container->register(ImageVariantController::class)
+            ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$generateHandler', new Reference(GenerateVariantHandler::class))
+            ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
+            ->setArgument('$urlSigner', new Reference(UrlSigner::class))
+            ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
+            ->setPublic(true);
+
+        $container->register(ResponseCacheOverrideListener::class)
+            ->setArgument('$tracker', new Reference(PendingGenerationTracker::class))
+            ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => '__invoke', 'priority' => -1024]);
     }
 
     /**

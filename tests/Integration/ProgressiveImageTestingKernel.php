@@ -144,6 +144,10 @@ class ProgressiveImageTestingKernel extends Kernel
             ]));
         }
 
+        $routes->add('pgi_variant_serve', new Route('/media/pgi/wait', [
+            '_controller' => \Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController::class.'::serve',
+        ]));
+
         return $routes;
     }
 

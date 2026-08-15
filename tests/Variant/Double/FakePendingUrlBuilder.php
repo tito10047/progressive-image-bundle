@@ -14,13 +14,12 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Double;
 
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\PendingUrlBuilder;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveVariantUrl;
 
 final class FakePendingUrlBuilder implements PendingUrlBuilder
 {
-    public function build(SourcePath $source, VariantSpec $spec): string
+    public function build(ResolveVariantUrl $query): string
     {
-        return '/wait/'.$source->value;
+        return '/wait/'.$query->source->value;
     }
 }

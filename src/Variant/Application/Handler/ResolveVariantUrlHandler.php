@@ -68,10 +68,10 @@ final class ResolveVariantUrlHandler
             return $this->memo[$variant->id->value];
         }
 
-        return $this->memo[$variant->id->value] = $this->resolve($variant);
+        return $this->memo[$variant->id->value] = $this->resolve($variant, $query);
     }
 
-    private function resolve(Variant $variant): ResolvedUrl
+    private function resolve(Variant $variant, ResolveVariantUrl $query): ResolvedUrl
     {
         $path = $variant->path();
 
@@ -86,7 +86,7 @@ final class ResolveVariantUrlHandler
             PendingFallbackStrategy::Original => $this->originalUrlResolver->resolve($variant->source),
             PendingFallbackStrategy::Wait => $this->urlSigner->sign(
                 ($this->pendingUrlBuilder ?? throw new \LogicException('fallback_while_pending is "wait" but no PendingUrlBuilder was configured.'))
-                    ->build($variant->source, $variant->spec)
+                    ->build($query)
             ),
         };
 

@@ -19,6 +19,7 @@ use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Tests\Fixtures\FakeDimensionsEchoingUrlGenerator;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\MessengerGenerationDispatcher;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
 
 class ProgressiveImageExtensionWiringTest extends PGITestCase
@@ -130,5 +131,40 @@ class ProgressiveImageExtensionWiringTest extends PGITestCase
         $this->expectException(\InvalidArgumentException::class);
 
         self::getContainer()->get('progressive_image.resolver.default');
+    }
+
+    public function testMessengerGenerationDispatcherIsNotSharedSinceItDedupsPerRequestOnly(): void
+    {
+        // Docblock/design requirement (same as ResolveVariantUrlHandler): $dispatchedThisRequest
+        // must not persist across requests on a persistent worker (Swoole/RoadRunner/FrankenPHP),
+        // which is only true if the service is request-scoped (setShared(false)).
+        self::bootKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => [__DIR__.'/../Fixtures/images']],
+                ],
+                'variant_store' => [
+                    'storage' => 'test.variant_storage',
+                ],
+            ],
+        ], function (ContainerBuilder $container): void {
+            $container->loadFromExtension('framework', [
+                'messenger' => [
+                    'default_bus' => 'messenger.bus.default',
+                    'buses' => ['messenger.bus.default' => null],
+                ],
+            ]);
+            $container->register('test.variant_storage.adapter', \League\Flysystem\Local\LocalFilesystemAdapter::class)
+                ->setArgument('$location', sys_get_temp_dir());
+            $container->register('test.variant_storage', Filesystem::class)
+                ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))
+                ->setPublic(true);
+        });
+
+        $container = self::getContainer();
+        $first = $container->get(MessengerGenerationDispatcher::class);
+        $second = $container->get(MessengerGenerationDispatcher::class);
+
+        $this->assertNotSame($first, $second);
     }
 }

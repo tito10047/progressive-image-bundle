@@ -542,8 +542,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         }
 
         $container->register(MessengerGenerationDispatcher::class)
-            ->setArgument('$bus', new Reference('message_bus'))
-            ->setArgument('$hasher', new Reference(VariantIdHasher::class));
+            ->setArgument('$bus', new Reference('messenger.default_bus'))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setShared(false);
         $container->setAlias(GenerationDispatcher::class, MessengerGenerationDispatcher::class);
 
         $container->register(GenerateVariantMessageHandler::class)

@@ -11,8 +11,8 @@
 
 namespace Tito10047\ProgressiveImageBundle\Event;
 
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\UX\TwigComponent\Event\PreCreateForRenderEvent;
 use Symfony\UX\TwigComponent\Event\PreRenderEvent;
@@ -20,7 +20,7 @@ use Symfony\UX\TwigComponent\Event\PreRenderEvent;
 final class TransparentImageCacheSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ?TagAwareCacheInterface $cache,
+        private readonly (CacheItemPoolInterface&TagAwareCacheInterface)|null $cache,
         private readonly bool $enabled,
         private readonly ?int $ttl = null,
     ) {
@@ -41,18 +41,10 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
         }
 
         $key = $this->generateKey($event->getInputProps());
-        /** @var string|null $cachedHtml */
-        $cachedHtml = $this->cache->get($key, function (ItemInterface $item) use ($event) {
-            $ttl = $event->getInputProps()['ttl'] ?? $this->ttl;
-            if ($ttl) {
-                $item->expiresAfter($ttl);
-            }
+        $item = $this->cache->getItem($key);
 
-            return null;
-        });
-
-        if (null !== $cachedHtml) {
-            $event->setRenderedString($cachedHtml);
+        if ($item->isHit()) {
+            $event->setRenderedString($item->get());
         }
     }
 
@@ -63,8 +55,12 @@ final class TransparentImageCacheSubscriber implements EventSubscriberInterface
         }
 
         // If we get here, it means there was nothing in the cache (otherwise PreCreateForRenderEvent would have stopped the rendering)
+        // The key must be derived from the same input props onPreCreate() used, not the
+        // post-mount variables: the latter include defaulted properties that differ from
+        // the raw template attributes, so keying off them would never match onPreCreate()'s
+        // lookup key.
+        $key = $this->generateKey($event->getMountedComponent()->getInputProps());
         $variables = $event->getVariables();
-        $key = $this->generateKey($variables);
 
         // Wrap the original template in a wrapper that stores the result in the cache
         $variables['pgi_original_template'] = $event->getTemplate();

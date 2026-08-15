@@ -3,6 +3,7 @@ composer.lock
 .idea
 /var/
 .phpunit.result.cache
+.deptrac.cache
 /config/reference.php
 /.php-cs-fixer.cache
 /public/media/cache/

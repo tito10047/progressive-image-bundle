@@ -132,4 +132,37 @@ class BreakpointAssignmentTest extends TestCase
             ['lg:4 xs:12', '16-9', 2],
         ];
     }
+
+    #[DataProvider('provideSloppilySpacedSegments')]
+    public function testParseSegmentsIgnoresExtraWhitespaceInsteadOfThrowing(string $input, int $expectedCount): void
+    {
+        $results = BreakpointAssignment::parseSegments($input, null);
+
+        $this->assertCount($expectedCount, $results);
+    }
+
+    public static function provideSloppilySpacedSegments(): array
+    {
+        return [
+            'double space between segments' => ['lg:4  xs:12', 2],
+            'leading space' => [' lg:4 xs:12', 2],
+            'trailing space' => ['lg:4 xs:12 ', 2],
+            'single segment with trailing space' => ['lg:4 ', 1],
+        ];
+    }
+
+    public function testFromSegmentThrowsForNonNumericExplicitDimensions(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid breakpoint assignment format: "lg:[abcxdef]"');
+
+        BreakpointAssignment::fromSegment('lg:[abcxdef]', null);
+    }
+
+    public function testFromSegmentThrowsForPartiallyNonNumericExplicitDimensions(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        BreakpointAssignment::fromSegment('lg:[430xabc]', null);
+    }
 }

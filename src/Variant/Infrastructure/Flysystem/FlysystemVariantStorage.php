@@ -44,11 +44,7 @@ final readonly class FlysystemVariantStorage implements VariantStorage
 
     public function write(VariantPath $path, GeneratedImage $image): void
     {
-        $full = $this->fullPath($path);
-        $tmp = $full.'.tmp-'.bin2hex(random_bytes(8));
-
-        $this->filesystem->write($tmp, $image->contents);
-        $this->filesystem->move($tmp, $full);
+        $this->writeAtomically($this->fullPath($path), $image->contents);
     }
 
     public function read(VariantPath $path): GeneratedImage
@@ -69,12 +65,14 @@ final readonly class FlysystemVariantStorage implements VariantStorage
 
     public function publicPath(VariantPath $path): string
     {
-        return rtrim($this->publicUrlPrefix, '/').'/'.$path->value;
+        $encoded = implode('/', array_map(rawurlencode(...), explode('/', $path->value)));
+
+        return rtrim($this->publicUrlPrefix, '/').'/'.$encoded;
     }
 
     public function writeFailMarker(VariantPath $path, \DateTimeImmutable $at): void
     {
-        $this->filesystem->write($this->failMarkerPath($path), (string) $at->getTimestamp());
+        $this->writeAtomically($this->failMarkerPath($path), (string) $at->getTimestamp());
     }
 
     public function failMarkerTimestamp(VariantPath $path): ?\DateTimeImmutable
@@ -85,14 +83,52 @@ final readonly class FlysystemVariantStorage implements VariantStorage
             return null;
         }
 
-        return (new \DateTimeImmutable())->setTimestamp((int) $this->filesystem->read($marker));
+        $contents = trim($this->filesystem->read($marker));
+        if (!ctype_digit($contents)) {
+            // Corrupted/empty marker: treat as "no marker" instead of silently casting
+            // garbage to 0 (epoch 1970), which would make hasFreshFailMarker() in
+            // GenerateVariantHandler report "not fresh" forever and disable throttling
+            // without any error. A correct marker gets (atomically) written on the very
+            // next failure.
+            return null;
+        }
+
+        return (new \DateTimeImmutable())->setTimestamp((int) $contents);
+    }
+
+    /**
+     * Writes to a random temp path first, then moves it into place, so a reader never sees
+     * a partially-written file; on a failed move, best-effort cleans up the orphaned temp
+     * file instead of leaving it behind.
+     */
+    private function writeAtomically(string $destination, string $contents): void
+    {
+        $tmp = $destination.'.tmp-'.bin2hex(random_bytes(8));
+
+        $this->filesystem->write($tmp, $contents);
+
+        try {
+            $this->filesystem->move($tmp, $destination);
+        } catch (\Throwable $e) {
+            try {
+                $this->filesystem->delete($tmp);
+            } catch (\Throwable) {
+                // best-effort cleanup; the original move() failure is what matters
+            }
+
+            throw $e;
+        }
     }
 
     private function formatOf(VariantPath $path): OutputFormat
     {
         [$formatSegment] = explode('/', $path->value, 2);
 
-        return OutputFormat::from($formatSegment);
+        try {
+            return OutputFormat::from($formatSegment);
+        } catch (\ValueError $e) {
+            throw new VariantDomainException(sprintf('Corrupted variant path "%s": unknown format segment "%s".', $path->value, $formatSegment), previous: $e);
+        }
     }
 
     private function fullPath(VariantPath $path): string

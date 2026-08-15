@@ -60,7 +60,7 @@ final readonly class VariantSpecFactory
     ): VariantSpec {
         $filterSetRaw = null !== $filterSetName ? $this->filterSets->rawFilterSet($filterSetName) : [];
 
-        $merged = array_replace_recursive($filterSetRaw, $this->imageConfigs, $context);
+        $merged = self::mergeLayers($filterSetRaw, $this->imageConfigs, $context);
 
         $chain = $this->parseFilters($merged)->without(Crop::class, Thumbnail::class);
 
@@ -77,6 +77,35 @@ final readonly class VariantSpecFactory
         }
 
         return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged));
+    }
+
+    /**
+     * Recursively merges config layers like array_replace_recursive(), except that
+     * indexed (list) arrays are replaced wholesale rather than merged element-by-index.
+     * array_replace_recursive() would merge e.g. filters.resize.size: [800, 600] with a
+     * later layer's [400] into [400, 600] — silently keeping the base height instead of
+     * failing on the now-incomplete pair. Only genuinely associative arrays get merged key
+     * by key; a list always simply replaces whatever came before it.
+     *
+     * @param array<array-key, mixed> ...$layers
+     *
+     * @return array<array-key, mixed>
+     */
+    private static function mergeLayers(array ...$layers): array
+    {
+        $merged = [];
+        foreach ($layers as $layer) {
+            foreach ($layer as $key => $value) {
+                $existing = $merged[$key] ?? null;
+                if (is_array($value) && is_array($existing) && !array_is_list($value) && !array_is_list($existing)) {
+                    $merged[$key] = self::mergeLayers($existing, $value);
+                } else {
+                    $merged[$key] = $value;
+                }
+            }
+        }
+
+        return $merged;
     }
 
     /**

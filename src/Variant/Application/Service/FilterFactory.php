@@ -77,7 +77,7 @@ final readonly class FilterFactory
             throw new InvalidFilterDefinition('Filter "crop" requires a [x, y] "start" option.');
         }
 
-        [$x, $y] = array_values($start);
+        [$x, $y] = $this->pair($start, 'x', 'y');
 
         if (!is_numeric($x) || !is_numeric($y)) {
             throw new InvalidFilterDefinition('Filter "crop" option "start" must contain numeric x and y.');
@@ -117,13 +117,31 @@ final readonly class FilterFactory
             throw new InvalidFilterDefinition(sprintf('Filter "%s" requires a [width, height] "%s" option.', $filterName, $key));
         }
 
-        [$width, $height] = array_values($value);
+        [$width, $height] = $this->pair($value, 'width', 'height');
 
         if (!is_numeric($width) || !is_numeric($height)) {
             throw new InvalidFilterDefinition(sprintf('Filter "%s" option "%s" must contain numeric width and height.', $filterName, $key));
         }
 
         return new Dimensions((int) $width, (int) $height);
+    }
+
+    /**
+     * Reads a two-element option either positionally (a plain [a, b] list, the common YAML
+     * sequence form) or by explicit key name (an associative array) — never by raw storage
+     * order, so e.g. {y: 20, x: 10} isn't silently swapped into (x=20, y=10).
+     *
+     * @param array<array-key, mixed> $value
+     *
+     * @return array{0: mixed, 1: mixed}
+     */
+    private function pair(array $value, string $firstKey, string $secondKey): array
+    {
+        if (array_is_list($value)) {
+            return [$value[0], $value[1]];
+        }
+
+        return [$value[$firstKey] ?? null, $value[$secondKey] ?? null];
     }
 
     /**

@@ -132,4 +132,20 @@ final class FilterFactoryTest extends TestCase
 
         $this->factory->create('thumbnail', ['size' => [200, 200], 'mode' => 'sideways']);
     }
+
+    public function testCropStartAsAssociativeArrayIsReadByKeyNotByStorageOrder(): void
+    {
+        // y is stored BEFORE x — array_values() would silently swap them.
+        $filter = $this->factory->create('crop', ['start' => ['y' => 20, 'x' => 10], 'size' => [100, 50]]);
+
+        self::assertSame(['crop' => ['x' => 10, 'y' => 20, 'w' => 100, 'h' => 50]], $filter->canonical());
+    }
+
+    public function testDimensionsAsAssociativeArrayIsReadByKeyNotByStorageOrder(): void
+    {
+        // height is stored BEFORE width — array_values() would silently swap them.
+        $filter = $this->factory->create('resize', ['size' => ['height' => 480, 'width' => 640]]);
+
+        self::assertSame(['resize' => ['w' => 640, 'h' => 480]], $filter->canonical());
+    }
 }

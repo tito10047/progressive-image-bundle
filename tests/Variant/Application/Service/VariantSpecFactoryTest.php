@@ -159,4 +159,32 @@ final class VariantSpecFactoryTest extends TestCase
         self::assertSame(OutputFormat::Jpeg, $spec->format);
         self::assertSame(85, $spec->quality->value);
     }
+
+    /**
+     * array_replace_recursive() merges two indexed (list) arrays element-by-numeric-index,
+     * not wholesale — overriding only the width (a one-element list) would silently keep
+     * the filter set's original height instead of failing loudly on the now-invalid pair.
+     */
+    public function testContextResizeSizeFullyReplacesFilterSetSizeInsteadOfMergingByIndex(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => ['resize' => ['size' => [800, 600]]]],
+        ]);
+
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $factory->create(200, 150, 'hero', context: ['filters' => ['resize' => ['size' => [400]]]]);
+    }
+
+    public function testContextResizeSizeThatDoesFullyOverrideBothDimensionsIsUsedAsIs(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => ['resize' => ['size' => [800, 600]]]],
+        ]);
+
+        $spec = $factory->create(200, 150, 'hero', context: ['filters' => ['resize' => ['size' => [400, 300]]]]);
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertSame(['resize' => ['w' => 400, 'h' => 300]], $filters[0]->canonical());
+    }
 }

@@ -17,10 +17,15 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefin
 
 /**
  * Immutable, boot-time-validated snapshot of the "filter_sets" bundle config.
- * A typo in a filter name or a malformed option breaks the boot (constructor throws),
- * not a request at runtime. Raw definitions are kept (not pre-parsed into FilterChain)
- * because VariantSpecFactory still needs to recursively merge them with imageConfigs
- * and per-call context before turning the result into typed filters.
+ * A typo in a filter name or a malformed option in the RAW "filter_sets" config breaks the
+ * boot (constructor throws). This does NOT guarantee the fully merged runtime config (raw
+ * filter set + imageConfigs + per-request Twig context, see VariantSpecFactory::create())
+ * is valid — that merge can only happen per-request, since context isn't known at boot —
+ * but VariantSpecFactory::parseFilters() still fails loudly (InvalidFilterDefinition) at
+ * request time if the merge produces something malformed, it just can't be caught earlier.
+ * Raw definitions are kept (not pre-parsed into FilterChain) because VariantSpecFactory
+ * still needs to recursively merge them with imageConfigs and per-call context before
+ * turning the result into typed filters.
  */
 final readonly class FilterSetRegistry
 {

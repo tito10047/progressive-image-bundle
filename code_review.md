@@ -105,7 +105,7 @@ Nálezy zoradené podľa toho, ako boli objavené (adresár po adresári). Form�
 
 ## src/Variant/Domain/Filter/WatermarkPosition.php
 
-- **WatermarkPosition.php:20,23** — `case Top = 'top';` a `case Bottom = 'bottom';` sú odsadené tabulátorom, zvyšok enumu medzerami — ďalší (tretí) výskyt nekonzistentného odsadenia tabulátor/medzera v repozitári (po `Configuration.php` a `ResponsiveAttributeGenerator.php`), naznačuje chýbajúci/nevynucovaný code-style formátovací nástroj pri commitovaní.
+- [OPRAVENÉ] **WatermarkPosition.php:20,23** — `case Top = 'top';` a `case Bottom = 'bottom';` sú odsadené tabulátorom, zvyšok enumu medzerami — ďalší (tretí) výskyt nekonzistentného odsadenia tabulátor/medzera v repozitári (po `Configuration.php` a `ResponsiveAttributeGenerator.php`), naznačuje chýbajúci/nevynucovaný code-style formátovací nástroj pri commitovaní. *(Fix: oba riadky prevedené na 4-medzerové odsadenie. Overené `php-cs-fixer --dry-run` (0 súborov na opravu).)*
 
 ## src/Variant/Domain/Service/AspectCropCalculator.php
 

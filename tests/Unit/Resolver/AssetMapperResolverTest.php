@@ -51,4 +51,32 @@ class AssetMapperResolverTest extends TestCase
         $this->expectException(PathResolutionException::class);
         $resolver->resolve('non-existent.jpg');
     }
+
+    public function testResolveBuildsThePublicPathIndexOnlyOnceAcrossMultipleCalls(): void
+    {
+        $assetMapper = $this->createMock(AssetMapperInterface::class);
+        $assetOne = new MappedAsset(
+            logicalPath: 'assets/one.jpg',
+            sourcePath: '/absolute/path/to/one.jpg',
+            publicPathWithoutDigest: '/assets/one.jpg',
+            publicPath: '/assets/one.jpg'
+        );
+        $assetTwo = new MappedAsset(
+            logicalPath: 'assets/two.jpg',
+            sourcePath: '/absolute/path/to/two.jpg',
+            publicPathWithoutDigest: '/assets/two.jpg',
+            publicPath: '/assets/two.jpg'
+        );
+
+        // allAssets() does an O(n) scan of the whole asset manifest — it must only be
+        // called once, not once per resolve() call.
+        $assetMapper->expects($this->once())
+            ->method('allAssets')
+            ->willReturn([$assetOne, $assetTwo]);
+
+        $resolver = new AssetMapperResolver($assetMapper);
+
+        $this->assertSame('/absolute/path/to/one.jpg', $resolver->resolve('assets/one.jpg'));
+        $this->assertSame('/absolute/path/to/two.jpg', $resolver->resolve('assets/two.jpg'));
+    }
 }

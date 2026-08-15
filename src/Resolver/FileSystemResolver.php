@@ -109,7 +109,7 @@ final class FileSystemResolver implements PathResolverInterface
     private function sanitizeAbsolutePath(string $path): string
     {
         $roots = array_filter($this->roots, function (string $root) use ($path): bool {
-            return 0 === mb_strpos($path, $root);
+            return str_starts_with($path, rtrim($root, '/').'/');
         });
 
         if (0 === \count($roots)) {

@@ -61,4 +61,23 @@ class FileSystemResolverTest extends TestCase
 
         $this->assertSame(realpath($this->tempDir.'/test.jpg'), $result);
     }
+
+    public function testResolveRejectsPathsInASiblingDirectorySharingTheRootsNamePrefix(): void
+    {
+        // Sibling directory: "{$this->tempDir}-secret" is NOT inside $this->tempDir, but its
+        // absolute path shares $this->tempDir as a plain string prefix.
+        $siblingDir = $this->tempDir.'-secret';
+        mkdir($siblingDir);
+        file_put_contents($siblingDir.'/secret.txt', 'top secret');
+
+        try {
+            $resolver = new FileSystemResolver([$this->tempDir]);
+
+            $this->expectException(PathResolutionException::class);
+            $resolver->resolve('../'.basename($siblingDir).'/secret.txt');
+        } finally {
+            unlink($siblingDir.'/secret.txt');
+            rmdir($siblingDir);
+        }
+    }
 }

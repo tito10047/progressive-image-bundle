@@ -112,4 +112,23 @@ class ProgressiveImageExtensionWiringTest extends PGITestCase
             ],
         ]);
     }
+
+    public function testNamedFilesystemResolverDefaultsAllowUnresolvableToFalse(): void
+    {
+        // Configuration.php declares ->booleanNode('allowUnresolvable')->defaultFalse(), so
+        // an omitted value must resolve to false, not the "?? true" fallback previously in
+        // ProgressiveImageExtension.php (which could never actually run, since
+        // processConfiguration() always fills this key in).
+        self::bootKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp/pgi-does-not-exist-'.uniqid()]],
+                ],
+            ],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        self::getContainer()->get('progressive_image.resolver.default');
+    }
 }

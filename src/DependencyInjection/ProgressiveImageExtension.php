@@ -262,7 +262,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             if ('filesystem' === $resolverConfig['type']) {
                 $container->register($id, FileSystemResolver::class)
                     ->setArgument('$roots', $resolverConfig['roots'] ?? ['%kernel.project_dir%/public'])
-                    ->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'] ?? true)
+                    ->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'])
                     ->setPublic(true);
             } elseif ('asset_mapper' === $resolverConfig['type']) {
                 $container->register($id, AssetMapperResolver::class)

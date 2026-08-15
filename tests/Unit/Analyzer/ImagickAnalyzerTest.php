@@ -14,6 +14,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Analyzer;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Analyzer\ImagickAnalyzer;
 use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
+use Tito10047\ProgressiveImageBundle\Exception\ImageProcessingException;
 use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 
 class ImagickAnalyzerTest extends TestCase
@@ -45,5 +46,38 @@ class ImagickAnalyzerTest extends TestCase
         $this->assertIsString($metadata->originalHash);
 
         fclose($stream);
+    }
+
+    public function testAnalyzeWrapsNonImagickThrowablesIntoImageProcessingException(): void
+    {
+        $loader = $this->createMock(LoaderInterface::class);
+        $path = 'tests/Fixtures/test.png';
+
+        // A closed resource makes Imagick::readImageFile() raise a \TypeError,
+        // not an \ImagickException — this must still be wrapped.
+        $stream = fopen($path, 'rb');
+        fclose($stream);
+        $loader->expects($this->once())->method('load')->willReturn($stream);
+
+        $analyzer = new ImagickAnalyzer();
+
+        $this->expectException(ImageProcessingException::class);
+        $analyzer->analyze($loader, $path);
+    }
+
+    public function testAssertValidDimensionsThrowsForZeroWidth(): void
+    {
+        $this->expectException(ImageProcessingException::class);
+
+        $method = new \ReflectionMethod(ImagickAnalyzer::class, 'assertValidDimensions');
+        $method->invoke(null, 0, 10);
+    }
+
+    public function testAssertValidDimensionsThrowsForZeroHeight(): void
+    {
+        $this->expectException(ImageProcessingException::class);
+
+        $method = new \ReflectionMethod(ImagickAnalyzer::class, 'assertValidDimensions');
+        $method->invoke(null, 10, 0);
     }
 }

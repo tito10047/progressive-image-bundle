@@ -37,6 +37,8 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
             $width = $image->getImageWidth();
             $height = $image->getImageHeight();
 
+            self::assertValidDimensions($width, $height);
+
             $pixels = $image->exportImagePixels(0, 0, $width, $height, 'RGB', \Imagick::PIXEL_CHAR);
 
             $formattedPixels = [];
@@ -52,8 +54,12 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
                 }
                 $formattedPixels[] = $row;
             }
-        } catch (\ImagickException $e) {
+        } catch (ImageProcessingException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
             throw new ImageProcessingException('Imagick could not load data from stream: '.$e->getMessage());
+        } finally {
+            $image->clear();
         }
 
         $hash = Blurhash::encode($formattedPixels, $this->componentsX, $this->componentsY);
@@ -63,5 +69,16 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
             $orgWidth,
             $orgHeight
         );
+    }
+
+    private static function assertValidDimensions(int $width, int $height): void
+    {
+        if ($width < 1 || $height < 1) {
+            throw new ImageProcessingException(sprintf(
+                'Cannot compute pixel data for a degenerate image (width=%d, height=%d).',
+                $width,
+                $height
+            ));
+        }
     }
 }

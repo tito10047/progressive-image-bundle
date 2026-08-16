@@ -14,14 +14,14 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator;
 
 use Symfony\Component\HttpFoundation\RequestStack;
-use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantUrlHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveVariantUrl;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Dimensions;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\PointOfInterest;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;
 
 /**
  * Implements the existing ResponsiveImageUrlGeneratorInterface — the anti-corruption seam
@@ -31,8 +31,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
  *
  * The interface doesn't carry original dimensions, so — unlike the previous generator,
  * which silently never ran its POI crop math because it always passed null for them —
- * this reads them via MetadataReader, and only when a pointInterest is actually given
- * (an extra cache lookup would otherwise run on every single image).
+ * this reads them via SourceReader (the same cheap getimagesize()-based lookup the Variant
+ * pipeline already uses elsewhere), and only when a pointInterest is actually given. This
+ * deliberately does NOT go through MetadataReaderInterface/the legacy analyzer pipeline:
+ * that would also compute a blurhash on every cache miss, which is never used here.
  *
  * Format negotiation (formats.negotiate in the bundle config) also lives here rather than
  * in VariantSpecFactory: it just sets context['format']/context['quality'], the same
@@ -47,7 +49,7 @@ final readonly class VariantResponsiveImageUrlGenerator implements ResponsiveIma
      */
     public function __construct(
         private ResolveVariantUrlHandler $resolveHandler,
-        private MetadataReaderInterface $metadataReader,
+        private SourceReader $sourceReader,
         private RequestStack $requestStack,
         private array $negotiateFormats = [],
         private array $qualityByFormat = [],
@@ -80,11 +82,17 @@ final readonly class VariantResponsiveImageUrlGenerator implements ResponsiveIma
         $poi = null;
         $originalDimensions = null;
         if (null !== $pointInterest) {
-            [$poiX, $poiY] = explode('x', $pointInterest, 2);
-            $poi = new PointOfInterest((int) $poiX, (int) $poiY);
+            $parts = explode('x', $pointInterest, 2);
+            if (2 !== count($parts) || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
+                throw new InvalidFilterDefinition(sprintf('Invalid pointInterest "%s", expected format "X0xY0" e.g. "500x500".', $pointInterest));
+            }
+            $poi = new PointOfInterest((int) $parts[0], (int) $parts[1]);
 
-            $metadata = $this->metadataReader->getMetadata($path);
-            $originalDimensions = new Dimensions($metadata->width, $metadata->height);
+            $source = $this->sourceReader->read(new SourcePath($path));
+            if (is_resource($source->stream)) {
+                fclose($source->stream);
+            }
+            $originalDimensions = $source->dimensions;
         }
 
         $resolved = ($this->resolveHandler)(new ResolveVariantUrl(
@@ -113,11 +121,49 @@ final readonly class VariantResponsiveImageUrlGenerator implements ResponsiveIma
 
         $accept = $request->headers->get('Accept', '');
         foreach ($this->negotiateFormats as $format) {
-            if (str_contains($accept, OutputFormat::from($format)->mime())) {
+            if ($this->acceptsMime($accept, OutputFormat::from($format)->mime())) {
                 return $format;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Minimal RFC 7231 Accept-header matching: media-range wildcards (e.g. "image/star" or
+     * "star/star") and "q=0" exclusions, in addition to an exact mime match. Not a full
+     * content-negotiation implementation (e.g. it doesn't compare q-values across different
+     * candidate formats) — $this->negotiateFormats is already the server's own preference
+     * order, so the first format the client accepts at all (q > 0) wins.
+     */
+    private function acceptsMime(string $accept, string $mime): bool
+    {
+        [$type] = explode('/', $mime, 2);
+
+        foreach (explode(',', $accept) as $entry) {
+            $parts = explode(';', trim($entry));
+            $range = trim($parts[0]);
+            if ('' === $range) {
+                continue;
+            }
+
+            $q = 1.0;
+            foreach (array_slice($parts, 1) as $param) {
+                $param = trim($param);
+                if (str_starts_with($param, 'q=') && is_numeric(substr($param, 2))) {
+                    $q = (float) substr($param, 2);
+                }
+            }
+
+            if ($q <= 0.0) {
+                continue;
+            }
+
+            if ('*/*' === $range || $mime === $range || $type.'/*' === $range) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

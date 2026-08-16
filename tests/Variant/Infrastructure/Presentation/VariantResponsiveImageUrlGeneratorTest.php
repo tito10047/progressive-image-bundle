@@ -16,9 +16,8 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Infrastructure\Presenta
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Tito10047\ProgressiveImageBundle\DTO\ImageMetadata;
-use Tito10047\ProgressiveImageBundle\Service\MetadataReaderInterface;
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\FakeOriginalUrlResolver;
+use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\FakeSourceReader;
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\FakeUrlSigner;
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\InMemoryVariantStorage;
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\SpyGenerationDispatcher;
@@ -28,9 +27,13 @@ use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterFactory;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterSetRegistry;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\PendingGenerationTracker;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\VariantSpecFactory;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Resize;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Dimensions;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourceImage;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\VariantIdHasher;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
@@ -55,7 +58,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
      * @param array<string, int>    $qualityByFormat
      */
     private function makeGenerator(
-        MetadataReaderInterface $metadataReader,
+        SourceReader $sourceReader,
         ?RequestStack $requestStack = null,
         array $negotiateFormats = [],
         array $qualityByFormat = [],
@@ -74,16 +77,24 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
 
         return new VariantResponsiveImageUrlGenerator(
             $resolveHandler,
-            $metadataReader,
+            $sourceReader,
             $requestStack ?? new RequestStack(),
             $negotiateFormats,
             $qualityByFormat
         );
     }
 
+    private function sourceImage(int $width = 1000, int $height = 1000): SourceImage
+    {
+        $stream = fopen('php://memory', 'r');
+        self::assertNotFalse($stream);
+
+        return new SourceImage($stream, new Dimensions($width, $height), 'image/jpeg');
+    }
+
     public function testReturnsTheResolvedUrl(): void
     {
-        $generator = $this->makeGenerator($this->createStub(MetadataReaderInterface::class));
+        $generator = $this->makeGenerator($this->createStub(SourceReader::class));
 
         $url = $generator->generateUrl('uploads/hero.jpg', 200, 200);
 
@@ -92,7 +103,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
 
     public function testDefaultsHeightToWidthWhenNotGiven(): void
     {
-        $generator = $this->makeGenerator($this->createStub(MetadataReaderInterface::class));
+        $generator = $this->makeGenerator($this->createStub(SourceReader::class));
 
         $generator->generateUrl('uploads/hero.jpg', 200, null);
 
@@ -107,7 +118,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
             new FilterFactory(),
             new AspectCropCalculator()
         );
-        $generator = $this->makeGenerator($this->createStub(MetadataReaderInterface::class));
+        $generator = $this->makeGenerator($this->createStub(SourceReader::class));
 
         $generator->generateUrl('uploads/hero.jpg', 200, 200, null, ['filter' => 'sq']);
 
@@ -115,15 +126,11 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         self::assertInstanceOf(Resize::class, $filters[0]);
     }
 
-    public function testResolvesOriginalDimensionsViaMetadataReaderWhenPointInterestGiven(): void
+    public function testResolvesOriginalDimensionsViaSourceReaderWhenPointInterestGiven(): void
     {
-        $metadataReader = $this->createMock(MetadataReaderInterface::class);
-        $metadataReader->expects(self::once())
-            ->method('getMetadata')
-            ->with('uploads/hero.jpg')
-            ->willReturn(new ImageMetadata('hash', 1000, 1000));
+        $sourceReader = FakeSourceReader::returning($this->sourceImage(1000, 1000));
 
-        $generator = $this->makeGenerator($metadataReader);
+        $generator = $this->makeGenerator($sourceReader);
 
         $generator->generateUrl('uploads/hero.jpg', 200, 100, '500x500');
 
@@ -131,12 +138,20 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         self::assertInstanceOf(Crop::class, $filters[0]);
     }
 
-    public function testDoesNotCallMetadataReaderWithoutPointInterest(): void
+    public function testDoesNotCallSourceReaderWithoutPointInterest(): void
     {
-        $metadataReader = $this->createMock(MetadataReaderInterface::class);
-        $metadataReader->expects(self::never())->method('getMetadata');
+        $sourceReader = $this->createMock(SourceReader::class);
+        $sourceReader->expects(self::never())->method('read');
 
-        $this->makeGenerator($metadataReader)->generateUrl('uploads/hero.jpg', 200, 200);
+        $this->makeGenerator($sourceReader)->generateUrl('uploads/hero.jpg', 200, 200);
+    }
+
+    public function testThrowsOnMalformedPointInterest(): void
+    {
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $this->makeGenerator($this->createStub(SourceReader::class))
+            ->generateUrl('uploads/hero.jpg', 200, 100, '500');
     }
 
     public function testNegotiatesTheFirstAcceptedFormatAndItsConfiguredQuality(): void
@@ -145,7 +160,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         $requestStack->push(Request::create('/', server: ['HTTP_ACCEPT' => 'image/avif,image/webp,*/*']));
 
         $generator = $this->makeGenerator(
-            $this->createStub(MetadataReaderInterface::class),
+            $this->createStub(SourceReader::class),
             $requestStack,
             ['avif', 'webp'],
             ['avif' => 55, 'webp' => 82]
@@ -164,7 +179,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         $requestStack->push(Request::create('/', server: ['HTTP_ACCEPT' => 'text/html']));
 
         $generator = $this->makeGenerator(
-            $this->createStub(MetadataReaderInterface::class),
+            $this->createStub(SourceReader::class),
             $requestStack,
             ['avif', 'webp']
         );
@@ -180,7 +195,7 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         $requestStack->push(Request::create('/', server: ['HTTP_ACCEPT' => 'image/avif']));
 
         $generator = $this->makeGenerator(
-            $this->createStub(MetadataReaderInterface::class),
+            $this->createStub(SourceReader::class),
             $requestStack,
             ['avif']
         );
@@ -188,5 +203,39 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
         $generator->generateUrl('uploads/hero.jpg', 200, 200, null, ['format' => 'png']);
 
         self::assertSame(OutputFormat::Png, $this->dispatcher->dispatched()[0]->spec->format);
+    }
+
+    public function testNegotiatesAnImageWildcardAcceptHeader(): void
+    {
+        $requestStack = new RequestStack();
+        // No explicit image/webp or image/avif, just a broad image wildcard — a real
+        // browser sending Accept: image/* should still get an optimized format.
+        $requestStack->push(Request::create('/', server: ['HTTP_ACCEPT' => 'image/*']));
+
+        $generator = $this->makeGenerator(
+            $this->createStub(SourceReader::class),
+            $requestStack,
+            ['avif', 'webp']
+        );
+
+        $generator->generateUrl('uploads/hero.jpg', 200, 200);
+
+        self::assertSame(OutputFormat::Avif, $this->dispatcher->dispatched()[0]->spec->format);
+    }
+
+    public function testDoesNotNegotiateAFormatExplicitlyExcludedWithQZero(): void
+    {
+        $requestStack = new RequestStack();
+        $requestStack->push(Request::create('/', server: ['HTTP_ACCEPT' => 'image/avif;q=0,image/webp']));
+
+        $generator = $this->makeGenerator(
+            $this->createStub(SourceReader::class),
+            $requestStack,
+            ['avif', 'webp']
+        );
+
+        $generator->generateUrl('uploads/hero.jpg', 200, 200);
+
+        self::assertSame(OutputFormat::Webp, $this->dispatcher->dispatched()[0]->spec->format);
     }
 }

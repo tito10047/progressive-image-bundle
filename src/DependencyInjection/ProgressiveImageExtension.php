@@ -414,7 +414,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 
         $container->register(VariantResponsiveImageUrlGenerator::class)
             ->setArgument('$resolveHandler', new Reference(ResolveVariantUrlHandler::class))
-            ->setArgument('$metadataReader', new Reference(MetadataReader::class))
+            ->setArgument('$sourceReader', new Reference(SourceReader::class))
             ->setArgument('$requestStack', new Reference('request_stack'))
             ->setArgument('$negotiateFormats', $configs['formats']['negotiate'] ?? [])
             ->setArgument('$qualityByFormat', $configs['formats']['quality'] ?? [])

@@ -1,23 +1,41 @@
-# <img src="logo/SVG/ImageBundleLogo-01-cropped.svg" width="100" align="center" alt="Logo"> Progressive Image Bundle Documentation
-
-Welcome to the documentation for the **Progressive Image Bundle** for Symfony. This bundle helps you deliver lightning-fast and fully responsive images with minimal
-effort.
-
-## 📌 Contents
-
-1. [**Installation**](installation.md) - How to get started with the bundle.
-2. [**Configuration**](configuration.md) - Detailed overview of all settings.
-3. [**Usage**](usage.md) - How to use the Twig component in templates.
-4. [**Responsive Strategy**](responsive-strategy.md) - Grid, breakpoints, and upscaling protection.
-5. [**Advanced Features**](advanced.md) - LCP optimization, HTML caching, and architecture.
-
 ---
+layout: home
 
-## 🚀 Why Progressive Image Bundle?
+hero:
+  name: Progressive Image Bundle
+  text: Responsive images for Symfony, done right.
+  tagline: Blurhash placeholders, zero CLS, content-addressed variant generation — one Twig component, no LiipImagine required.
+  image:
+    src: /logo.svg
+    alt: Progressive Image Bundle
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /guide/getting-started
+    - theme: alt
+      text: Twig Component
+      link: /guide/twig-component
+    - theme: alt
+      text: View on GitHub
+      link: https://github.com/tito10047/progressive-image-bundle
 
-- **Fully Responsive:** Automatic generation of `srcset` and `sizes` based on your grid (Tailwind, Bootstrap, or custom).
-- **Modern Placeholders:** Integrated support for Blurhash.
-- **High Performance:** Stream-based metadata reading without loading entire images into memory.
-- **Zero CLS:** Automatically reserves space for the image in the layout.
-- **Smart Preload:** Improve LCP score by automatically preloading critical images.
-- **LiipImagine Integration:** Seamless cooperation with the most popular Symfony image processing bundle.
+features:
+  - icon: 🎨
+    title: Blur & Error Placeholders
+    details: Every image renders behind a Blurhash placeholder decoded client-side, with a built-in error overlay if the source can't be resolved.
+  - icon: 🖼️
+    title: Responsive via <picture>
+    details: Tailwind-like breakpoint selectors ("sm:12 md:6@landscape lg:4@square") compile to a real <picture> element with per-breakpoint srcset/sizes.
+  - icon: ⚙️
+    title: Content-Addressed Variants
+    details: Every generated size is identified by an HMAC hash of its source + spec — the same request from any worker produces the same file, with no coordination needed.
+  - icon: 🚦
+    title: Three Generation Strategies
+    details: Generate synchronously in the request, deferred on kernel.terminate, or asynchronously via Messenger — same pipeline, different "when".
+  - icon: 🎯
+    title: Zero CLS
+    details: Aspect ratio and width are reserved via CSS custom properties before the image ever loads, so nothing jumps.
+  - icon: 🧩
+    title: Built to Be Extended
+    details: Swap the storage backend, image engine, post-processors, path resolution or URL generation — every seam is a Symfony service/interface.
+---

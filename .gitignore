@@ -7,3 +7,6 @@ composer.lock
 /config/reference.php
 /.php-cs-fixer.cache
 /public/media/cache/
+/docs/node_modules/
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/

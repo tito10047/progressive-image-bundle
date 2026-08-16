@@ -98,11 +98,17 @@ final readonly class ImageVariantController
             } catch (\Throwable $e) {
                 // GenerateVariantHandler already recorded the fail marker and published
                 // VariantGenerationFailed — this falls through to the original-image
-                // fallback below, but the failure itself must still be visible somewhere.
-                $this->logger?->warning('Synchronous variant generation failed; falling back to the original image.', [
-                    'source' => $sourcePath->value,
-                    'exception' => $e,
-                ]);
+                // fallback below, but the failure itself must still be visible somewhere,
+                // even in an app that never registered a PSR-3 logger service (the DI
+                // wiring uses IGNORE_ON_INVALID_REFERENCE, so $this->logger can be null).
+                if ($this->logger) {
+                    $this->logger->warning('Synchronous variant generation failed; falling back to the original image.', [
+                        'source' => $sourcePath->value,
+                        'exception' => $e,
+                    ]);
+                } else {
+                    error_log(sprintf('Synchronous variant generation failed for source "%s": %s', $sourcePath->value, $e->getMessage()));
+                }
             }
         }
 

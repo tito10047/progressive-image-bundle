@@ -128,6 +128,28 @@ final class ImageVariantControllerTest extends TestCase
         self::assertTrue($response->headers->hasCacheControlDirective('must-revalidate'));
     }
 
+    public function testLogsToErrorLogWhenGenerationFailsAndNoLoggerServiceIsAvailable(): void
+    {
+        $this->sourceReader = FakeSourceReader::failingWith();
+
+        $previousErrorLog = ini_get('error_log');
+        $tmpFile = sys_get_temp_dir().'/pgi-error-log-'.bin2hex(random_bytes(8)).'.log';
+        ini_set('error_log', $tmpFile);
+
+        try {
+            $request = Request::create($this->signer->sign('https://example.com/pgi_variant_serve'));
+            // makeController() never injects a logger, so $this->logger is null — the
+            // controller must still surface the failure somewhere instead of swallowing it.
+            $this->makeController()->serve($request, 'a.jpg', 200, 200);
+
+            self::assertFileExists($tmpFile);
+            self::assertStringContainsString('Synchronous variant generation failed', (string) file_get_contents($tmpFile));
+        } finally {
+            ini_set('error_log', false !== $previousErrorLog ? $previousErrorLog : '');
+            @unlink($tmpFile);
+        }
+    }
+
     public function testRebuildsTheSameVariantIdFromFilterSetPoiAndContext(): void
     {
         $specFactory = new VariantSpecFactory(

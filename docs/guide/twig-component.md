@@ -129,6 +129,37 @@ into a variant URL. Two differences from the component's own filter-set handling
   is no page render here to redirect through a signed "wait" endpoint, so
   `generation.fallback_while_pending: wait` has no effect on this function.
 
+### Overriding format, size, and more per call
+
+`pgi_filter()`'s third argument, `context`, is a plain array in exactly the same shape as a
+`filter_sets.<name>` entry (`filters`, `format`, `quality`, `progressive`,
+`strip_metadata`). It's merged **on top of** the named filter set — same rules as
+`image_configs` in [Filters, Formats & Quality](/guide/variant-pipeline/filters-formats-and-quality#how-a-variantspec-is-built):
+a plain key like `format` or `quality` simply overrides, while `filters.<name>` is merged
+key by key, so you only need to specify what you're actually changing.
+
+```twig
+{# Same filter set, but WebP instead of whatever format it defines #}
+<img src="{{ pgi_filter('images/hero.jpg', 'thumb_small', { format: 'webp' }) }}" alt="Hero">
+
+{# Override quality only #}
+<img src="{{ pgi_filter('images/hero.jpg', 'thumb_small', { quality: 95 }) }}" alt="Hero">
+
+{# Explicit size: add/override the "resize" (or "thumbnail") filter's size on top of
+   whatever the filter set already configures #}
+<img src="{{ pgi_filter('images/hero.jpg', 'watermarked', { filters: { resize: { size: [400, 300] } } }) }}" alt="Hero">
+
+{# Progressive JPEG + stripped metadata, e.g. for an og:image that should be as small as possible #}
+<meta property="og:image" content="{{ pgi_filter('images/hero.jpg', 'og_image', { progressive: true, strip_metadata: true }) }}">
+```
+
+Any key `filter_sets.<name>` accepts is fair game in `context` — see
+[Filters, Formats & Quality](/guide/variant-pipeline/filters-formats-and-quality) for the
+full filter list (`thumbnail`, `crop`, `resize`, `rotate`, `background`, `watermark`,
+`grayscale`, `negative`, `auto_rotate`, `paste`, `relative_resize`) and the exact merge
+rules (list values like `filters.resize.size` are replaced wholesale, never merged
+element-by-index).
+
 See [Migrating from LiipImagineBundle](/guide/migrating-from-liip) for how this maps onto
 Liip's `imagine_filter()`.
 

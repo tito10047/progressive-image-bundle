@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Tito10047\ProgressiveImageBundle\Variant\Application\Service;
 
+use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\FilterChain;
@@ -34,8 +35,12 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator
  */
 final readonly class VariantSpecFactory
 {
+    /** @var array<FilterModifierInterface> */
+    private array $filterModifiers;
+
     /**
-     * @param array<string, mixed> $imageConfigs
+     * @param array<string, mixed>              $imageConfigs
+     * @param iterable<FilterModifierInterface> $filterModifiers
      */
     public function __construct(
         private FilterSetRegistry $filterSets,
@@ -46,7 +51,11 @@ final readonly class VariantSpecFactory
         private Quality $defaultQuality = new Quality(85),
         private bool $defaultProgressive = false,
         private bool $defaultStripMetadata = false,
+        iterable $filterModifiers = [],
     ) {
+        // Materialized once: a TaggedIteratorArgument-injected iterable may be a one-shot
+        // \Generator, and parseFilters() re-iterates it once per raw filter entry.
+        $this->filterModifiers = is_array($filterModifiers) ? $filterModifiers : iterator_to_array($filterModifiers, false);
     }
 
     /**
@@ -142,6 +151,12 @@ final readonly class VariantSpecFactory
         foreach ($rawFilters as $name => $options) {
             if (!is_string($name) || !is_array($options)) {
                 throw new InvalidFilterDefinition('Malformed filter definition in merged config.');
+            }
+
+            foreach ($this->filterModifiers as $filterModifier) {
+                if ($filterModifier->supports($name)) {
+                    $options = $filterModifier->modify($name, $options);
+                }
             }
 
             $chain = $chain->with($this->filterFactory->create($name, $options));

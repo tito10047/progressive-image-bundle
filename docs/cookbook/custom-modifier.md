@@ -84,8 +84,9 @@ to control ordering relative to the built-in `BaseFilterModifier` (priority `-10
 
 ## `FilterModifierInterface`
 
-A second, narrower interface exists for modifying a single already-resolved filter's
-options rather than the whole context array:
+A second, narrower interface exists for rewriting a single already-resolved filter's raw
+options — after the `filter_sets` → `image_configs` → `context` merge, right before that
+one filter is turned into a typed `Filter` object — rather than the whole context array:
 
 ```php
 namespace Tito10047\ProgressiveImageBundle\Modifier;
@@ -102,7 +103,47 @@ interface FilterModifierInterface
 }
 ```
 
-Also autoconfigured, tagged `pgi.filter_modifier`. **As of this version, nothing in the
-bundle collects that tag into a consumer yet** — implementing it registers the service but
-has no observable effect. Prefer `ModifierInterface` above until this seam is wired up to
-something.
+Use this when what you need to change depends on the *filter's own options*, not just the
+breakpoint/modifier string — `ModifierInterface` only ever sees the modifier string itself
+and the context built so far, with no visibility into what a specific filter's merged
+options ended up being.
+
+### Example: clamping a watermark's opacity
+
+```php
+namespace App\Image;
+
+use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
+
+final class ClampWatermarkOpacity implements FilterModifierInterface
+{
+    public function supports(string $filterName): bool
+    {
+        return 'watermark' === $filterName;
+    }
+
+    public function modify(string $filterName, array $currentOptions): array
+    {
+        $currentOptions['opacity'] = min(50, $currentOptions['opacity'] ?? 100);
+
+        return $currentOptions;
+    }
+}
+```
+
+### Wiring it in
+
+Also autoconfigured — implementing the interface is enough, no explicit tagging needed:
+
+```php
+// config/services.php
+$container->services()->set(App\Image\ClampWatermarkOpacity::class);
+```
+
+`VariantSpecFactory` collects every service tagged `pgi.filter_modifier` (the tag
+`ProgressiveImageExtension::load()` autoconfigures `FilterModifierInterface` into) and, for
+every raw `(filterName, options)` pair in the merged config, runs it through every modifier
+whose `supports($filterName)` returns true — in registration order — before handing the
+(possibly rewritten) options to `FilterFactory::create()`. This runs for both `create()`
+(the responsive/breakpoint path) and `createFromFilterSet()` (`pgi_filter()`, the
+on-the-fly resolve route) alike.

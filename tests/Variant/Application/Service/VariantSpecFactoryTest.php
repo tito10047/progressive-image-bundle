@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Application\Service;
 
 use PHPUnit\Framework\TestCase;
+use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterFactory;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterSetRegistry;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\VariantSpecFactory;
@@ -315,5 +316,91 @@ final class VariantSpecFactoryTest extends TestCase
 
         self::assertTrue($spec->progressive);
         self::assertTrue($spec->stripMetadata);
+    }
+
+    public function testFilterModifierRewritesAFiltersOptionsBeforeItIsBuilt(): void
+    {
+        $modifier = new class implements FilterModifierInterface {
+            public function supports(string $filterName): bool
+            {
+                return 'resize' === $filterName;
+            }
+
+            public function modify(string $filterName, array $currentOptions): array
+            {
+                $currentOptions['size'] = [999, 999];
+
+                return $currentOptions;
+            }
+        };
+
+        $factory = new VariantSpecFactory(
+            new FilterSetRegistry(['hero' => ['filters' => ['resize' => ['size' => [100, 100]]]]], new FilterFactory()),
+            new FilterFactory(),
+            new AspectCropCalculator(),
+            filterModifiers: [$modifier],
+        );
+
+        $spec = $factory->createFromFilterSet('hero');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertSame(['resize' => ['w' => 999, 'h' => 999]], $filters[0]->canonical());
+    }
+
+    public function testFilterModifierThatDoesNotSupportTheFilterLeavesItUnchanged(): void
+    {
+        $modifier = new class implements FilterModifierInterface {
+            public function supports(string $filterName): bool
+            {
+                return false;
+            }
+
+            public function modify(string $filterName, array $currentOptions): array
+            {
+                throw new \LogicException('modify() must not be called when supports() is false.');
+            }
+        };
+
+        $factory = new VariantSpecFactory(
+            new FilterSetRegistry(['hero' => ['filters' => ['resize' => ['size' => [100, 100]]]]], new FilterFactory()),
+            new FilterFactory(),
+            new AspectCropCalculator(),
+            filterModifiers: [$modifier],
+        );
+
+        $spec = $factory->createFromFilterSet('hero');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertSame(['resize' => ['w' => 100, 'h' => 100]], $filters[0]->canonical());
+    }
+
+    public function testFilterModifierAlsoAppliesToCreateNotJustCreateFromFilterSet(): void
+    {
+        $modifier = new class implements FilterModifierInterface {
+            public function supports(string $filterName): bool
+            {
+                return 'resize' === $filterName;
+            }
+
+            public function modify(string $filterName, array $currentOptions): array
+            {
+                $currentOptions['size'] = [999, 999];
+
+                return $currentOptions;
+            }
+        };
+
+        $factory = new VariantSpecFactory(
+            new FilterSetRegistry(['hero' => ['filters' => ['resize' => ['size' => [100, 100]]]]], new FilterFactory()),
+            new FilterFactory(),
+            new AspectCropCalculator(),
+            filterModifiers: [$modifier],
+        );
+
+        $spec = $factory->create(200, 150, 'hero');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertInstanceOf(Resize::class, $filters[0]);
+        self::assertSame(['resize' => ['w' => 999, 'h' => 999]], $filters[0]->canonical());
     }
 }

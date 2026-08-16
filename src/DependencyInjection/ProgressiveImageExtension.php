@@ -381,7 +381,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$defaultFormat', $defaultFormat)
             ->setArgument('$defaultQuality', new Reference('progressive_image.variant.default_quality'))
             ->setArgument('$defaultProgressive', $configs['formats']['progressive'] ?? false)
-            ->setArgument('$defaultStripMetadata', $configs['formats']['strip_metadata'] ?? false);
+            ->setArgument('$defaultStripMetadata', $configs['formats']['strip_metadata'] ?? false)
+            ->setArgument('$filterModifiers', new TaggedIteratorArgument('pgi.filter_modifier'));
         $container->register(PendingGenerationTracker::class)
             ->addTag('kernel.reset', ['method' => 'reset']);
 

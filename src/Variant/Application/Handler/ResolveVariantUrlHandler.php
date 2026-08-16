@@ -79,8 +79,22 @@ final class ResolveVariantUrlHandler
             return new ResolvedUrl($this->storage->publicPath($path), false);
         }
 
-        $this->tracker->markPending($variant->id);
         $this->dispatcher->dispatch(new GenerateVariant($variant->source, $variant->spec));
+
+        // A synchronous dispatcher (generation.strategy: sync) may have already produced
+        // the variant by the time dispatch() returns — async/terminate dispatchers never
+        // do (they only ever queue the work), so this check is a no-op for them, but for
+        // sync it's the difference between serving the real generated image on the very
+        // first request and needlessly falling back to the original for one extra request.
+        if ($this->storage->exists($path)) {
+            return new ResolvedUrl($this->storage->publicPath($path), false);
+        }
+
+        // Only mark (and therefore force the response to no-store, see
+        // ResponseCacheOverrideListener) once it's confirmed the variant is still not
+        // ready — a page whose sync generation just succeeded above has nothing pending
+        // and can be cached normally.
+        $this->tracker->markPending($variant->id);
 
         $url = match ($this->fallback) {
             PendingFallbackStrategy::Original => $this->originalUrlResolver->resolve($variant->source),

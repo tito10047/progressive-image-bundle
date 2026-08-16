@@ -84,15 +84,16 @@ final class VariantContextWiringTest extends TestCase
 
         $query = new ResolveVariantUrl(new SourcePath('test.png'), 50, 50, 'thumbnail_square');
 
-        $miss = $resolveHandler($query);
-        self::assertTrue($miss->pending, 'first resolve must be a miss: nothing generated yet');
-        self::assertSame('/test.png', $miss->url, 'fallback_while_pending defaults to "original"');
+        // generation.strategy=sync runs generation inline: by the time dispatch() returns
+        // inside resolve(), the variant is already in storage, so even the very first
+        // resolve() call must report a hit, not the "original image" fallback.
+        $firstResolve = $resolveHandler($query);
+        self::assertFalse($firstResolve->pending, 'sync generation already completed within this same resolve() call');
+        self::assertStringStartsWith('/media/pgi/', $firstResolve->url);
 
-        // generation.strategy=sync means ResolveVariantUrlHandler already dispatched
-        // (and therefore ran) generation synchronously. ResolveVariantUrlHandler is
-        // shared(false), so fetching it again yields a fresh instance — the same as a
-        // second, independent injection point — and its own memoization can't mask a
-        // stale result.
+        // ResolveVariantUrlHandler is shared(false), so fetching it again yields a fresh
+        // instance — the same as a second, independent injection point — confirming the
+        // hit isn't an artifact of the first handler's own memoization.
         $secondResolveHandler = $container->get(ResolveVariantUrlHandler::class);
         $hit = $secondResolveHandler($query);
         self::assertFalse($hit->pending, 'second resolve, against a fresh handler instance, must be a storage hit');

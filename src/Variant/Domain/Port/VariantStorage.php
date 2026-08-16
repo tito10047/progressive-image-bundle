@@ -22,6 +22,11 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantPath;
  */
 interface VariantStorage
 {
+    /**
+     * @phpstan-impure reflects external, mutable filesystem state — the same $path can
+     * legitimately answer differently across two calls within a single request (e.g.
+     * ResolveVariantUrlHandler re-checking after a synchronous dispatch()).
+     */
     public function exists(VariantPath $path): bool;
 
     public function write(VariantPath $path, GeneratedImage $image): void;

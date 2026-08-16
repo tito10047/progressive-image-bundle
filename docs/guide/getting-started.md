@@ -12,7 +12,8 @@ Encore / bundler-based frontend, since it only needs a working
 composer require tito10047/progressive-image-bundle
 ```
 
-If you're not using Symfony Flex, register the bundle manually:
+There's no published Symfony Flex recipe yet, so `composer require` won't auto-configure
+anything — register the bundle and import its routing manually, both shown below.
 
 ```php
 // config/bundles.php
@@ -24,10 +25,12 @@ return [
 
 ## 2. Import the routing
 
-The bundle exposes one route, `pgi_variant_serve`, used to serve a variant that is still
+The bundle exposes two routes: `pgi_variant_serve`, used to serve a variant that is still
 pending generation and as an nginx `try_files` fallback target (see
-[Serving Behind Nginx](/cookbook/serving-behind-nginx)). Import it even if you don't plan
-to use those flows immediately:
+[Serving Behind Nginx](/cookbook/serving-behind-nginx)); and `pgi_variant_resolve`, the
+on-the-fly `{filterSet}/{path}` resolve route (see
+[On-the-Fly Resolve Route](/cookbook/on-the-fly-resolve-route)). Import both even if you
+don't plan to use those flows immediately:
 
 ```yaml
 # config/routes/progressive_image.yaml
@@ -134,6 +137,38 @@ breakpoint, and (if `variant_store.storage` is configured) generates every requi
 first request — a `<picture>` element with the correct `srcset`/`sizes` is rendered
 immediately, and subsequent requests are served straight from storage. See
 [The Twig Component](/guide/twig-component) for every available attribute.
+
+## For maintainers: what a Flex recipe would look like
+
+Symfony Flex recipes live in the separate
+[`symfony/recipes-contrib`](https://github.com/symfony/recipes-contrib) repository (not
+inside this one) as a PR adding `tito10047/progressive-image-bundle/<version>/`, with:
+
+- `manifest.json`:
+  ```json
+  {
+      "bundles": {
+          "Tito10047\\ProgressiveImageBundle\\ProgressiveImageBundle": ["all"]
+      },
+      "copy-from-recipe": {
+          "config/": "%CONFIG_DIR%/"
+      }
+  }
+  ```
+- `config/packages/progressive_image.yaml` — a minimal starter config (at least one
+  `resolvers` entry, since that's required):
+  ```yaml
+  progressive_image:
+      resolvers:
+          default:
+              type: filesystem
+              roots: ['%kernel.project_dir%/public']
+  ```
+- `config/routes/progressive_image.yaml` — importing this bundle's `config/routes.php`,
+  the same snippet shown in step 2 above.
+
+This automates exactly the two manual steps above for anyone using Flex; until it's
+submitted and merged, follow steps 1–2 as written.
 
 ## What's next?
 

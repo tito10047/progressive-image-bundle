@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Progressive Image Bundle
   text: Responsive images for Symfony, done right.
-  tagline: Blurhash placeholders, zero CLS, content-addressed variant generation — one Twig component, no LiipImagine required.
+  tagline: One Twig component turns any image into a fully responsive, Blurhash-placeholder, zero-CLS, AVIF/WebP-negotiated <picture> element — content-addressed and cached forever. No LiipImagineBundle required.
   image:
     src: /logo.svg
     alt: Progressive Image Bundle

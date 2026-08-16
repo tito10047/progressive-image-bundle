@@ -1,0 +1,57 @@
+/**
+ * pgi.blue brand theme
+ * Palette derived from the bundle logo gradient (#804CD3 -> #0001FC) and ink #060114.
+ */
+:root {
+  --pgi-violet: #7c4dd8;
+  --pgi-blue: #3457ff;
+  --pgi-blue-deep: #1a2fb8;
+  --pgi-ink: #060114;
+
+  --pgi-gradient: linear-gradient(135deg, var(--pgi-violet) 0%, var(--pgi-blue) 55%, var(--pgi-blue-deep) 100%);
+
+  --vp-c-brand-1: var(--pgi-blue);
+  --vp-c-brand-2: var(--pgi-blue-deep);
+  --vp-c-brand-3: #6d84ff;
+  --vp-c-brand-soft: rgba(52, 87, 255, 0.14);
+
+  --vp-c-tip-1: var(--pgi-blue);
+  --vp-c-tip-2: var(--pgi-blue-deep);
+  --vp-c-tip-3: var(--vp-c-brand-soft);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+}
+
+.dark {
+  --vp-c-brand-1: #7c8fff;
+  --vp-c-brand-2: #5a6dff;
+  --vp-c-brand-3: #9aa8ff;
+  --vp-c-brand-soft: rgba(124, 143, 255, 0.16);
+}
+
+/* Hero name gets the brand gradient instead of a flat solid color */
+.VPHero .name {
+  background: var(--pgi-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.VPButton.brand {
+  background: var(--pgi-gradient);
+  border-color: transparent;
+}
+
+.VPButton.brand:hover {
+  background: var(--pgi-gradient);
+  opacity: 0.88;
+}
+
+/* Domain wordmark used across custom homepage sections */
+.pgi-domain {
+  font-family: var(--vp-font-family-mono);
+  font-weight: 600;
+  background: var(--pgi-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

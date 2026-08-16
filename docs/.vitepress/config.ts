@@ -1,22 +1,32 @@
 import { defineConfig } from 'vitepress';
 
+const description = 'High-performance progressive image loading for Symfony — Blurhash placeholders, zero CLS, content-addressed responsive variants. No LiipImagineBundle required.';
+
 export default defineConfig({
   title: 'Progressive Image Bundle',
-  description: 'High-performance progressive image loading for Symfony — Blurhash placeholders, zero CLS, content-addressed responsive variants.',
-  base: '/progressive-image-bundle/',
+  description,
+  base: '/',
   lang: 'en-US',
   cleanUrls: true,
   lastUpdated: true,
 
+  sitemap: {
+    hostname: 'https://pgi.blue',
+  },
+
   head: [
-    ['link', { rel: 'icon', href: '/progressive-image-bundle/logo.svg' }],
-    ['meta', { name: 'theme-color', content: '#2563eb' }],
+    ['link', { rel: 'icon', href: '/logo.svg' }],
+    ['link', { rel: 'canonical', href: 'https://pgi.blue/' }],
+    ['meta', { name: 'theme-color', content: '#3457FF' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Progressive Image Bundle' }],
-    ['meta', {
-      property: 'og:description',
-      content: 'High-performance progressive image loading for Symfony — Blurhash placeholders, zero CLS, content-addressed responsive variants.',
-    }],
+    ['meta', { property: 'og:url', content: 'https://pgi.blue/' }],
+    ['meta', { property: 'og:site_name', content: 'pgi.blue' }],
+    ['meta', { property: 'og:title', content: 'Progressive Image Bundle — pgi.blue' }],
+    ['meta', { property: 'og:description', content: description }],
+    ['meta', { property: 'og:image', content: 'https://pgi.blue/logo.svg' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'Progressive Image Bundle — pgi.blue' }],
+    ['meta', { name: 'twitter:description', content: description }],
   ],
 
   themeConfig: {
@@ -42,6 +52,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'Migrating from LiipImagineBundle', link: '/guide/migrating-from-liip' },
           { text: 'Configuration Reference', link: '/guide/configuration-reference' },
           { text: 'The Twig Component', link: '/guide/twig-component' },
           { text: 'Responsive Grid & Ratios', link: '/guide/responsive-grid-and-ratios' },

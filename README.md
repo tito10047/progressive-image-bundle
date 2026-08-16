@@ -18,7 +18,7 @@ This bundle handles everything you need for modern image management. From **full
 
 > ⚠️ **Version 2.0 is experimental.** It's a from-scratch DDD rewrite of the Variant pipeline and hasn't been tagged as a stable release yet — expect breaking changes before a final `2.0.0` tag.
 
-**📖 Full documentation: [tito10047.github.io/progressive-image-bundle](https://tito10047.github.io/progressive-image-bundle/)**
+**📖 Full documentation: [pgi.blue](https://pgi.blue/)**
 
 ---
 
@@ -71,7 +71,7 @@ dimensions based on the container width defined by your CSS framework (Bootstrap
 > **What is a "container"?** The bundle automatically detects your CSS framework (Bootstrap or Tailwind) and extracts the exact container widths for each breakpoint from
 > its configuration. It then uses these values to calculate the precise pixel dimensions for your images.
 
-Full syntax reference: [The Twig Component → Sizes syntax](https://tito10047.github.io/progressive-image-bundle/guide/twig-component#sizes-syntax).
+Full syntax reference: [The Twig Component → Sizes syntax](https://pgi.blue/guide/twig-component#sizes-syntax).
 
 ---
 
@@ -79,7 +79,7 @@ Full syntax reference: [The Twig Component → Sizes syntax](https://tito10047.g
 
 ### Point of Interest (PoI) Cropping
 
-Define a focal point as **pixel coordinates in the original image** (e.g., `pointInterest="544x320"`) so the most important subject stays in frame regardless of the target aspect ratio. The bundle finds the largest region of the original that matches the target ratio, centres it on the focal point, and scales the result — never slicing at original resolution. → [Cookbook: Point of Interest Cropping](https://tito10047.github.io/progressive-image-bundle/cookbook/point-of-interest-cropping)
+Define a focal point as **pixel coordinates in the original image** (e.g., `pointInterest="544x320"`) so the most important subject stays in frame regardless of the target aspect ratio. The bundle finds the largest region of the original that matches the target ratio, centres it on the focal point, and scales the result — never slicing at original resolution. → [Cookbook: Point of Interest Cropping](https://pgi.blue/cookbook/point-of-interest-cropping)
 
 ### Smart Upscaling Protection
 
@@ -94,12 +94,12 @@ bytes.
 
 Every generated file is identified by an HMAC hash of its source + processing spec — the same request from any request or worker produces the same file, with no
 coordination needed beyond a short-lived lock. Choose when generation actually runs: inline in the request (`sync`), deferred to `kernel.terminate`, or asynchronously via
-Symfony Messenger (`async`, the default). → [Variant Pipeline → Overview](https://tito10047.github.io/progressive-image-bundle/guide/variant-pipeline/overview)
+Symfony Messenger (`async`, the default). → [Variant Pipeline → Overview](https://pgi.blue/guide/variant-pipeline/overview)
 
 ### Custom Modifiers & Filters
 
 Extend the selector logic with your own modifiers (e.g., `lg:4|circle`), or add your own crop/resize/watermark filters via `filter_sets`. You can implement custom logic
-and even prioritize modifiers to override default behavior. → [Cookbook: Custom Modifier](https://tito10047.github.io/progressive-image-bundle/cookbook/custom-modifier)
+and even prioritize modifiers to override default behavior. → [Cookbook: Custom Modifier](https://pgi.blue/cookbook/custom-modifier)
 
 ---
 
@@ -109,7 +109,7 @@ and even prioritize modifiers to override default behavior. → [Cookbook: Custo
 composer require tito10047/progressive-image-bundle
 ```
 
-See [Getting Started](https://tito10047.github.io/progressive-image-bundle/guide/getting-started) for routing, cache pool, and full setup steps.
+See [Getting Started](https://pgi.blue/guide/getting-started) for routing, cache pool, and full setup steps.
 
 ---
 
@@ -138,7 +138,7 @@ progressive_image:
         strategy: async # async (default) | sync | terminate
 ```
 
-Every available option is documented in the [Configuration Reference](https://tito10047.github.io/progressive-image-bundle/guide/configuration-reference).
+Every available option is documented in the [Configuration Reference](https://pgi.blue/guide/configuration-reference).
 
 ---
 
@@ -150,14 +150,14 @@ MIT License. See [LICENSE](LICENSE) for more information.
 
 ## 📚 Documentation
 
-**📖 Full documentation site: [tito10047.github.io/progressive-image-bundle](https://tito10047.github.io/progressive-image-bundle/)**
+**📖 Full documentation site: [pgi.blue](https://pgi.blue/)**
 
 | Section | What's in it |
 |:--|:--|
-| [Guide](https://tito10047.github.io/progressive-image-bundle/guide/getting-started) | Installation, full configuration reference, the Twig component, responsive grid & ratios, caching, architecture |
-| [Variant Pipeline](https://tito10047.github.io/progressive-image-bundle/guide/variant-pipeline/overview) | How images actually get generated: content-addressed variants, the three generation strategies, filters/formats/quality, storage |
-| [Cookbook](https://tito10047.github.io/progressive-image-bundle/cookbook/custom-storage-backend) | Step-by-step recipes for extending the bundle: custom storage, image engine, post-processors, path decorators, URL generators, modifiers, async workers, point-of-interest cropping, serving behind nginx |
-| [API Reference](https://tito10047.github.io/progressive-image-bundle/api) | Every interface, model, route and command, as a quick lookup table |
+| [Guide](https://pgi.blue/guide/getting-started) | Installation, full configuration reference, the Twig component, responsive grid & ratios, caching, architecture |
+| [Variant Pipeline](https://pgi.blue/guide/variant-pipeline/overview) | How images actually get generated: content-addressed variants, the three generation strategies, filters/formats/quality, storage |
+| [Cookbook](https://pgi.blue/cookbook/custom-storage-backend) | Step-by-step recipes for extending the bundle: custom storage, image engine, post-processors, path decorators, URL generators, modifiers, async workers, point-of-interest cropping, serving behind nginx |
+| [API Reference](https://pgi.blue/api) | Every interface, model, route and command, as a quick lookup table |
 
 The docs source lives in [`docs/`](docs/) and is built with [VitePress](https://vitepress.dev/) — run `npm install && npm run dev` inside that directory to preview changes locally.
 

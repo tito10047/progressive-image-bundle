@@ -78,6 +78,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\CwebpPos
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\JpegoptimPostProcessor;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\PngquantPostProcessor;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ResolveFilterController;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\EventListener\ResponseCacheOverrideListener;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Twig\FilterUrlExtension;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\QueryPendingUrlBuilder;
@@ -475,6 +476,15 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$generateHandler', new Reference(GenerateVariantHandler::class))
             ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
             ->setArgument('$urlSigner', new Reference(UrlSigner::class))
+            ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
+            ->setPublic(true);
+
+        $container->register(ResolveFilterController::class)
+            ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$generateHandler', new Reference(GenerateVariantHandler::class))
+            ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
             ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
             ->setPublic(true);
 

@@ -135,6 +135,10 @@ class ProgressiveImageTestingKernel extends Kernel
             '_controller' => \Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController::class.'::serve',
         ]));
 
+        $routes->add('pgi_variant_resolve', new Route('/media/pgi/resolve/{filterSet}/{path}', [
+            '_controller' => \Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ResolveFilterController::class.'::resolve',
+        ], ['path' => '.+']));
+
         return $routes;
     }
 

@@ -63,6 +63,7 @@ export default defineConfig({
         items: [
           { text: 'Custom Storage Backend', link: '/cookbook/custom-storage-backend' },
           { text: 'Remote (HTTP) Source Loading', link: '/cookbook/http-source-loader' },
+          { text: 'On-the-Fly Resolve Route', link: '/cookbook/on-the-fly-resolve-route' },
           { text: 'Custom Image Manipulator', link: '/cookbook/custom-image-manipulator' },
           { text: 'Custom Post-Processor', link: '/cookbook/custom-post-processor' },
           { text: 'Custom Path Decorator', link: '/cookbook/custom-path-decorator' },

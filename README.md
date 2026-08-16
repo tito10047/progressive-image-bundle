@@ -16,6 +16,8 @@ This bundle handles everything you need for modern image management. From **full
 
 > 🌍 **Production Ready:** This bundle is successfully deployed and running in production on live websites such as [mostka.sk](https://mostka.sk/) and [vsetkosada.sk](https://vsetkosada.sk/).
 
+> ⚠️ **Version 2.0 is experimental.** It's a from-scratch DDD rewrite of the Variant pipeline and hasn't been tagged as a stable release yet — expect breaking changes before a final `2.0.0` tag.
+
 **📖 Full documentation: [tito10047.github.io/progressive-image-bundle](https://tito10047.github.io/progressive-image-bundle/)**
 
 ---

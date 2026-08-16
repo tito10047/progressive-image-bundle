@@ -494,7 +494,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(FlysystemVariantStorage::class)
             ->setArgument('$filesystem', new Reference($storageId))
             ->setArgument('$prefix', $configs['variant_store']['prefix'] ?? '')
-            ->setArgument('$publicUrlPrefix', $configs['variant_store']['public_url_prefix'] ?? '/media/pgi');
+            ->setArgument('$publicUrlPrefix', $configs['variant_store']['public_url_prefix'] ?? '/media/pgi')
+            ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE));
         $container->setAlias(VariantStorage::class, FlysystemVariantStorage::class);
     }
 

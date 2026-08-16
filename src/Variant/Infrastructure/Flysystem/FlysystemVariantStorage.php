@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Flysystem;
 
 use League\Flysystem\FilesystemOperator;
+use Psr\Log\LoggerInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\VariantDomainException;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\GeneratedImage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
@@ -34,6 +35,7 @@ final readonly class FlysystemVariantStorage implements VariantStorage
         private FilesystemOperator $filesystem,
         private string $prefix = '',
         private string $publicUrlPrefix = '/media/pgi',
+        private ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -112,8 +114,18 @@ final readonly class FlysystemVariantStorage implements VariantStorage
         } catch (\Throwable $e) {
             try {
                 $this->filesystem->delete($tmp);
-            } catch (\Throwable) {
-                // best-effort cleanup; the original move() failure is what matters
+            } catch (\Throwable $cleanupException) {
+                // Best-effort cleanup; the original move() failure is what matters and is
+                // rethrown below regardless, but an orphaned tmp file is itself worth a
+                // trace so it isn't a mystery later.
+                if ($this->logger) {
+                    $this->logger->warning('Failed to clean up orphaned temp file after a failed move().', [
+                        'tmp' => $tmp,
+                        'exception' => $cleanupException,
+                    ]);
+                } else {
+                    error_log(sprintf('Failed to clean up orphaned temp file "%s" after a failed move(): %s', $tmp, $cleanupException->getMessage()));
+                }
             }
 
             throw $e;

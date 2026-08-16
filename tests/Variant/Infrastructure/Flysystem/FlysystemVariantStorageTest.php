@@ -95,6 +95,50 @@ final class FlysystemVariantStorageTest extends TestCase
         $storage->write($this->makePath(), new GeneratedImage('data', OutputFormat::Webp));
     }
 
+    public function testLogsWhenCleanupOfTheOrphanedTmpFileAlsoFailsButStillRethrowsTheOriginalError(): void
+    {
+        $filesystem = $this->createMock(FilesystemOperator::class);
+        $filesystem->method('write');
+        $filesystem->method('move')->willThrowException(new UnableToMoveFile('move failed'));
+        $filesystem->method('delete')->willThrowException(new \RuntimeException('delete also failed'));
+
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+
+        $storage = new FlysystemVariantStorage($filesystem, logger: $logger);
+
+        try {
+            $storage->write($this->makePath(), new GeneratedImage('data', OutputFormat::Webp));
+            self::fail('Expected UnableToMoveFile to be thrown.');
+        } catch (UnableToMoveFile $e) {
+            self::assertSame('move failed', $e->getMessage());
+        }
+    }
+
+    public function testLogsToErrorLogWhenCleanupFailsAndNoLoggerServiceIsAvailable(): void
+    {
+        $filesystem = $this->createMock(FilesystemOperator::class);
+        $filesystem->method('write');
+        $filesystem->method('move')->willThrowException(new UnableToMoveFile('move failed'));
+        $filesystem->method('delete')->willThrowException(new \RuntimeException('delete also failed'));
+
+        $storage = new FlysystemVariantStorage($filesystem);
+
+        $previousErrorLog = ini_get('error_log');
+        $tmpFile = sys_get_temp_dir().'/pgi-error-log-'.bin2hex(random_bytes(8)).'.log';
+        ini_set('error_log', $tmpFile);
+
+        try {
+            $storage->write($this->makePath(), new GeneratedImage('data', OutputFormat::Webp));
+        } catch (UnableToMoveFile) {
+        } finally {
+            self::assertFileExists($tmpFile);
+            self::assertStringContainsString('Failed to clean up orphaned temp file', (string) file_get_contents($tmpFile));
+            ini_set('error_log', false !== $previousErrorLog ? $previousErrorLog : '');
+            @unlink($tmpFile);
+        }
+    }
+
     public function testWriteFailMarkerIsWrittenAtomicallyViaTmpAndMove(): void
     {
         $filesystem = new Filesystem(new LocalFilesystemAdapter($this->root));

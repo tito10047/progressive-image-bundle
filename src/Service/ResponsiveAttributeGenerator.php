@@ -31,6 +31,8 @@ final class ResponsiveAttributeGenerator
      *      } $gridConfig
      * @param array<string, string> $ratioConfig
      * @param int[]                 $retinaMultipliers
+     * @param array<string, array{mime: string, quality: int|null}> $pictureFormats formats rendered as extra
+     *                                                                              <picture><source type="..."> candidates, most preferred first
      */
     public function __construct(
         private array $gridConfig,
@@ -41,6 +43,7 @@ final class ResponsiveAttributeGenerator
         private readonly ?ModifierProvider $modifierProvider = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly int $fluidMaxWidth = 1920,
+        private readonly array $pictureFormats = [],
     ) {
     }
 
@@ -89,20 +92,20 @@ final class ResponsiveAttributeGenerator
                 : $context;
 
             $multipliers = $retina ? $this->retinaMultipliers : [1];
-            $srcsetParts = [];
-            $firstUrl = null;
+            $media = $layout['min_viewport'] > 0 ? "(min-width: {$layout['min_viewport']}px)" : null;
 
-            foreach ($multipliers as $multiplier) {
-                $mPixelWidth = (int) round($pixelWidth * $multiplier);
-                $url = $this->generateUrl($path, $mPixelWidth, $originalWidth, $pointInterest, $assignmentContext, $ratio);
-
-                if ($url) {
-                    if (null === $firstUrl) {
-                        $firstUrl = $url;
-                    }
-                    $srcsetParts[] = $url." {$mPixelWidth}w";
+            foreach ($this->pictureFormats as $formatId => $formatInfo) {
+                $formatContext = $assignmentContext;
+                $formatContext['format'] = $formatId;
+                if (null !== $formatInfo['quality']) {
+                    $formatContext['quality'] = $formatInfo['quality'];
                 }
+
+                [$formatSrcsetParts] = $this->buildSrcsetParts($path, $pixelWidth, $originalWidth, $pointInterest, $formatContext, $ratio, $multipliers);
+                $sources[] = new ResponsiveSource($media, implode(', ', $formatSrcsetParts), $sizeValue, $formatInfo['mime']);
             }
+
+            [$srcsetParts, $firstUrl] = $this->buildSrcsetParts($path, $pixelWidth, $originalWidth, $pointInterest, $assignmentContext, $ratio, $multipliers);
 
             if ($preload && $firstUrl && $srcsetParts) {
                 $preloadUrl ??= $firstUrl;
@@ -123,7 +126,6 @@ final class ResponsiveAttributeGenerator
             }
 
             $srcset = implode(', ', $srcsetParts);
-            $media = $layout['min_viewport'] > 0 ? "(min-width: {$layout['min_viewport']}px)" : null;
             $source = new ResponsiveSource($media, $srcset, $sizeValue);
 
             if (null === $media) {
@@ -211,6 +213,39 @@ final class ResponsiveAttributeGenerator
         }
 
         return [$pixelWidth, $sizeValue, $sizeValue];
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @param int[]                $multipliers
+     *
+     * @return array{0: string[], 1: ?string} [srcsetParts ("url Nw" strings), firstUrl]
+     */
+    private function buildSrcsetParts(
+        string $path,
+        float $pixelWidth,
+        int $originalWidth,
+        ?string $pointInterest,
+        array $context,
+        ?float $ratio,
+        array $multipliers,
+    ): array {
+        $srcsetParts = [];
+        $firstUrl = null;
+
+        foreach ($multipliers as $multiplier) {
+            $mPixelWidth = (int) round($pixelWidth * $multiplier);
+            $url = $this->generateUrl($path, $mPixelWidth, $originalWidth, $pointInterest, $context, $ratio);
+
+            if ($url) {
+                if (null === $firstUrl) {
+                    $firstUrl = $url;
+                }
+                $srcsetParts[] = $url." {$mPixelWidth}w";
+            }
+        }
+
+        return [$srcsetParts, $firstUrl];
     }
 
     private function generateUrl(

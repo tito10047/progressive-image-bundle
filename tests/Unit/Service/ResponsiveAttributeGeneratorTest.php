@@ -434,4 +434,69 @@ class ResponsiveAttributeGeneratorTest extends TestCase
 
         $this->assertStringContainsString('url-circle 360w', $result->getSources()[0]->getSrcset());
     }
+
+    public function testPictureFormatsProduceTypedSourcesBeforeThePlainSourcePerBreakpoint(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('default', 12, 'square'),
+            new BreakpointAssignment('md', 6, 'landscape'),
+        ];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturnCallback(
+            static function (string $p, int $w, ?int $h, ?string $poi, array $context) {
+                $format = $context['format'] ?? 'plain';
+                $quality = $context['quality'] ?? 'none';
+
+                return "url-{$w}-{$format}-{$quality}";
+            }
+        );
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            pictureFormats: [
+                'avif' => ['mime' => 'image/avif', 'quality' => 60],
+                'webp' => ['mime' => 'image/webp', 'quality' => 82],
+            ],
+        );
+
+        $result = $generator->generate($path, $assignments, $originalWidth, false);
+
+        $sources = $result->getSources();
+        $this->assertCount(5, $sources);
+
+        // md breakpoint group: avif, webp, plain — in that order, sharing the same media.
+        $this->assertSame('(min-width: 768px)', $sources[0]->getMedia());
+        $this->assertSame('image/avif', $sources[0]->getType());
+        $this->assertStringContainsString('url-360-avif-60', $sources[0]->getSrcset());
+
+        $this->assertSame('(min-width: 768px)', $sources[1]->getMedia());
+        $this->assertSame('image/webp', $sources[1]->getType());
+        $this->assertStringContainsString('url-360-webp-82', $sources[1]->getSrcset());
+
+        $this->assertSame('(min-width: 768px)', $sources[2]->getMedia());
+        $this->assertNull($sources[2]->getType());
+        $this->assertStringContainsString('url-360-plain-none', $sources[2]->getSrcset());
+        $this->assertStringNotContainsString('avif', $sources[2]->getSrcset());
+
+        // default breakpoint group (media null, otherwise only used for the <img> fallback):
+        // its format-typed sources still land in $sources so <picture> can offer them too.
+        $this->assertNull($sources[3]->getMedia());
+        $this->assertSame('image/avif', $sources[3]->getType());
+        $this->assertStringContainsString('url-1920-avif-60', $sources[3]->getSrcset());
+
+        $this->assertNull($sources[4]->getMedia());
+        $this->assertSame('image/webp', $sources[4]->getType());
+        $this->assertStringContainsString('url-1920-webp-82', $sources[4]->getSrcset());
+
+        // The plain/default-format source for the default breakpoint only ever becomes the
+        // <img> fallback (getDefaultSource()), never a typed <source>.
+        $this->assertNull($result->getDefaultSource()->getType());
+        $this->assertStringContainsString('url-1920-plain-none', $result->getDefaultSource()->getSrcset());
+    }
 }

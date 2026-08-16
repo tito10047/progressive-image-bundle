@@ -17,6 +17,7 @@ class ResponsiveSource implements ResponsiveSourceInterface
         private readonly ?string $media,
         private readonly string $srcset,
         private readonly string $sizes,
+        private readonly ?string $type = null,
     ) {
     }
 
@@ -33,5 +34,10 @@ class ResponsiveSource implements ResponsiveSourceInterface
     public function getSizes(): string
     {
         return $this->sizes;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
     }
 }

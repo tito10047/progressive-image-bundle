@@ -27,6 +27,7 @@
 			{% for source in this.responsiveAttributes.sources %}
 				<source
 						{% if source.media %}media="{{ source.media }}"{% endif %}
+						{% if source.type %}type="{{ source.type }}"{% endif %}
 						srcset="{{ source.srcset|raw }}"
 						sizes="{{ source.sizes }}"
 				>

@@ -18,4 +18,6 @@ interface ResponsiveSourceInterface
     public function getSrcset(): string;
 
     public function getSizes(): string;
+
+    public function getType(): ?string;
 }

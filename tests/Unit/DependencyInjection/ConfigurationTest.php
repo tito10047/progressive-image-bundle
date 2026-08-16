@@ -147,6 +147,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame('jpeg', $config['formats']['default']);
         $this->assertSame(85, $config['formats']['default_quality']);
         $this->assertSame([], $config['formats']['negotiate']);
+        $this->assertSame([], $config['formats']['picture']);
         $this->assertSame(['jpeg' => 85, 'webp' => 82, 'avif' => 60, 'png' => 90], $config['formats']['quality']);
         $this->assertSame([], $config['filter_sets']);
     }
@@ -169,6 +170,35 @@ class ConfigurationTest extends TestCase
         $this->assertSame(['avif', 'webp'], $config['formats']['negotiate']);
         $this->assertSame(55, $config['formats']['quality']['avif']);
         $this->assertSame(82, $config['formats']['quality']['webp'], 'unspecified formats keep their own defaults');
+    }
+
+    public function testFormatsPictureIsConfigurableAndValidatedAgainstTheSameEnum(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'picture' => ['avif', 'webp'],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['avif', 'webp'], $config['formats']['picture']);
+
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+        $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'picture' => ['heic'],
+                ],
+            ],
+        ]);
     }
 
     public function testPostProcessorsDefaultToDisabledWithTheirNameAsTheBinary(): void

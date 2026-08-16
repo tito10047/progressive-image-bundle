@@ -158,6 +158,15 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $retina = $retinaConfig['enabled'] ?? true;
         $retinaMultipliers = $retinaConfig['multipliers'] ?? [1, 2];
 
+        $qualityByFormat = $configs['formats']['quality'] ?? [];
+        $pictureFormats = [];
+        foreach ($configs['formats']['picture'] ?? [] as $pictureFormat) {
+            $pictureFormats[$pictureFormat] = [
+                'mime' => OutputFormat::from($pictureFormat)->mime(),
+                'quality' => $qualityByFormat[$pictureFormat] ?? null,
+            ];
+        }
+
         if (!$imageCacheEnabled) {
             $imageCacheServiceReference = null;
         } else {
@@ -239,6 +248,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$modifierProvider', new Reference(ModifierProvider::class))
             ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
             ->setArgument('$fluidMaxWidth', $responsiveConfig['fluid_max_width'] ?? 1920)
+            ->setArgument('$pictureFormats', $pictureFormats)
             ->setPublic(true)
         ;
 

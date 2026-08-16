@@ -1,0 +1,6 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>PGI Test</h1>
+    <twig:pgi:Image src="{{ asset('images/test.jpg') }}" alt="e2e test" sizes="sm:12 md:6@landscape" />
+{% endblock %}

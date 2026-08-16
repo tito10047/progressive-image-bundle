@@ -22,12 +22,16 @@ final class AssetMapperResolver implements PathResolverInterface
     private ?array $publicPathToSourcePath = null;
 
     public function __construct(
-        private readonly AssetMapperInterface $assetMapper,
+        private readonly ?AssetMapperInterface $assetMapper,
     ) {
     }
 
     public function resolve(string $path): string
     {
+        if (null === $this->assetMapper) {
+            throw new \LogicException('An "asset_mapper" resolver is configured, but symfony/asset-mapper is not installed. Run "composer require symfony/asset-mapper", or remove this resolver from your "progressive_image.resolvers" configuration.');
+        }
+
         $path = '/'.mb_ltrim($path, '/');
 
         if (null === $this->publicPathToSourcePath) {

@@ -316,8 +316,12 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                     ->setArgument('$allowUnresolvable', $resolverConfig['allowUnresolvable'])
                     ->setPublic(true);
             } elseif ('asset_mapper' === $resolverConfig['type']) {
+                // symfony/asset-mapper may not be installed at all (e.g. a Webpack Encore
+                // project) — an optional reference keeps the container compiling either way;
+                // AssetMapperResolver itself throws a clear LogicException if it's ever
+                // actually used without the real service present.
                 $container->register($id, AssetMapperResolver::class)
-                    ->setArgument('$assetMapper', new Reference('asset_mapper'))
+                    ->setArgument('$assetMapper', new Reference('asset_mapper', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
                     ->setPublic(true);
             } elseif ('chain' === $resolverConfig['type']) {
                 $childResolvers = array_map(fn ($name) => new Reference('progressive_image.resolver.'.$name), $resolverConfig['resolvers'] ?? []);

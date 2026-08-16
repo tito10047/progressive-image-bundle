@@ -15,6 +15,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Unit\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Tito10047\ProgressiveImageBundle\DependencyInjection\ProgressiveImageExtension;
 
@@ -40,6 +41,10 @@ final class AssetMapperPrependWiringTest extends TestCase
         // asset_mapper namespace must match exactly, or AssetMapper's autoimport (which
         // resolves "@tito10047/progressive-image-bundle/styles/style.css" against the
         // registered namespace) silently never fires.
+        if (!interface_exists(AssetMapperInterface::class)) {
+            self::markTestSkipped('symfony/asset-mapper is not installed.');
+        }
+
         $container = $this->buildContainer(frameworkBundleRegistered: true);
 
         (new ProgressiveImageExtension())->prepend($container);

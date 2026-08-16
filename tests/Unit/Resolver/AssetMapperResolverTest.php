@@ -19,8 +19,17 @@ use Tito10047\ProgressiveImageBundle\Resolver\AssetMapperResolver;
 
 class AssetMapperResolverTest extends TestCase
 {
+    private function skipUnlessAssetMapperIsInstalled(): void
+    {
+        if (!interface_exists(AssetMapperInterface::class)) {
+            self::markTestSkipped('symfony/asset-mapper is not installed.');
+        }
+    }
+
     public function testResolveFoundAsset(): void
     {
+        $this->skipUnlessAssetMapperIsInstalled();
+
         $assetMapper = $this->createMock(AssetMapperInterface::class);
         $asset = new MappedAsset(
             logicalPath: 'assets/test.jpg',
@@ -41,6 +50,8 @@ class AssetMapperResolverTest extends TestCase
 
     public function testResolveNotFoundThrowsException(): void
     {
+        $this->skipUnlessAssetMapperIsInstalled();
+
         $assetMapper = $this->createMock(AssetMapperInterface::class);
         $assetMapper->expects($this->once())
             ->method('allAssets')
@@ -54,6 +65,8 @@ class AssetMapperResolverTest extends TestCase
 
     public function testResolveBuildsThePublicPathIndexOnlyOnceAcrossMultipleCalls(): void
     {
+        $this->skipUnlessAssetMapperIsInstalled();
+
         $assetMapper = $this->createMock(AssetMapperInterface::class);
         $assetOne = new MappedAsset(
             logicalPath: 'assets/one.jpg',
@@ -78,5 +91,17 @@ class AssetMapperResolverTest extends TestCase
 
         $this->assertSame('/absolute/path/to/one.jpg', $resolver->resolve('assets/one.jpg'));
         $this->assertSame('/absolute/path/to/two.jpg', $resolver->resolve('assets/two.jpg'));
+    }
+
+    public function testResolveWithoutAssetMapperInstalledThrowsAClearLogicException(): void
+    {
+        // The DI extension injects null here (IGNORE_ON_INVALID_REFERENCE) when
+        // symfony/asset-mapper isn't installed, so the container still compiles — this
+        // must fail loudly and clearly the moment the resolver is actually used instead.
+        $resolver = new AssetMapperResolver(null);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageMatches('/asset-mapper/i');
+        $resolver->resolve('assets/test.jpg');
     }
 }

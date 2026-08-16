@@ -36,12 +36,16 @@ abstract readonly class CliPostProcessor implements PostProcessor
     public function process(GeneratedImage $image): GeneratedImage
     {
         $dir = sys_get_temp_dir().'/pgi-postprocess-'.bin2hex(random_bytes(8));
-        mkdir($dir);
+        if (!mkdir($dir, 0o700)) {
+            throw new VariantDomainException(sprintf('%s could not create temp directory "%s".', static::class, $dir));
+        }
         $input = $dir.'/input.'.$this->inputExtension($image);
         $output = $dir.'/output.'.$image->format->extension();
 
         try {
-            file_put_contents($input, $this->inputContents($image));
+            if (false === file_put_contents($input, $this->inputContents($image))) {
+                throw new VariantDomainException(sprintf('%s could not write temp input file "%s".', static::class, $input));
+            }
 
             $process = new Process($this->buildCommand($input, $output), timeout: $this->timeout);
             $process->run();
@@ -81,7 +85,7 @@ abstract readonly class CliPostProcessor implements PostProcessor
     protected function readResult(Process $process, string $inputPath, string $outputPath): string
     {
         $contents = file_get_contents($outputPath);
-        if (false === $contents) {
+        if (false === $contents || '' === $contents) {
             throw new VariantDomainException(sprintf('%s produced no output file at "%s".', static::class, $outputPath));
         }
 

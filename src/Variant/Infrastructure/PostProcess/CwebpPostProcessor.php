@@ -17,6 +17,14 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
 
 final readonly class CwebpPostProcessor extends CliPostProcessor
 {
+    public function __construct(
+        string $bin,
+        private int $quality = 82,
+        float $timeout = 30.0,
+    ) {
+        parent::__construct($bin, $timeout);
+    }
+
     public function supports(OutputFormat $format): bool
     {
         return OutputFormat::Webp === $format;
@@ -24,6 +32,6 @@ final readonly class CwebpPostProcessor extends CliPostProcessor
 
     protected function buildCommand(string $inputPath, string $outputPath): array
     {
-        return [$this->bin, '-quiet', $inputPath, '-o', $outputPath];
+        return [$this->bin, '-quiet', '-q', (string) $this->quality, $inputPath, '-o', $outputPath];
     }
 }

@@ -471,9 +471,18 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 continue;
             }
 
-            $container->register($class)
+            $definition = $container->register($class)
                 ->setArgument('$bin', $bin)
                 ->addTag('progressive_image.variant.post_processor');
+
+            // cwebp/avifenc re-encode via their own CLI binary, discarding Intervention's
+            // encoding — without passing the configured quality through, that re-encode
+            // would silently use the binary's own default instead.
+            if (CwebpPostProcessor::class === $class) {
+                $definition->setArgument('$quality', $configs['formats']['quality']['webp'] ?? 82);
+            } elseif (AvifencPostProcessor::class === $class) {
+                $definition->setArgument('$quality', $configs['formats']['quality']['avif'] ?? 60);
+            }
         }
     }
 

@@ -60,11 +60,42 @@ final class AvifencPostProcessorTest extends TestCase
         $this->processor->process(new GeneratedImage('not a real image', OutputFormat::Avif));
     }
 
+    public function testConfiguredQualityIsPassedToTheCliBinaryInsteadOfItsOwnDefault(): void
+    {
+        $bin = (new ExecutableFinder())->find('avifenc');
+        self::assertNotNull($bin);
+
+        $noisy = $this->sampleNoisyAvifBytes();
+
+        $lowQuality = (new AvifencPostProcessor($bin, quality: 5))->process(new GeneratedImage($noisy, OutputFormat::Avif));
+        $highQuality = (new AvifencPostProcessor($bin, quality: 95))->process(new GeneratedImage($noisy, OutputFormat::Avif));
+
+        self::assertLessThan(\strlen($highQuality->contents), \strlen($lowQuality->contents), 'a low -q setting must produce meaningfully smaller output than a high one for the same noisy input');
+    }
+
     private function sampleAvifBytes(): string
     {
         $image = imagecreatetruecolor(20, 20);
         $path = sys_get_temp_dir().'/pgi-avif-sample-'.bin2hex(random_bytes(4)).'.avif';
         imageavif($image, $path);
+        $bytes = file_get_contents($path);
+        unlink($path);
+        self::assertIsString($bytes);
+
+        return $bytes;
+    }
+
+    private function sampleNoisyAvifBytes(): string
+    {
+        $image = imagecreatetruecolor(200, 200);
+        mt_srand(42);
+        for ($x = 0; $x < 200; ++$x) {
+            for ($y = 0; $y < 200; ++$y) {
+                imagesetpixel($image, $x, $y, imagecolorallocate($image, mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255)));
+            }
+        }
+        $path = sys_get_temp_dir().'/pgi-avif-sample-'.bin2hex(random_bytes(4)).'.avif';
+        imageavif($image, $path, 100);
         $bytes = file_get_contents($path);
         unlink($path);
         self::assertIsString($bytes);

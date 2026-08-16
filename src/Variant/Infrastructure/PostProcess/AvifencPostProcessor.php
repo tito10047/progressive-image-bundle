@@ -26,6 +26,14 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
  */
 final readonly class AvifencPostProcessor extends CliPostProcessor
 {
+    public function __construct(
+        string $bin,
+        private int $quality = 60,
+        float $timeout = 30.0,
+    ) {
+        parent::__construct($bin, $timeout);
+    }
+
     public function supports(OutputFormat $format): bool
     {
         return OutputFormat::Avif === $format;
@@ -33,7 +41,7 @@ final readonly class AvifencPostProcessor extends CliPostProcessor
 
     protected function buildCommand(string $inputPath, string $outputPath): array
     {
-        return [$this->bin, $inputPath, $outputPath];
+        return [$this->bin, '-q', (string) $this->quality, $inputPath, $outputPath];
     }
 
     protected function inputExtension(GeneratedImage $image): string

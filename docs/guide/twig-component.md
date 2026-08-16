@@ -115,11 +115,6 @@ function instead:
 <img src="{{ pgi_filter('images/hero.jpg', 'thumb_small') }}" alt="Hero">
 ```
 
-```php
-// wherever you build the response
-$url = $twig->render('...'); // or inject the Twig Environment / call it from a controller via {{ }}
-```
-
 `pgi_filter(path, filterSetName, context = [])` resolves a `filter_sets` entry (the
 [same `filter_sets` config the component's `filter` prop uses](/guide/variant-pipeline/filters-formats-and-quality))
 into a variant URL. Two differences from the component's own filter-set handling matter:
@@ -136,3 +131,54 @@ into a variant URL. Two differences from the component's own filter-set handling
 
 See [Migrating from LiipImagineBundle](/guide/migrating-from-liip) for how this maps onto
 Liip's `imagine_filter()`.
+
+## Resolving a URL from PHP (a controller, no Twig at all)
+
+`pgi_filter()` is just a thin wrapper — `FilterUrlExtension::resolve()` builds a
+`ResolveFilterUrl` query and passes it to `ResolveFilterUrlHandler`. Nothing stops you from
+injecting that handler directly wherever you need a variant URL as a plain string outside
+of any Twig render: a JSON API response, a webhook payload, a PDF generator, a scheduled
+command.
+
+```php
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveFilterUrlHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Query\ResolveFilterUrl;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
+
+final class ProductApiController extends AbstractController
+{
+    public function __construct(
+        private readonly ResolveFilterUrlHandler $resolveFilterUrl,
+    ) {
+    }
+
+    #[Route('/api/products/{id}/image')]
+    public function image(string $id): JsonResponse
+    {
+        $resolved = ($this->resolveFilterUrl)(new ResolveFilterUrl(
+            new SourcePath('images/products/'.$id.'.jpg'),
+            'thumb_small',
+        ));
+
+        return $this->json([
+            'url' => $resolved->url,
+            'pending' => $resolved->pending, // true while the variant is still generating in the background
+        ]);
+    }
+}
+```
+
+`ResolveFilterUrlHandler` is a normal, autowireable service — no special wiring needed
+beyond the constructor type-hint. It's registered non-shared (`setShared(false)`), so every
+injection gets its own instance; that's an internal memoization detail (each instance caches
+resolved URLs for the lifetime of *that* injection), not something you need to manage.
+
+`ResolveFilterUrl` takes the same two arguments as `pgi_filter()` — a `SourcePath` (wrap
+whatever string you'd normally pass as `pgi_filter()`'s first argument) and the
+`filter_sets` name — plus an optional third `context` array. The returned `ResolvedUrl` has
+`->url` (string) and `->pending` (bool, `true` if generation was just triggered and `->url`
+currently points at the original while it completes) — the exact same semantics described
+above for `pgi_filter()` apply here too.

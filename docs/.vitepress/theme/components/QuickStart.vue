@@ -71,6 +71,9 @@ const active = ref(tabs[0].key);
         breakpoint needs, and generates every variant on first request. Full walkthrough
         in the <a href="/guide/getting-started">Getting Started guide</a>.
       </p>
+      <p class="quick-start-requirements">
+        Requires <strong>PHP 8.3+</strong> and <strong>Symfony 6.4, 7.4, or 8.1+</strong>.
+      </p>
     </div>
   </section>
 </template>
@@ -148,5 +151,16 @@ const active = ref(tabs[0].key);
   margin-top: 20px;
   font-size: 14px;
   color: var(--vp-c-text-3);
+}
+
+.quick-start-requirements {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--vp-c-text-3);
+}
+
+.quick-start-requirements strong {
+  color: var(--vp-c-text-2);
 }
 </style>

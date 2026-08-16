@@ -1,10 +1,15 @@
 # Getting Started
 
-Progressive Image Bundle requires **PHP 8.2+** and **Symfony 6.4+**. It ships as a
-Symfony bundle (`tito10047/progressive-image-bundle`) and works with either
+Progressive Image Bundle requires **PHP 8.3+** and **Symfony 6.4, 7.4, or 8.1+**. It ships
+as a Symfony bundle (`tito10047/progressive-image-bundle`) and works with either
 [Symfony UX AssetMapper](https://symfony.com/bundles/AssetMapperBundle) or a Webpack
 Encore / bundler-based frontend, since it only needs a working
 [Stimulus](https://stimulus.hotwired.dev/) environment.
+
+> **Why PHP 8.3?** The Variant pipeline is built on
+> [`intervention/image`](https://packagist.org/packages/intervention/image) `^4.2`, which
+> itself requires PHP 8.3+. See [`composer.json`](https://github.com/tito10047/progressive-image-bundle/blob/main/composer.json)
+> for the exact per-package Symfony version constraints.
 
 ## 1. Install via Composer
 

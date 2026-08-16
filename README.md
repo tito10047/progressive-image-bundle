@@ -5,8 +5,8 @@
 [![PHPStan](https://img.shields.io/github/actions/workflow/status/tito10047/progressive-image-bundle/ci.yml?branch=main&label=phpstan)](https://github.com/tito10047/progressive-image-bundle/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/tito10047/progressive-image-bundle.svg)](https://packagist.org/packages/tito10047/progressive-image-bundle)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892bf.svg)](https://php.net)
-[![Symfony Version](https://img.shields.io/badge/Symfony-%3E%3D%206.4-black?logo=symfony)](https://symfony.com/)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.3-8892bf.svg)](https://php.net)
+[![Symfony Version](https://img.shields.io/badge/Symfony-6.4%20%7C%207.4%20%7C%208.1%2B-black?logo=symfony)](https://symfony.com/)
 [![Symfony Style](https://img.shields.io/badge/code%20style-symfony-black?logo=symfony)](https://symfony.com/)
 [![Coverage Status](https://coveralls.io/repos/github/tito10047/progressive-image-bundle/badge.svg?branch=main)](https://coveralls.io/github/tito10047/progressive-image-bundle?branch=main)
 
@@ -19,6 +19,11 @@ This bundle handles everything you need for modern image management. From **full
 > ⚠️ **Version 2.0 is experimental.** It's a from-scratch DDD rewrite of the Variant pipeline and hasn't been tagged as a stable release yet — expect breaking changes before a final `2.0.0` tag.
 
 **📖 Full documentation: [pgi.blue](https://pgi.blue/)**
+
+### ✅ Requirements
+
+- **PHP 8.3 or newer** — required by [`intervention/image`](https://packagist.org/packages/intervention/image) (`^4.2`), the image-processing library the Variant pipeline is built on.
+- **Symfony 6.4, 7.4, or 8.1+** — see [`composer.json`](composer.json) for the exact per-package constraints.
 
 ---
 

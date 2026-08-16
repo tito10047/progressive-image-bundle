@@ -531,7 +531,8 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 
         if ('sync' === $strategy) {
             $container->register(SyncGenerationDispatcher::class)
-                ->setArgument('$handler', new Reference(GenerateVariantHandler::class));
+                ->setArgument('$handler', new Reference(GenerateVariantHandler::class))
+                ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE));
             $container->setAlias(GenerationDispatcher::class, SyncGenerationDispatcher::class);
 
             return;

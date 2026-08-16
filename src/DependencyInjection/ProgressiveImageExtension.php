@@ -14,6 +14,7 @@ namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -110,6 +111,21 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ],
             ],
         ]);
+
+        // generation.transport ("only used if strategy=async" per its own ->info()) is
+        // otherwise never actually wired anywhere: without this, GenerateVariant has no
+        // framework.messenger.routing entry, so the default bus falls back to handling it
+        // synchronously in-process — the "async" strategy would silently behave like "sync".
+        $resolved = (new Processor())->processConfiguration(new Configuration(), $builder->getExtensionConfig('progressive_image'));
+        if ('async' === $resolved['generation']['strategy'] && interface_exists(MessageBusInterface::class)) {
+            $builder->prependExtensionConfig('framework', [
+                'messenger' => [
+                    'routing' => [
+                        GenerateVariant::class => $resolved['generation']['transport'],
+                    ],
+                ],
+            ]);
+        }
     }
 
     public function load(array $configs, ContainerBuilder $container): void

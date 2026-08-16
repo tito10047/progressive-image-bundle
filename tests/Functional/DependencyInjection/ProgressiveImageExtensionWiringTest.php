@@ -15,10 +15,17 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Tests\Fixtures\FakeDimensionsEchoingUrlGenerator;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Command\GenerateVariant;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\FilterChain;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Quality;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Messenger\MessengerGenerationDispatcher;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
 
@@ -131,6 +138,52 @@ class ProgressiveImageExtensionWiringTest extends PGITestCase
         $this->expectException(\InvalidArgumentException::class);
 
         self::getContainer()->get('progressive_image.resolver.default');
+    }
+
+    public function testAsyncStrategyRoutesGenerateVariantToTheConfiguredTransport(): void
+    {
+        // generation.transport is documented ("Messenger transport name, only used if
+        // strategy=async") but load() never actually wired it into
+        // framework.messenger.routing — meaning GenerateVariant was always handled
+        // synchronously in-process by the default bus, regardless of this setting.
+        self::bootKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => [__DIR__.'/../Fixtures/images']],
+                ],
+                'variant_store' => [
+                    'storage' => 'test.variant_storage',
+                ],
+                'generation' => [
+                    'strategy' => 'async',
+                    'transport' => 'async_images',
+                ],
+            ],
+        ], function (ContainerBuilder $container): void {
+            $container->loadFromExtension('framework', [
+                'messenger' => [
+                    'default_bus' => 'messenger.bus.default',
+                    'buses' => ['messenger.bus.default' => null],
+                    'transports' => ['async_images' => 'in-memory://'],
+                ],
+            ]);
+            $container->register('test.variant_storage.adapter', LocalFilesystemAdapter::class)
+                ->setArgument('$location', sys_get_temp_dir());
+            $container->register('test.variant_storage', Filesystem::class)
+                ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))
+                ->setPublic(true);
+        });
+
+        $container = self::getContainer();
+        $dispatcher = $container->get(MessengerGenerationDispatcher::class);
+        $dispatcher->dispatch(new GenerateVariant(
+            new SourcePath('test.png'),
+            new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85))
+        ));
+
+        /** @var InMemoryTransport $transport */
+        $transport = $container->get('messenger.transport.async_images');
+        self::assertCount(1, $transport->getSent(), 'GenerateVariant must be routed to the configured transport, not handled synchronously in-process');
     }
 
     public function testMessengerGenerationDispatcherIsNotSharedSinceItDedupsPerRequestOnly(): void

@@ -77,6 +77,15 @@ class ProgressiveImageTestingKernel extends Kernel
                         ],
                     ],
                 ],
+                // generation.strategy defaults to "async", which needs a real transport for
+                // its default generation.transport ("async_images") to route to — an
+                // in-memory one is enough so tests that don't care about the async pipeline
+                // (most of them) don't have to configure their own just to boot the kernel.
+                'messenger' => [
+                    'transports' => [
+                        'async_images' => 'in-memory://',
+                    ],
+                ],
             ]);
 
             //            $container->setAlias('test.service_container', 'service_container')->setPublic(true);

@@ -18,9 +18,14 @@ use Intervention\Image\ImageManager;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Loader\FileSystemLoader;
 use Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\AutoRotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Background;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\FilterChain;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Grayscale;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Negative;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Paste;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\RelativeResize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Resize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Rotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Thumbnail;
@@ -86,9 +91,18 @@ final class InterventionImageManipulatorTest extends TestCase
         return new SourceImage($stream, new Dimensions($width, $height), 'image/png');
     }
 
-    private function spec(FilterChain $filters, OutputFormat $format = OutputFormat::Png, int $quality = 85): VariantSpec
+    private function spec(FilterChain $filters, OutputFormat $format = OutputFormat::Png, int $quality = 85, bool $progressive = false, bool $stripMetadata = false): VariantSpec
     {
-        return new VariantSpec($filters, $format, new Quality($quality));
+        return new VariantSpec($filters, $format, new Quality($quality), $progressive, $stripMetadata);
+    }
+
+    /**
+     * SOF2 (0xFFC2) = progressive DCT, SOF0 (0xFFC0) = baseline DCT — a single-scan test
+     * image from GD/libjpeg emits exactly one of the two.
+     */
+    private function isProgressiveJpeg(string $bytes): bool
+    {
+        return false !== strpos($bytes, "\xFF\xC2") && false === strpos($bytes, "\xFF\xC0");
     }
 
     /**
@@ -213,5 +227,145 @@ final class InterventionImageManipulatorTest extends TestCase
         [$width, $height] = $this->dimensionsOf($result->contents);
         self::assertSame(50, $width);
         self::assertSame(50, $height);
+    }
+
+    public function testGrayscaleRemovesColorInformation(): void
+    {
+        $image = imagecreatetruecolor(10, 10);
+        imagefill($image, 0, 0, imagecolorallocate($image, 200, 0, 0));
+        $path = $this->root.'/red.png';
+        imagepng($image, $path);
+        $stream = fopen($path, 'r');
+        self::assertNotFalse($stream);
+        $source = new SourceImage($stream, new Dimensions(10, 10), 'image/png');
+
+        $result = $this->manipulator->process($source, $this->spec(FilterChain::of(new Grayscale())));
+
+        $decoded = imagecreatefromstring($result->contents);
+        self::assertNotFalse($decoded);
+        $rgb = imagecolorat($decoded, 5, 5);
+        $r = ($rgb >> 16) & 0xFF;
+        $g = ($rgb >> 8) & 0xFF;
+        $b = $rgb & 0xFF;
+        self::assertSame($r, $g, 'grayscale must equalize the channels');
+        self::assertSame($g, $b, 'grayscale must equalize the channels');
+    }
+
+    public function testNegativeInvertsColors(): void
+    {
+        $image = imagecreatetruecolor(10, 10);
+        imagefill($image, 0, 0, imagecolorallocate($image, 0, 0, 0));
+        $path = $this->root.'/black.png';
+        imagepng($image, $path);
+        $stream = fopen($path, 'r');
+        self::assertNotFalse($stream);
+        $source = new SourceImage($stream, new Dimensions(10, 10), 'image/png');
+
+        $result = $this->manipulator->process($source, $this->spec(FilterChain::of(new Negative())));
+
+        $decoded = imagecreatefromstring($result->contents);
+        self::assertNotFalse($decoded);
+        $rgb = imagecolorat($decoded, 5, 5);
+        self::assertSame(255, ($rgb >> 16) & 0xFF, 'inverted black must be white');
+    }
+
+    public function testAutoRotateAppliesWithoutErrorOnAnImageWithNoExifData(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(100, 50),
+            $this->spec(FilterChain::of(new AutoRotate()))
+        );
+
+        [$width, $height] = $this->dimensionsOf($result->contents);
+        self::assertSame(100, $width, 'no EXIF orientation present, dimensions must be unchanged');
+        self::assertSame(50, $height);
+    }
+
+    public function testPasteInsertsAnotherSourceImageAtAnAbsolutePosition(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(100, 100),
+            $this->spec(FilterChain::of(new Paste(new SourcePath('watermark.png'), 20, 30)))
+        );
+
+        [$width, $height] = $this->dimensionsOf($result->contents);
+        self::assertSame(100, $width, 'paste must not change the canvas size');
+        self::assertSame(100, $height);
+    }
+
+    public function testRelativeResizeScalesByPercentOfCurrentDimensions(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(200, 100),
+            $this->spec(FilterChain::of(new RelativeResize(widthPercent: 50.0, heightPercent: 50.0)))
+        );
+
+        [$width, $height] = $this->dimensionsOf($result->contents);
+        self::assertSame(100, $width);
+        self::assertSame(50, $height);
+    }
+
+    public function testRelativeResizeAppliesAfterAPriorFilterInTheChain(): void
+    {
+        // Relative to the image's state at that point in the pipeline (100x100, after the
+        // thumbnail), not the original source (200x100) — same semantics Liip's own
+        // relative_resize has always had.
+        $result = $this->manipulator->process(
+            $this->source(200, 100),
+            $this->spec(FilterChain::of(
+                Thumbnail::outbound(new Dimensions(100, 100)),
+                new RelativeResize(widthPercent: 50.0, heightPercent: 50.0)
+            ))
+        );
+
+        [$width, $height] = $this->dimensionsOf($result->contents);
+        self::assertSame(50, $width);
+        self::assertSame(50, $height);
+    }
+
+    public function testProgressiveTrueProducesAProgressiveJpeg(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(50, 50),
+            $this->spec(FilterChain::empty(), OutputFormat::Jpeg, progressive: true)
+        );
+
+        self::assertTrue($this->isProgressiveJpeg($result->contents));
+    }
+
+    public function testProgressiveFalseProducesABaselineJpeg(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(50, 50),
+            $this->spec(FilterChain::empty(), OutputFormat::Jpeg, progressive: false)
+        );
+
+        self::assertFalse($this->isProgressiveJpeg($result->contents));
+    }
+
+    public function testProgressiveTrueProducesAnInterlacedPng(): void
+    {
+        $result = $this->manipulator->process(
+            $this->source(50, 50),
+            $this->spec(FilterChain::empty(), OutputFormat::Png, progressive: true)
+        );
+
+        // PNG IHDR's interlace-method byte sits right after the 8-byte signature + the
+        // 4-byte length/4-byte "IHDR" header + 4-byte width + 4-byte height + 3 single-byte
+        // fields (bit depth, color type, compression) + 1-byte filter method = offset 28.
+        self::assertSame(1, ord($result->contents[28]), 'interlace method must be Adam7 (1)');
+    }
+
+    public function testStripMetadataDoesNotBreakEncodingForEachFormat(): void
+    {
+        foreach ([OutputFormat::Jpeg, OutputFormat::Webp, OutputFormat::Avif] as $format) {
+            $result = $this->manipulator->process(
+                $this->source(20, 20),
+                $this->spec(FilterChain::empty(), $format, stripMetadata: true)
+            );
+
+            $info = getimagesizefromstring($result->contents);
+            self::assertIsArray($info, "stripMetadata must still produce a valid decodable {$format->value}");
+        }
     }
 }

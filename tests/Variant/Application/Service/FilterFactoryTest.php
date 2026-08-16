@@ -16,8 +16,13 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Application\Service;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterFactory;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\AutoRotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Background;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Grayscale;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Negative;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Paste;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\RelativeResize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Resize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Rotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Thumbnail;
@@ -147,5 +152,64 @@ final class FilterFactoryTest extends TestCase
         $filter = $this->factory->create('resize', ['size' => ['height' => 480, 'width' => 640]]);
 
         self::assertSame(['resize' => ['w' => 640, 'h' => 480]], $filter->canonical());
+    }
+
+    public function testCreatesGrayscale(): void
+    {
+        self::assertInstanceOf(Grayscale::class, $this->factory->create('grayscale', []));
+    }
+
+    public function testCreatesNegative(): void
+    {
+        self::assertInstanceOf(Negative::class, $this->factory->create('negative', []));
+    }
+
+    public function testCreatesAutoRotate(): void
+    {
+        self::assertInstanceOf(AutoRotate::class, $this->factory->create('auto_rotate', []));
+    }
+
+    public function testCreatesPasteWithDefaults(): void
+    {
+        $filter = $this->factory->create('paste', ['image' => 'badge.png']);
+
+        self::assertInstanceOf(Paste::class, $filter);
+        self::assertSame(['paste' => ['image' => 'badge.png', 'x' => 0, 'y' => 0]], $filter->canonical());
+    }
+
+    public function testCreatesPasteWithExplicitPosition(): void
+    {
+        $filter = $this->factory->create('paste', ['image' => 'badge.png', 'x' => 20, 'y' => 30]);
+
+        self::assertSame(['paste' => ['image' => 'badge.png', 'x' => 20, 'y' => 30]], $filter->canonical());
+    }
+
+    public function testThrowsWhenPasteImageIsMissing(): void
+    {
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $this->factory->create('paste', []);
+    }
+
+    public function testCreatesRelativeResize(): void
+    {
+        $filter = $this->factory->create('relative_resize', ['width_percent' => 50, 'height_percent' => 150]);
+
+        self::assertInstanceOf(RelativeResize::class, $filter);
+        self::assertSame(['relative_resize' => ['width_percent' => 50.0, 'height_percent' => 150.0]], $filter->canonical());
+    }
+
+    public function testThrowsWhenRelativeResizeHasNeitherDimension(): void
+    {
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $this->factory->create('relative_resize', []);
+    }
+
+    public function testThrowsWhenRelativeResizePercentIsNotNumeric(): void
+    {
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $this->factory->create('relative_resize', ['width_percent' => 'huge']);
     }
 }

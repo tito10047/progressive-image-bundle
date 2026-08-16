@@ -149,7 +149,28 @@ class ConfigurationTest extends TestCase
         $this->assertSame([], $config['formats']['negotiate']);
         $this->assertSame([], $config['formats']['picture']);
         $this->assertSame(['jpeg' => 85, 'webp' => 82, 'avif' => 60, 'png' => 90], $config['formats']['quality']);
+        $this->assertFalse($config['formats']['progressive']);
+        $this->assertFalse($config['formats']['strip_metadata']);
         $this->assertSame([], $config['filter_sets']);
+    }
+
+    public function testFormatsProgressiveAndStripMetadataAreConfigurable(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'progressive' => true,
+                    'strip_metadata' => true,
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['formats']['progressive']);
+        $this->assertTrue($config['formats']['strip_metadata']);
     }
 
     public function testFormatsNegotiateAndQualityAreConfigurable(): void

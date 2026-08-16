@@ -43,6 +43,8 @@ final class VariantSpecTest extends TestCase
                 'filters' => [['thumbnail' => ['w' => 200, 'h' => 200, 'mode' => 'outbound']]],
                 'format' => 'webp',
                 'quality' => 82,
+                'progressive' => false,
+                'strip_metadata' => false,
             ],
             $spec->canonical()
         );
@@ -53,9 +55,41 @@ final class VariantSpecTest extends TestCase
         $spec = new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85));
 
         self::assertSame(
-            ['filters' => [], 'format' => 'jpeg', 'quality' => 85],
+            ['filters' => [], 'format' => 'jpeg', 'quality' => 85, 'progressive' => false, 'strip_metadata' => false],
             $spec->canonical()
         );
+    }
+
+    public function testProgressiveAndStripMetadataDefaultToFalse(): void
+    {
+        $spec = new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85));
+
+        self::assertFalse($spec->progressive);
+        self::assertFalse($spec->stripMetadata);
+    }
+
+    public function testCanonicalIncludesExplicitProgressiveAndStripMetadataFlags(): void
+    {
+        $spec = new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85), progressive: true, stripMetadata: true);
+
+        self::assertSame(
+            ['filters' => [], 'format' => 'jpeg', 'quality' => 85, 'progressive' => true, 'strip_metadata' => true],
+            $spec->canonical()
+        );
+    }
+
+    /**
+     * Two variants differing only in "progressive" produce different bytes (a progressive
+     * JPEG is a different encoding of the same image) — their canonical() must differ too,
+     * or they'd collide onto the same VariantId and one would silently overwrite the other
+     * in storage.
+     */
+    public function testCanonicalDistinguishesDifferentProgressiveValues(): void
+    {
+        $withoutProgressive = new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85), progressive: false);
+        $withProgressive = new VariantSpec(FilterChain::empty(), OutputFormat::Jpeg, new Quality(85), progressive: true);
+
+        self::assertNotSame($withoutProgressive->canonical(), $withProgressive->canonical());
     }
 
     /**

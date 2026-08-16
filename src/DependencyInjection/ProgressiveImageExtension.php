@@ -379,7 +379,9 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$cropCalculator', new Reference(AspectCropCalculator::class))
             ->setArgument('$imageConfigs', $configs['image_configs'] ?? [])
             ->setArgument('$defaultFormat', $defaultFormat)
-            ->setArgument('$defaultQuality', new Reference('progressive_image.variant.default_quality'));
+            ->setArgument('$defaultQuality', new Reference('progressive_image.variant.default_quality'))
+            ->setArgument('$defaultProgressive', $configs['formats']['progressive'] ?? false)
+            ->setArgument('$defaultStripMetadata', $configs['formats']['strip_metadata'] ?? false);
         $container->register(PendingGenerationTracker::class)
             ->addTag('kernel.reset', ['method' => 'reset']);
 

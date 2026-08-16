@@ -21,11 +21,13 @@ final readonly class VariantSpec
         public FilterChain $filters,
         public OutputFormat $format,
         public Quality $quality,
+        public bool $progressive = false,
+        public bool $stripMetadata = false,
     ) {
     }
 
     /**
-     * @return array{filters: list<array<string, mixed>>, format: string, quality: int}
+     * @return array{filters: list<array<string, mixed>>, format: string, quality: int, progressive: bool, strip_metadata: bool}
      */
     public function canonical(): array
     {
@@ -36,6 +38,8 @@ final readonly class VariantSpec
             // two specs that only differ in a setting with no effect on the actual output
             // don't hash to different VariantIds and get generated/stored twice.
             'quality' => $this->format->usesQuality() ? $this->quality->value : 0,
+            'progressive' => $this->progressive,
+            'strip_metadata' => $this->stripMetadata,
         ];
     }
 }

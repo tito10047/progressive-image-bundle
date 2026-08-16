@@ -26,7 +26,8 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
  */
 final readonly class VariantIdHasher
 {
-    private const int HASH_SCHEMA_VERSION = 1;
+    // Bumped 1 -> 2: VariantSpec::canonical() gained "progressive"/"strip_metadata" keys.
+    private const int HASH_SCHEMA_VERSION = 2;
 
     public function __construct(private string $secret)
     {

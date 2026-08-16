@@ -44,6 +44,8 @@ final readonly class VariantSpecFactory
         private array $imageConfigs = [],
         private OutputFormat $defaultFormat = OutputFormat::Jpeg,
         private Quality $defaultQuality = new Quality(85),
+        private bool $defaultProgressive = false,
+        private bool $defaultStripMetadata = false,
     ) {
     }
 
@@ -76,7 +78,7 @@ final readonly class VariantSpecFactory
             $chain = $chain->with(Thumbnail::outbound(new Dimensions($width, $height)));
         }
 
-        return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged));
+        return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged), $this->resolveProgressive($merged), $this->resolveStripMetadata($merged));
     }
 
     /**
@@ -94,7 +96,7 @@ final readonly class VariantSpecFactory
         $merged = self::mergeLayers($filterSetRaw, $this->imageConfigs, $context);
         $chain = $this->parseFilters($merged);
 
-        return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged));
+        return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged), $this->resolveProgressive($merged), $this->resolveStripMetadata($merged));
     }
 
     /**
@@ -178,5 +180,21 @@ final readonly class VariantSpecFactory
         }
 
         return new Quality((int) $merged['quality']);
+    }
+
+    /**
+     * @param array<array-key, mixed> $merged
+     */
+    private function resolveProgressive(array $merged): bool
+    {
+        return isset($merged['progressive']) ? (bool) $merged['progressive'] : $this->defaultProgressive;
+    }
+
+    /**
+     * @param array<array-key, mixed> $merged
+     */
+    private function resolveStripMetadata(array $merged): bool
+    {
+        return isset($merged['strip_metadata']) ? (bool) $merged['strip_metadata'] : $this->defaultStripMetadata;
     }
 }

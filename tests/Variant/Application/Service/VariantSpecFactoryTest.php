@@ -33,7 +33,7 @@ final class VariantSpecFactoryTest extends TestCase
      * @param array<string, array<string, mixed>> $filterSets
      * @param array<string, mixed>                $imageConfigs
      */
-    private function makeFactory(array $filterSets = [], array $imageConfigs = []): VariantSpecFactory
+    private function makeFactory(array $filterSets = [], array $imageConfigs = [], bool $defaultProgressive = false, bool $defaultStripMetadata = false): VariantSpecFactory
     {
         return new VariantSpecFactory(
             new FilterSetRegistry($filterSets, new FilterFactory()),
@@ -41,7 +41,9 @@ final class VariantSpecFactoryTest extends TestCase
             new AspectCropCalculator(),
             $imageConfigs,
             OutputFormat::Jpeg,
-            new Quality(85)
+            new Quality(85),
+            $defaultProgressive,
+            $defaultStripMetadata,
         );
     }
 
@@ -261,5 +263,57 @@ final class VariantSpecFactoryTest extends TestCase
         $filters = iterator_to_array($spec->filters, false);
         self::assertCount(1, $filters);
         self::assertSame(['thumbnail' => ['w' => 300, 'h' => 300, 'mode' => 'outbound']], $filters[0]->canonical());
+    }
+
+    public function testProgressiveAndStripMetadataDefaultToFalseWhenNothingOverridesThem(): void
+    {
+        $spec = $this->makeFactory()->create(200, 150);
+
+        self::assertFalse($spec->progressive);
+        self::assertFalse($spec->stripMetadata);
+    }
+
+    public function testBundleDefaultProgressiveAndStripMetadataAreUsedWhenConfigured(): void
+    {
+        $spec = $this->makeFactory(defaultProgressive: true, defaultStripMetadata: true)->create(200, 150);
+
+        self::assertTrue($spec->progressive);
+        self::assertTrue($spec->stripMetadata);
+    }
+
+    public function testFilterSetCanOverrideTheBundleDefaultProgressiveAndStripMetadata(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => [], 'progressive' => true, 'strip_metadata' => true],
+        ], defaultProgressive: false, defaultStripMetadata: false);
+
+        $spec = $factory->create(200, 150, 'hero');
+
+        self::assertTrue($spec->progressive);
+        self::assertTrue($spec->stripMetadata);
+    }
+
+    public function testContextCanOverrideProgressiveAndStripMetadata(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => [], 'progressive' => true, 'strip_metadata' => true],
+        ]);
+
+        $spec = $factory->create(200, 150, 'hero', context: ['progressive' => false, 'strip_metadata' => false]);
+
+        self::assertFalse($spec->progressive);
+        self::assertFalse($spec->stripMetadata);
+    }
+
+    public function testCreateFromFilterSetAlsoResolvesProgressiveAndStripMetadata(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => [], 'progressive' => true, 'strip_metadata' => true],
+        ]);
+
+        $spec = $factory->createFromFilterSet('hero');
+
+        self::assertTrue($spec->progressive);
+        self::assertTrue($spec->stripMetadata);
     }
 }

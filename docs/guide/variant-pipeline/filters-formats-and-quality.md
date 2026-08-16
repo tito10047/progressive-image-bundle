@@ -63,6 +63,11 @@ constructs the registry during container compilation), so a broken config breaks
 | `rotate` | `angle: <int degrees>` | Normalized into `[0, 360)`. |
 | `background` | `color: '#rrggbb'` or `'#rrggbbaa'` | Fills transparent areas. |
 | `watermark` | `image: <path>`, `position: top_left\|top_right\|top\|bottom_left\|bottom_right\|bottom\|center` (default `center`), `opacity: 0-100` (default `100`) | `image` is resolved the same way as any other source path. |
+| `grayscale` | none | Removes color information. |
+| `negative` | none | Inverts colors. |
+| `auto_rotate` | none | Rotates upright according to EXIF orientation, then discards the tag. |
+| `paste` | `image: <path>`, `x: <int>` (default `0`), `y: <int>` (default `0`) | Pastes another source at an absolute offset from the top-left corner — unlike `watermark`, no alignment/opacity, just a fixed position. |
+| `relative_resize` | `width_percent: <float>`, `height_percent: <float>` (at least one required) | Scales relative to the image's dimensions **at that point in the filter chain**, not the original source — e.g. after a `thumbnail`, `relative_resize` scales the already-thumbnailed size. `50` halves it, `150` grows it by 50%. |
 
 Every filter's `canonical()` representation feeds directly into `VariantIdHasher` — two
 specs that produce different `canonical()` output always get different `VariantId`s and
@@ -81,6 +86,8 @@ progressive_image:
             webp: 82
             avif: 60
             png: 90
+        progressive: false
+        strip_metadata: false
 ```
 
 - `formats.default` / `formats.default_quality` apply whenever a `filter_sets` entry,
@@ -91,6 +98,14 @@ progressive_image:
 - `png` quality is accepted but has no effect on the encoded output — `VariantSpec::canonical()`
   normalizes it to `0` so two PNG specs that only differ in a meaningless `quality` value
   don't hash to different `VariantId`s.
+- `formats.progressive` — for JPEG, produces a progressive-scan JPEG; for PNG, an Adam7-interlaced
+  one. No effect on WebP/AVIF (neither format has an equivalent concept). Like `format`/`quality`,
+  it can be overridden per filter set or per-call `context` (`progressive: true`).
+- `formats.strip_metadata` — strips EXIF/metadata on encode, for JPEG/WebP/AVIF (Intervention's
+  PNG encoder has no such option). Also overridable per filter set/context (`strip_metadata: true`).
+- Both flags are part of `VariantSpec::canonical()`, so two variants that differ only in
+  `progressive`/`strip_metadata` get distinct `VariantId`s and separate stored files, never
+  overwrite one another.
 
 ## Post-processors
 

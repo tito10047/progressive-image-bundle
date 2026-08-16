@@ -14,9 +14,14 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Variant\Application\Service;
 
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\AutoRotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Background;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Filter;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Grayscale;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Negative;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Paste;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\RelativeResize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Resize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Rotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Thumbnail;
@@ -46,6 +51,11 @@ final readonly class FilterFactory
             'rotate' => new Rotate($this->int($options, 'angle', 'rotate')),
             'background' => new Background($this->string($options, 'color', 'background')),
             'watermark' => $this->watermark($options),
+            'grayscale' => new Grayscale(),
+            'negative' => new Negative(),
+            'auto_rotate' => new AutoRotate(),
+            'paste' => $this->paste($options),
+            'relative_resize' => $this->relativeResize($options),
             default => throw new InvalidFilterDefinition(sprintf('Unknown filter "%s".', $name)),
         };
     }
@@ -104,6 +114,43 @@ final readonly class FilterFactory
         }
 
         return new Watermark(new SourcePath($image), WatermarkPosition::from($position), (int) $opacity);
+    }
+
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private function paste(array $options): Paste
+    {
+        $image = $this->string($options, 'image', 'paste');
+        $x = $options['x'] ?? 0;
+        $y = $options['y'] ?? 0;
+
+        if (!is_numeric($x) || !is_numeric($y)) {
+            throw new InvalidFilterDefinition('Filter "paste" requires numeric "x"/"y" options.');
+        }
+
+        return new Paste(new SourcePath($image), (int) $x, (int) $y);
+    }
+
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private function relativeResize(array $options): RelativeResize
+    {
+        $widthPercent = $options['width_percent'] ?? null;
+        $heightPercent = $options['height_percent'] ?? null;
+
+        if (null !== $widthPercent && !is_numeric($widthPercent)) {
+            throw new InvalidFilterDefinition('Filter "relative_resize" option "width_percent" must be numeric.');
+        }
+        if (null !== $heightPercent && !is_numeric($heightPercent)) {
+            throw new InvalidFilterDefinition('Filter "relative_resize" option "height_percent" must be numeric.');
+        }
+
+        return new RelativeResize(
+            null !== $widthPercent ? (float) $widthPercent : null,
+            null !== $heightPercent ? (float) $heightPercent : null,
+        );
     }
 
     /**

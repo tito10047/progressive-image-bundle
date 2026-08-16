@@ -22,9 +22,14 @@ use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\EncoderInterface;
 use Intervention\Image\Interfaces\ImageInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\InvalidFilterDefinition;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\AutoRotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Background;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Crop;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Filter;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Grayscale;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Negative;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Paste;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\RelativeResize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Resize;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Rotate;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Thumbnail;
@@ -62,7 +67,7 @@ final readonly class InterventionImageManipulator implements ImageManipulator
             $image = $this->apply($image, $filter);
         }
 
-        return new GeneratedImage($image->encode($this->encoderFor($spec->format, $spec->quality))->toString(), $spec->format);
+        return new GeneratedImage($image->encode($this->encoderFor($spec))->toString(), $spec->format);
     }
 
     private function apply(ImageInterface $image, Filter $filter): ImageInterface
@@ -74,6 +79,11 @@ final readonly class InterventionImageManipulator implements ImageManipulator
             $filter instanceof Rotate => $image->rotate((float) $filter->degrees),
             $filter instanceof Background => $image->fillTransparentAreas($filter->color),
             $filter instanceof Watermark => $this->watermark($image, $filter),
+            $filter instanceof Grayscale => $image->grayscale(),
+            $filter instanceof Negative => $image->invert(),
+            $filter instanceof AutoRotate => $image->orient(),
+            $filter instanceof Paste => $this->paste($image, $filter),
+            $filter instanceof RelativeResize => $this->relativeResize($image, $filter),
             default => throw new InvalidFilterDefinition(sprintf('No Intervention mapping for filter "%s".', $filter::class)),
         };
     }
@@ -94,6 +104,32 @@ final readonly class InterventionImageManipulator implements ImageManipulator
         return $image->insert($markImage, alignment: $this->alignmentFor($filter->position), transparency: $filter->opacity / 100);
     }
 
+    private function paste(ImageInterface $image, Paste $filter): ImageInterface
+    {
+        $pasted = $this->sourceReader->read($filter->image);
+        $pastedImage = $this->imageManager->decodeStream($pasted->stream);
+
+        return $image->insert($pastedImage, x: $filter->x, y: $filter->y);
+    }
+
+    /**
+     * Relative to the image's dimensions at this point in the chain, not the original
+     * source — see RelativeResize's own docblock for why resize() (not
+     * resizeCanvasRelative(), which pads/crops the canvas instead of scaling content) is
+     * the correct primitive here.
+     */
+    private function relativeResize(ImageInterface $image, RelativeResize $filter): ImageInterface
+    {
+        $targetWidth = null !== $filter->widthPercent
+            ? (int) round($image->width() * $filter->widthPercent / 100)
+            : null;
+        $targetHeight = null !== $filter->heightPercent
+            ? (int) round($image->height() * $filter->heightPercent / 100)
+            : null;
+
+        return $image->resize($targetWidth, $targetHeight);
+    }
+
     private function alignmentFor(WatermarkPosition $position): Alignment
     {
         return match ($position) {
@@ -107,13 +143,20 @@ final readonly class InterventionImageManipulator implements ImageManipulator
         };
     }
 
-    private function encoderFor(OutputFormat $format, Quality $quality): EncoderInterface
+    /**
+     * PNG has no "strip" option (Intervention's PngEncoder doesn't expose one) and no
+     * quality; its only relevant flag is "interlaced" (Adam7), which $spec->progressive
+     * doubles as — the same VariantSpec field means "interlace/progressive" per format,
+     * whatever that concretely means for the format in question. WebP/AVIF have no
+     * progressive concept at all, only "strip".
+     */
+    private function encoderFor(VariantSpec $spec): EncoderInterface
     {
-        return match ($format) {
-            OutputFormat::Jpeg => new JpegEncoder(quality: $quality->value),
-            OutputFormat::Png => new PngEncoder(),
-            OutputFormat::Webp => new WebpEncoder(quality: $quality->value),
-            OutputFormat::Avif => new AvifEncoder(quality: $quality->value),
+        return match ($spec->format) {
+            OutputFormat::Jpeg => new JpegEncoder(quality: $spec->quality->value, progressive: $spec->progressive, strip: $spec->stripMetadata),
+            OutputFormat::Png => new PngEncoder(interlaced: $spec->progressive),
+            OutputFormat::Webp => new WebpEncoder(quality: $spec->quality->value, strip: $spec->stripMetadata),
+            OutputFormat::Avif => new AvifEncoder(quality: $spec->quality->value, strip: $spec->stripMetadata),
         };
     }
 }

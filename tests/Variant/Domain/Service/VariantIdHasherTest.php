@@ -31,6 +31,9 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\VariantIdHasher;
  * A failing assertion means the hash-schema contract changed (canonical() shape, HMAC
  * algorithm, base64url encoding, ...) — that invalidates every VariantId ever issued and
  * requires a deliberate hash-schema version bump, not a quiet fix.
+ *
+ * Regenerated for HASH_SCHEMA_VERSION 2 (VariantSpec::canonical() gained "progressive"/
+ * "strip_metadata" keys) — the previous v1 literals are preserved in git history.
  */
 final class VariantIdHasherTest extends TestCase
 {
@@ -52,7 +55,7 @@ final class VariantIdHasherTest extends TestCase
         yield 'simple thumbnail' => [
             new SourcePath('uploads/hero.jpg'),
             new VariantSpec(FilterChain::of(Thumbnail::outbound(new Dimensions(200, 200))), OutputFormat::Webp, new Quality(82)),
-            'xzrOv7Ms2ZNQ8XMW0WWZAXZ0WsIGVokziqAi1-KgBcc',
+            'I53U4OsoKYYSXAuex0Un_fnhli9QxVzRKLJBpjBBZ_M',
         ];
 
         yield 'crop then thumbnail' => [
@@ -65,13 +68,13 @@ final class VariantIdHasherTest extends TestCase
                 OutputFormat::Jpeg,
                 new Quality(85)
             ),
-            'Vo-8YKhHlCSVX--DpvOK066Q3pus02OW7oFC2hVKGKQ',
+            'YXXtKl2hEocodkMXA3Rs5siqjpOVX38CHxFuyzu3HIU',
         ];
 
         yield 'empty filters avif' => [
             new SourcePath('images/logo.png'),
             new VariantSpec(FilterChain::empty(), OutputFormat::Avif, new Quality(60)),
-            'J7ExqR5Sbk2itutVy_4b65qlsZZUt4sklx3cRoteAvE',
+            'o91Q021BiM5YKOtPY0t55UMdMk_EGUqZO0icu-u5pv0',
         ];
     }
 

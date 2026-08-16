@@ -23,10 +23,12 @@ use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Lock\Store\StoreFactory;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
@@ -61,7 +63,6 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Quality;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\Clock;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\GenerationLock;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\ImageManipulator;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\PostProcessor;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\AspectCropCalculator;
@@ -79,6 +80,8 @@ use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Control
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\EventListener\ResponseCacheOverrideListener;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\QueryPendingUrlBuilder;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\ChainSourceReader;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\HttpSourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\ResolverChainSourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\DefaultOriginalUrlResolver;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Symfony\SymfonyDomainEventBus;
@@ -323,11 +326,7 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             $onlyResolver = array_key_first($resolvers);
             $container->setAlias('progressive_image.resolver.default', 'progressive_image.resolver.'.$onlyResolver);
         } elseif (count($resolvers) > 1 && 'default' === $resolver) {
-            throw new \LogicException(sprintf(
-                'Multiple "resolvers" are configured (%s) but none is named "default" and no explicit "resolver" option was set. '
-                .'Either name one of them "default", or set progressive_image.resolver to the one that should be used.',
-                implode(', ', array_map(static fn ($name) => sprintf('"%s"', $name), array_keys($resolvers)))
-            ));
+            throw new \LogicException(sprintf('Multiple "resolvers" are configured (%s) but none is named "default" and no explicit "resolver" option was set. Either name one of them "default", or set progressive_image.resolver to the one that should be used.', implode(', ', array_map(static fn ($name) => sprintf('"%s"', $name), array_keys($resolvers)))));
         } else {
             $container->register('progressive_image.resolver.default', FileSystemResolver::class)
                 ->setArgument('$roots', ['%kernel.project_dir%/public'])
@@ -386,7 +385,14 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(ResolverChainSourceReader::class)
             ->setArgument('$resolver', new Reference('progressive_image.resolver.default'))
             ->setArgument('$loader', new Reference('progressive_image.filesystem.loader'));
-        $container->setAlias(SourceReader::class, ResolverChainSourceReader::class);
+
+        $httpSourceConfig = $configs['variant_source']['http'] ?? ['enabled' => false];
+        if ($httpSourceConfig['enabled'] ?? false) {
+            $this->configureHttpSourceReader($httpSourceConfig, $container);
+            $container->setAlias(SourceReader::class, ChainSourceReader::class);
+        } else {
+            $container->setAlias(SourceReader::class, ResolverChainSourceReader::class);
+        }
 
         $driverClass = 'imagick' === ($configs['driver'] ?? 'gd') ? ImagickDriver::class : GdDriver::class;
         $container->register('progressive_image.variant.image_manager', ImageManager::class)
@@ -547,6 +553,32 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(SymfonyGenerationLock::class)
             ->setArgument('$lockFactory', new Reference('progressive_image.variant.lock_factory'));
         $container->setAlias(GenerationLock::class, SymfonyGenerationLock::class);
+    }
+
+    /**
+     * @param array<string, mixed> $httpConfig
+     */
+    private function configureHttpSourceReader(array $httpConfig, ContainerBuilder $container): void
+    {
+        if (!interface_exists(HttpClientInterface::class)) {
+            throw new \LogicException('progressive_image.variant_source.http.enabled is true but symfony/http-client is not installed. Run "composer require symfony/http-client".');
+        }
+
+        // Deliberately its own HttpClient::create() instance rather than reusing the app's
+        // "http_client" service (which requires framework.http_client to be configured at
+        // all) — the Variant pipeline stays self-sufficient the same way it owns its own
+        // ImageManager and lock store instead of depending on app-level config for those.
+        $container->register('progressive_image.variant.http_client', HttpClientInterface::class)
+            ->setFactory([HttpClient::class, 'create']);
+
+        $container->register(HttpSourceReader::class)
+            ->setArgument('$client', new Reference('progressive_image.variant.http_client'))
+            ->setArgument('$allowedHosts', $httpConfig['allowed_hosts'] ?? [])
+            ->setArgument('$timeoutSeconds', $httpConfig['timeout'] ?? 5);
+
+        $container->register(ChainSourceReader::class)
+            ->setArgument('$local', new Reference(ResolverChainSourceReader::class))
+            ->setArgument('$remote', new Reference(HttpSourceReader::class));
     }
 
     /**

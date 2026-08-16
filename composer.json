@@ -43,6 +43,7 @@
         "phpstan/phpstan-symfony": "^2.0",
         "symfony/asset-mapper": "^6.4|^7.4|^8.1",
         "symfony/dotenv": "^6.4|^7.4|^8.1",
+        "symfony/http-client": "^6.4|^7.4|^8.1",
         "symfony/messenger": "^6.4|^7.4|^8.1",
         "symfony/test-pack": "^1.2",
         "symfony/yaml": "^6.4|^7.4|^8.1"

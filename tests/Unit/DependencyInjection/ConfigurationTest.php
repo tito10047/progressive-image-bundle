@@ -236,6 +236,65 @@ class ConfigurationTest extends TestCase
         $this->assertSame('/usr/local/bin/jpegoptim', $config['post_processors']['jpegoptim']['bin']);
     }
 
+    public function testVariantSourceHttpDefaultsToDisabled(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($config['variant_source']['http']['enabled']);
+        $this->assertSame([], $config['variant_source']['http']['allowed_hosts']);
+        $this->assertSame(5, $config['variant_source']['http']['timeout']);
+    }
+
+    public function testVariantSourceHttpCanBeEnabledWithAnAllowlist(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'variant_source' => [
+                    'http' => [
+                        'enabled' => true,
+                        'allowed_hosts' => ['images.example.com'],
+                        'timeout' => 10,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['variant_source']['http']['enabled']);
+        $this->assertSame(['images.example.com'], $config['variant_source']['http']['allowed_hosts']);
+        $this->assertSame(10, $config['variant_source']['http']['timeout']);
+    }
+
+    public function testVariantSourceHttpEnabledWithoutAllowedHostsIsInvalid(): void
+    {
+        $processor = new Processor();
+
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+
+        $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'variant_source' => [
+                    'http' => [
+                        'enabled' => true,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testVariantContextOverrides(): void
     {
         $processor = new Processor();

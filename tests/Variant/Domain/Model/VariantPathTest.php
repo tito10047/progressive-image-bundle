@@ -51,4 +51,54 @@ final class VariantPathTest extends TestCase
 
         self::assertStringEndsWith('.jpg', $path->value);
     }
+
+    public function testFromRawWrapsAnAlreadyKnownStoredPathVerbatim(): void
+    {
+        $path = VariantPath::fromRaw('jpeg/ab/abcdef/uploads/hero.jpg.jpg');
+
+        self::assertSame('jpeg/ab/abcdef/uploads/hero.jpg.jpg', $path->value);
+    }
+
+    public function testBelongsToSourceIsTrueForAVariantOfThatExactSource(): void
+    {
+        $id = new VariantId('abcdef0123456789');
+        $source = new SourcePath('uploads/hero.jpg');
+        $path = VariantPath::for($id, $source, OutputFormat::Webp);
+
+        self::assertTrue(VariantPath::belongsToSource($path->value, $source));
+    }
+
+    public function testBelongsToSourceIsTrueRegardlessOfWhichFormatOrId(): void
+    {
+        $source = new SourcePath('uploads/hero.jpg');
+
+        $jpeg = VariantPath::for(new VariantId('aaaa0000'), $source, OutputFormat::Jpeg);
+        $avif = VariantPath::for(new VariantId('bbbb1111'), $source, OutputFormat::Avif);
+
+        self::assertTrue(VariantPath::belongsToSource($jpeg->value, $source));
+        self::assertTrue(VariantPath::belongsToSource($avif->value, $source));
+    }
+
+    public function testBelongsToSourceIsFalseForADifferentSource(): void
+    {
+        $id = new VariantId('abcdef0123456789');
+        $path = VariantPath::for($id, new SourcePath('uploads/hero.jpg'), OutputFormat::Webp);
+
+        self::assertFalse(VariantPath::belongsToSource($path->value, new SourcePath('uploads/other.jpg')));
+    }
+
+    public function testBelongsToSourceIsFalseForASourceThatIsAPrefixOfAnother(): void
+    {
+        // "hero.jpg" must not match a variant of "hero.jpg.evil" (or vice versa) just
+        // because one string is a substring of the other.
+        $id = new VariantId('abcdef0123456789');
+        $path = VariantPath::for($id, new SourcePath('uploads/hero.jpg.evil'), OutputFormat::Webp);
+
+        self::assertFalse(VariantPath::belongsToSource($path->value, new SourcePath('uploads/hero.jpg')));
+    }
+
+    public function testBelongsToSourceIsFalseForAMalformedPath(): void
+    {
+        self::assertFalse(VariantPath::belongsToSource('not-a-variant-path', new SourcePath('uploads/hero.jpg')));
+    }
 }

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Double;
 
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\GeneratedImage;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantPath;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
 
@@ -58,5 +59,14 @@ final class InMemoryVariantStorage implements VariantStorage
     public function failMarkerTimestamp(VariantPath $path): ?\DateTimeImmutable
     {
         return $this->failMarkers[$path->value] ?? null;
+    }
+
+    public function list(SourcePath $source): iterable
+    {
+        foreach (array_keys($this->files) as $rawPath) {
+            if (VariantPath::belongsToSource($rawPath, $source)) {
+                yield VariantPath::fromRaw($rawPath);
+            }
+        }
     }
 }

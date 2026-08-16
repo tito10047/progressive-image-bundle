@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\VariantDomainException;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\GeneratedImage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantPath;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
 
@@ -96,6 +97,34 @@ final readonly class FlysystemVariantStorage implements VariantStorage
         }
 
         return (new \DateTimeImmutable())->setTimestamp((int) $contents);
+    }
+
+    /**
+     * Scan-based: no reverse index from source to its variants exists (or is worth
+     * maintaining) for a CLI purge/warm tool that runs occasionally, not on the hot path —
+     * a full deep listing under $prefix, filtered down to matches, is the accepted tradeoff.
+     */
+    public function list(SourcePath $source): iterable
+    {
+        foreach ($this->filesystem->listContents($this->prefix, deep: true) as $item) {
+            if (!$item->isFile()) {
+                continue;
+            }
+
+            $relative = $this->relativePath($item->path());
+            if (VariantPath::belongsToSource($relative, $source)) {
+                yield VariantPath::fromRaw($relative);
+            }
+        }
+    }
+
+    private function relativePath(string $fullPath): string
+    {
+        if ('' === $this->prefix) {
+            return $fullPath;
+        }
+
+        return ltrim(substr($fullPath, \strlen(rtrim($this->prefix, '/'))), '/');
     }
 
     /**

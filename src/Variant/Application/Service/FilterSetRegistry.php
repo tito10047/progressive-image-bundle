@@ -61,6 +61,14 @@ final readonly class FilterSetRegistry
     }
 
     /**
+     * @return list<string>
+     */
+    public function names(): array
+    {
+        return array_keys($this->rawSets);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function rawFilterSet(string $name): array

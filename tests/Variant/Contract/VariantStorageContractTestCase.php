@@ -125,4 +125,61 @@ abstract class VariantStorageContractTestCase extends TestCase
         self::assertTrue($storage->exists($a));
         self::assertFalse($storage->exists($b));
     }
+
+    public function testListReturnsEmptyForASourceWithNoVariants(): void
+    {
+        $storage = $this->createStorage();
+
+        self::assertSame([], iterator_to_array($storage->list(new SourcePath('uploads/hero.jpg')), false));
+    }
+
+    public function testListReturnsEveryVariantWrittenForASourceAcrossFormatsAndIds(): void
+    {
+        $storage = $this->createStorage();
+        $source = new SourcePath('uploads/hero.jpg');
+        $jpeg = VariantPath::for(new VariantId('aaaa0000'), $source, OutputFormat::Jpeg);
+        $webp = VariantPath::for(new VariantId('bbbb1111'), $source, OutputFormat::Webp);
+
+        $storage->write($jpeg, new GeneratedImage('jpeg-bytes', OutputFormat::Jpeg));
+        $storage->write($webp, new GeneratedImage('webp-bytes', OutputFormat::Webp));
+
+        $listed = array_map(static fn (VariantPath $p): string => $p->value, iterator_to_array($storage->list($source), false));
+        sort($listed);
+        $expected = [$jpeg->value, $webp->value];
+        sort($expected);
+
+        self::assertSame($expected, $listed);
+    }
+
+    public function testListDoesNotReturnVariantsBelongingToADifferentSource(): void
+    {
+        $storage = $this->createStorage();
+        $sourceA = new SourcePath('uploads/a.jpg');
+        $sourceB = new SourcePath('uploads/b.jpg');
+        $pathA = VariantPath::for(new VariantId('aaaa0000'), $sourceA, OutputFormat::Jpeg);
+        $pathB = VariantPath::for(new VariantId('bbbb1111'), $sourceB, OutputFormat::Jpeg);
+
+        $storage->write($pathA, new GeneratedImage('a-bytes', OutputFormat::Jpeg));
+        $storage->write($pathB, new GeneratedImage('b-bytes', OutputFormat::Jpeg));
+
+        $listed = iterator_to_array($storage->list($sourceA), false);
+
+        self::assertCount(1, $listed);
+        self::assertSame($pathA->value, $listed[0]->value);
+    }
+
+    public function testListedPathsCanBeDeletedDirectly(): void
+    {
+        $storage = $this->createStorage();
+        $source = new SourcePath('uploads/hero.jpg');
+        $path = VariantPath::for(new VariantId('aaaa0000'), $source, OutputFormat::Jpeg);
+        $storage->write($path, new GeneratedImage('bytes', OutputFormat::Jpeg));
+
+        foreach ($storage->list($source) as $listedPath) {
+            $storage->delete($listedPath);
+        }
+
+        self::assertFalse($storage->exists($path));
+        self::assertSame([], iterator_to_array($storage->list($source), false));
+    }
 }

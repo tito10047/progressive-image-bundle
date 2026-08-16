@@ -64,4 +64,19 @@ final class FilterSetRegistryTest extends TestCase
             'broken' => ['filters' => ['thumbnail' => ['mode' => 'outbound']]],
         ], new FilterFactory());
     }
+
+    public function testNamesReturnsEveryConfiguredFilterSetName(): void
+    {
+        $registry = new FilterSetRegistry([
+            'thumbnail_square' => ['filters' => []],
+            'hero' => ['filters' => []],
+        ], new FilterFactory());
+
+        self::assertSame(['thumbnail_square', 'hero'], $registry->names());
+    }
+
+    public function testNamesIsEmptyForAnEmptyRegistry(): void
+    {
+        self::assertSame([], (new FilterSetRegistry([], new FilterFactory()))->names());
+    }
 }

@@ -68,3 +68,8 @@ framework:
                     max_retries: 3
                     delay: 5000
 ```
+
+If you'd rather pre-generate known-important variants than wait for a worker to pick them
+up, see [CLI Commands](/guide/variant-pipeline/cli-commands) —
+`progressive-image:variant:warm` produces exactly the same on-disk artifacts a worker would,
+just synchronously and on demand.

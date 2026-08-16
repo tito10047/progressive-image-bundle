@@ -56,6 +56,7 @@ export default defineConfig({
           { text: 'Generation Strategies', link: '/guide/variant-pipeline/generation-strategies' },
           { text: 'Filters, Formats & Quality', link: '/guide/variant-pipeline/filters-formats-and-quality' },
           { text: 'Storage', link: '/guide/variant-pipeline/storage' },
+          { text: 'CLI Commands', link: '/guide/variant-pipeline/cli-commands' },
         ],
       },
       {

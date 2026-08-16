@@ -30,6 +30,8 @@ use Symfony\Component\Lock\Store\StoreFactory;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Tito10047\ProgressiveImageBundle\Command\GenerateCustomCssCommand;
+use Tito10047\ProgressiveImageBundle\Command\RemoveVariantCommand;
+use Tito10047\ProgressiveImageBundle\Command\WarmVariantCommand;
 use Tito10047\ProgressiveImageBundle\Event\TransparentImageCacheSubscriber;
 use Tito10047\ProgressiveImageBundle\Modifier\BaseFilterModifier;
 use Tito10047\ProgressiveImageBundle\Modifier\FilterModifierInterface;
@@ -491,6 +493,18 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         $container->register(ResponseCacheOverrideListener::class)
             ->setArgument('$tracker', new Reference(PendingGenerationTracker::class))
             ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => '__invoke', 'priority' => -1024]);
+
+        $container->register(WarmVariantCommand::class)
+            ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$generateHandler', new Reference(GenerateVariantHandler::class))
+            ->setArgument('$filterSets', new Reference(FilterSetRegistry::class))
+            ->addTag('console.command');
+
+        $container->register(RemoveVariantCommand::class)
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->addTag('console.command');
     }
 
     /**

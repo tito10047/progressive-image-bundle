@@ -211,6 +211,61 @@ final class VariantContextWiringTest extends TestCase
         $kernel->shutdown();
     }
 
+    /**
+     * TerminateGenerationDispatcher is both an event listener (kernel.terminate ->
+     * onTerminate()) AND injected via the GenerationDispatcher alias into
+     * ResolveVariantUrlHandler — if it were wired as non-shared, those would resolve to two
+     * different instances, and onTerminate() would flush an empty queue since dispatch()
+     * was called on a different object. This proves the real end-to-end flush still works
+     * with whatever sharedness the DI wiring actually uses.
+     */
+    public function testTerminateStrategyFlushesQueuedGenerationsOnKernelTerminate(): void
+    {
+        $this->storageRoot = sys_get_temp_dir().'/pgi-wiring-'.bin2hex(random_bytes(8));
+        mkdir($this->storageRoot);
+
+        $kernel = new ProgressiveImageTestingKernel([
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => [__DIR__.'/../../Functional/Fixtures/images']],
+                ],
+                'variant_store' => [
+                    'storage' => 'test.variant_storage',
+                ],
+                'generation' => [
+                    'strategy' => 'terminate',
+                ],
+            ],
+        ]);
+
+        $storageRoot = $this->storageRoot;
+        $kernel->setCustomConfiguration(function (ContainerBuilder $container) use ($storageRoot): void {
+            $container->register('test.variant_storage.adapter', LocalFilesystemAdapter::class)
+                ->setArgument('$location', $storageRoot);
+            $container->register('test.variant_storage', Filesystem::class)
+                ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))
+                ->setPublic(true);
+        });
+
+        $kernel->boot();
+        $container = $kernel->getContainer();
+
+        $resolveHandler = $container->get(ResolveVariantUrlHandler::class);
+        self::assertInstanceOf(ResolveVariantUrlHandler::class, $resolveHandler);
+
+        $resolved = $resolveHandler(new ResolveVariantUrl(new SourcePath('test.png'), 40, 40));
+        self::assertTrue($resolved->pending, 'generation must not have run yet — it is queued for kernel.terminate');
+
+        $request = Request::create('/');
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        $kernel->terminate($request, $response);
+
+        $files = glob($this->storageRoot.'/jpeg/*/*/*.jpg') ?: [];
+        self::assertNotEmpty($files, 'kernel.terminate must have flushed the queued generation onto disk');
+
+        $kernel->shutdown();
+    }
+
     private function removeDirectory(string $dir): void
     {
         $entries = scandir($dir);

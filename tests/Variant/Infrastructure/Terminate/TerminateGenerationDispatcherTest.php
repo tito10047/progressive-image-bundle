@@ -29,8 +29,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Quality;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourceImage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\SourceNotReadable;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Variant;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Service\VariantIdHasher;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Terminate\TerminateGenerationDispatcher;
 
@@ -92,6 +94,47 @@ final class TerminateGenerationDispatcherTest extends TestCase
 
         self::assertTrue($this->storage->exists($variantA->path()));
         self::assertTrue($this->storage->exists($variantB->path()));
+    }
+
+    public function testOnTerminateProcessesAllQueuedCommandsEvenWhenAnEarlierOneFails(): void
+    {
+        $failingSourceReader = new class implements SourceReader {
+            public function read(SourcePath $path): SourceImage
+            {
+                if ('uploads/broken.jpg' === $path->value) {
+                    throw new SourceNotReadable('broken');
+                }
+
+                $stream = fopen('php://memory', 'r') ?: throw new \RuntimeException('could not open php://memory');
+
+                return new SourceImage($stream, new Dimensions(100, 100), 'image/jpeg');
+            }
+        };
+
+        $handler = new GenerateVariantHandler(
+            $this->hasher,
+            new InMemoryGenerationLock(),
+            $this->storage,
+            $failingSourceReader,
+            new FakeImageManipulator(),
+            [],
+            new SpyDomainEventBus(),
+            new FrozenClock()
+        );
+
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+
+        $dispatcher = new TerminateGenerationDispatcher($handler, $logger);
+
+        [$sourceBroken, $specBroken] = $this->makeVariant('uploads/broken.jpg');
+        [$sourceOk, $specOk, $variantOk] = $this->makeVariant('uploads/ok.jpg');
+        $dispatcher->dispatch(new GenerateVariant($sourceBroken, $specBroken));
+        $dispatcher->dispatch(new GenerateVariant($sourceOk, $specOk));
+
+        $dispatcher->onTerminate();
+
+        self::assertTrue($this->storage->exists($variantOk->path()), 'the second (healthy) queued command must still run after the first one failed');
     }
 
     public function testOnTerminateClearsTheQueue(): void

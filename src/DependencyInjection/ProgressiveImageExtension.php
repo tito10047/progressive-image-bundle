@@ -540,8 +540,15 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
         }
 
         if ('terminate' === $strategy) {
+            // NOT setShared(false): unlike ResolveVariantUrlHandler, this class is both
+            // injected via the GenerationDispatcher alias AND separately resolved by the
+            // kernel.event_listener tag to call onTerminate() — a non-shared registration
+            // would make those resolve to two different instances, so onTerminate() would
+            // flush an empty queue instead of the one dispatch() actually populated
+            // (verified: this reproduces as a real failure, not just a theoretical one).
             $container->register(TerminateGenerationDispatcher::class)
                 ->setArgument('$handler', new Reference(GenerateVariantHandler::class))
+                ->setArgument('$logger', new Reference('logger', ContainerBuilder::IGNORE_ON_INVALID_REFERENCE))
                 ->addTag('kernel.event_listener', ['event' => 'kernel.terminate', 'method' => 'onTerminate']);
             $container->setAlias(GenerationDispatcher::class, TerminateGenerationDispatcher::class);
 

@@ -33,9 +33,16 @@ class ProgressiveImageTestingKernel extends Kernel
 
     private ?\Closure $customConfiguration = null;
 
+    // spl_object_hash($this) is not safe here: PHP reuses object handles once an
+    // earlier kernel is garbage-collected, so two kernels booted with different
+    // config can end up sharing a cache dir — the second then silently loads the
+    // first's stale compiled container instead of recompiling with its own config.
+    private readonly string $cacheId;
+
     public function __construct(
         private array $options = [],
     ) {
+        $this->cacheId = bin2hex(random_bytes(16));
         parent::__construct('test', true);
     }
 
@@ -133,7 +140,7 @@ class ProgressiveImageTestingKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return __DIR__.'/../../var/cache/tests/'.spl_object_hash($this);
+        return __DIR__.'/../../var/cache/tests/'.$this->cacheId;
     }
 
     public function shutdown(): void

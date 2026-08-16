@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Twig\Components;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -23,6 +24,9 @@ use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\Twig\Components\Image;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
+// $collector is only ever injected here, never verified — a legitimate stub-style use of
+// createMock() alongside other mocks in the same test that do configure ->expects().
+#[AllowMockObjectsWithoutExpectations]
 class ProgressiveImageComponentTest extends TestCase
 {
     public function testComponentProperties(): void

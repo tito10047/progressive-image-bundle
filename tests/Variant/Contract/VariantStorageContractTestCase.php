@@ -26,7 +26,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
  * adapter) — a fake that passes this but doesn't behave like the real thing would be a lie
  * the Application-layer tests silently rely on.
  */
-abstract class VariantStorageContractTest extends TestCase
+abstract class VariantStorageContractTestCase extends TestCase
 {
     abstract protected function createStorage(): VariantStorage;
 

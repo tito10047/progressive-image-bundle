@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
@@ -19,6 +20,10 @@ use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
+// $urlGenerator/$preloadCollector are shared mocks reused across every test method: some
+// configure ->expects(), others only stub ->method()->willReturn() for return values they
+// don't care to verify — both are legitimate uses of the same fixture.
+#[AllowMockObjectsWithoutExpectations]
 class ResponsiveAttributeGeneratorTest extends TestCase
 {
     private array $gridConfig;
@@ -345,7 +350,7 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $originalWidth = 2000;
 
         $modifier = $this->createMock(ModifierInterface::class);
-        $modifier->method('supports')->with('circle')->willReturn(true);
+        $modifier->method('supports')->willReturnMap([['circle', true]]);
         $modifier->expects($this->once())->method('modify')->with('circle', [])->willReturn(['circle' => true]);
 
         $modifierProvider = new ModifierProvider([$modifier]);
@@ -419,8 +424,8 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $originalWidth = 2000;
 
         $modifier = $this->createMock(ModifierInterface::class);
-        $modifier->method('supports')->with('circle')->willReturn(true);
-        $modifier->method('modify')->with('circle', [])->willReturn(['circle' => true]);
+        $modifier->method('supports')->willReturnMap([['circle', true]]);
+        $modifier->method('modify')->willReturnMap([['circle', [], ['circle' => true]]]);
 
         $modifierProvider = new ModifierProvider([$modifier]);
         $generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1], $this->preloadCollector, $this->urlGenerator, $modifierProvider);

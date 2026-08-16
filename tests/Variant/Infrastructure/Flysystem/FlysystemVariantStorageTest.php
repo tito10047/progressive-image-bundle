@@ -17,6 +17,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnableToMoveFile;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\VariantDomainException;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\GeneratedImage;
@@ -26,6 +27,10 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantId;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantPath;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Flysystem\FlysystemVariantStorage;
 
+// Some tests stub $filesystem's write/move/delete return values without verifying calls,
+// while others (testWriteCleansUpTheTmpFileWhenMoveFails) do assert on them via ->expects()
+// — both are legitimate uses of the same mock across different test methods.
+#[AllowMockObjectsWithoutExpectations]
 final class FlysystemVariantStorageTest extends TestCase
 {
     private string $root;

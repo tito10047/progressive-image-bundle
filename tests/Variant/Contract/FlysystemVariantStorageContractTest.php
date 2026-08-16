@@ -18,7 +18,7 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Flysystem\FlysystemVariantStorage;
 
-final class FlysystemVariantStorageContractTest extends VariantStorageContractTest
+final class FlysystemVariantStorageContractTest extends VariantStorageContractTestCase
 {
     private string $root;
 

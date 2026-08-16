@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -23,6 +24,9 @@ use Tito10047\ProgressiveImageBundle\Loader\LoaderInterface;
 use Tito10047\ProgressiveImageBundle\Resolver\PathResolverInterface;
 use Tito10047\ProgressiveImageBundle\Service\MetadataReader;
 
+// The dispatcher/cache/analyzer/loader/resolver collaborator mocks are used purely as
+// stubs in most tests here, with call verification only where a specific test cares.
+#[AllowMockObjectsWithoutExpectations]
 class MetadataReaderTest extends TestCase
 {
     private $dispatcher;

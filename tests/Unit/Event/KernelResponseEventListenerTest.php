@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Event;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,9 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 
+// $preloadCollector/$httpKernel are shared mocks used purely as stubs in most tests here,
+// with call verification only where a specific test cares about it.
+#[AllowMockObjectsWithoutExpectations]
 class KernelResponseEventListenerTest extends TestCase
 {
     private PreloadCollector $preloadCollector;

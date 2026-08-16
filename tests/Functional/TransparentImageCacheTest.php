@@ -46,7 +46,6 @@ class TransparentImageCacheTest extends PGITestCase
         if ($cache instanceof TagAwareAdapter) {
             $reflection = new \ReflectionClass($cache);
             $property = $reflection->getProperty('pool');
-            $property->setAccessible(true);
             $innerPool = $property->getValue($cache);
         }
 
@@ -95,7 +94,6 @@ class TransparentImageCacheTest extends PGITestCase
         $subscriber = $container->get(TransparentImageCacheSubscriber::class);
         $reflection = new \ReflectionClass($subscriber);
         $property = $reflection->getProperty('cache');
-        $property->setAccessible(true);
         $injectedCache = $property->getValue($subscriber);
 
         $this->assertInstanceOf(\Symfony\Contracts\Cache\TagAwareCacheInterface::class, $injectedCache);

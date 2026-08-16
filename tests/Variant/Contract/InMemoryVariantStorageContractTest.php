@@ -16,7 +16,7 @@ namespace Tito10047\ProgressiveImageBundle\Tests\Variant\Contract;
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\InMemoryVariantStorage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\VariantStorage;
 
-final class InMemoryVariantStorageContractTest extends VariantStorageContractTest
+final class InMemoryVariantStorageContractTest extends VariantStorageContractTestCase
 {
     protected function createStorage(): VariantStorage
     {

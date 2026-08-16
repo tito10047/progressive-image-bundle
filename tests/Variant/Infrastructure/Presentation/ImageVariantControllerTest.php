@@ -119,13 +119,25 @@ final class ImageVariantControllerTest extends TestCase
     {
         $this->sourceReader = FakeSourceReader::failingWith();
 
-        $request = Request::create($this->signer->sign('https://example.com/pgi_variant_serve'));
-        $response = $this->makeController()->serve($request, 'a.jpg', 200, 200);
+        // makeController() never injects a logger, so the controller's failure path falls
+        // back to error_log(); redirect it so that output doesn't leak to stdout and make
+        // this test "risky".
+        $previousErrorLog = ini_get('error_log');
+        $tmpFile = sys_get_temp_dir().'/pgi-error-log-'.bin2hex(random_bytes(8)).'.log';
+        ini_set('error_log', $tmpFile);
 
-        self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/original/a.jpg', $response->headers->get('Location'));
-        self::assertTrue($response->headers->hasCacheControlDirective('no-store'));
-        self::assertTrue($response->headers->hasCacheControlDirective('must-revalidate'));
+        try {
+            $request = Request::create($this->signer->sign('https://example.com/pgi_variant_serve'));
+            $response = $this->makeController()->serve($request, 'a.jpg', 200, 200);
+
+            self::assertSame(302, $response->getStatusCode());
+            self::assertSame('/original/a.jpg', $response->headers->get('Location'));
+            self::assertTrue($response->headers->hasCacheControlDirective('no-store'));
+            self::assertTrue($response->headers->hasCacheControlDirective('must-revalidate'));
+        } finally {
+            ini_set('error_log', false !== $previousErrorLog ? $previousErrorLog : '');
+            @unlink($tmpFile);
+        }
     }
 
     public function testLogsToErrorLogWhenGenerationFailsAndNoLoggerServiceIsAvailable(): void

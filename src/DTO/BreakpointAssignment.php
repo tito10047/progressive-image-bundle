@@ -65,6 +65,9 @@ final readonly class BreakpointAssignment
             $dimensions = substr($segment, 1, -1);
             if (str_contains($dimensions, 'x')) {
                 [$widthStr, $heightStr] = explode('x', $dimensions, 2);
+                if (!is_numeric($widthStr) || !is_numeric($heightStr)) {
+                    throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $originalSegment));
+                }
                 $width = (int) $widthStr;
                 $height = (int) $heightStr;
             } elseif (str_ends_with($dimensions, '%')) {
@@ -98,6 +101,8 @@ final readonly class BreakpointAssignment
      */
     public static function parseSegments(string $segments, ?string $ratio): array
     {
-        return array_map(fn ($segment) => self::fromSegment($segment, $ratio), explode(' ', $segments));
+        $parts = preg_split('/\s+/', trim($segments), -1, PREG_SPLIT_NO_EMPTY);
+
+        return array_map(fn ($segment) => self::fromSegment($segment, $ratio), $parts);
     }
 }

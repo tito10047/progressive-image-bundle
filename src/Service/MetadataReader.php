@@ -41,25 +41,58 @@ final class MetadataReader implements MetadataReaderInterface
      */
     public function getMetadata(string $src): ImageMetadata
     {
-        return $this->cache->get(md5($src), function (ItemInterface $item) use ($src) {
+        $result = $this->cache->get('pgi_meta_'.md5($src), function (ItemInterface $item) use ($src) {
             if ($this->ttl) {
                 $item->expiresAfter($this->ttl);
             }
+
             try {
                 $path = $this->pathResolver->resolve($src);
-            } catch (PathResolutionException $e) {
+
+                return $this->analyzer->analyze($this->loader, $path);
+            } catch (PathResolutionException) {
                 $this->dispatchEvent($src);
 
                 if (!$this->fallbackPath) {
-                    throw $e;
+                    // Cache the negative result too (same key, same TTL): without this, a
+                    // permanently-broken $src would re-run resolve() and re-dispatch
+                    // ImageNotFoundEvent on every single request forever, since Symfony's
+                    // cache->get() never stores anything when its callback throws.
+                    return null;
                 }
+
                 try {
-                    $path = $this->pathResolver->resolve($this->fallbackPath);
-                } catch (PathResolutionException $e) {
+                    return $this->getFallbackMetadata();
+                } catch (PathResolutionException $fallbackException) {
                     $this->dispatchEvent($this->fallbackPath);
-                    throw $e;
+
+                    throw $fallbackException;
                 }
             }
+        });
+
+        if (null === $result) {
+            throw new PathResolutionException(\sprintf('Source image not resolvable "%s"', $src));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws PathResolutionException
+     */
+    private function getFallbackMetadata(): ImageMetadata
+    {
+        // Keyed by the fallback path itself (not by whichever original $src fell back to
+        // it), so every broken $src shares this single cache entry instead of each one
+        // separately recomputing and storing an identical copy of the fallback image's
+        // (potentially expensive, e.g. blurhash) metadata.
+        return $this->cache->get('pgi_meta_'.md5($this->fallbackPath), function (ItemInterface $item) {
+            if ($this->ttl) {
+                $item->expiresAfter($this->ttl);
+            }
+
+            $path = $this->pathResolver->resolve($this->fallbackPath);
 
             return $this->analyzer->analyze($this->loader, $path);
         });

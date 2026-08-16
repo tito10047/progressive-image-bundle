@@ -16,6 +16,11 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 
 final class AssetMapperResolver implements PathResolverInterface
 {
+    /**
+     * @var array<string, string>|null
+     */
+    private ?array $publicPathToSourcePath = null;
+
     public function __construct(
         private readonly AssetMapperInterface $assetMapper,
     ) {
@@ -24,11 +29,18 @@ final class AssetMapperResolver implements PathResolverInterface
     public function resolve(string $path): string
     {
         $path = '/'.mb_ltrim($path, '/');
-        foreach ($this->assetMapper->allAssets() as $assetCandidate) {
-            if ($path === $assetCandidate->publicPath) {
-                return $assetCandidate->sourcePath;
+
+        if (null === $this->publicPathToSourcePath) {
+            $this->publicPathToSourcePath = [];
+            foreach ($this->assetMapper->allAssets() as $assetCandidate) {
+                $this->publicPathToSourcePath[$assetCandidate->publicPath] = $assetCandidate->sourcePath;
             }
         }
-        throw new PathResolutionException(\sprintf('Asset with public path "%s" not found.', $path));
+
+        if (!isset($this->publicPathToSourcePath[$path])) {
+            throw new PathResolutionException(\sprintf('Asset with public path "%s" not found.', $path));
+        }
+
+        return $this->publicPathToSourcePath[$path];
     }
 }

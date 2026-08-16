@@ -16,11 +16,19 @@ use Tito10047\ProgressiveImageBundle\Exception\PathResolutionException;
 class ChainResolver implements PathResolverInterface
 {
     /**
+     * @var array<PathResolverInterface>
+     */
+    private readonly array $resolvers;
+
+    /**
      * @param iterable<PathResolverInterface> $resolvers
      */
     public function __construct(
-        private readonly iterable $resolvers,
+        iterable $resolvers,
     ) {
+        // Materialized once: a TaggedIteratorArgument-injected iterable may be a one-shot
+        // \Generator, and resolve() is typically called once per image within a request.
+        $this->resolvers = is_array($resolvers) ? $resolvers : iterator_to_array($resolvers, false);
     }
 
     public function resolve(string $path): string

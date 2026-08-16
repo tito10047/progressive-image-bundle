@@ -23,7 +23,7 @@ class ConfigurationTest extends PGITestCase
         $this->assertEquals(['square' => '1:1'], $container->getParameter('progressive_image.responsive_strategy.ratios'));
     }
 
-    protected static function bootKernel(array $options = []): \Symfony\Component\HttpKernel\KernelInterface
+    protected static function bootKernel(array $options = [], ?\Closure $customConfiguration = null): \Symfony\Component\HttpKernel\KernelInterface
     {
         $options = array_merge_recursive([
             'progressive_image' => [
@@ -37,6 +37,6 @@ class ConfigurationTest extends PGITestCase
             ],
         ], $options);
 
-        return parent::bootKernel($options);
+        return parent::bootKernel($options, $customConfiguration);
     }
 }

@@ -14,11 +14,19 @@ namespace Tito10047\ProgressiveImageBundle\Modifier;
 final class ModifierProvider
 {
     /**
+     * @var array<ModifierInterface>
+     */
+    private readonly array $modifiers;
+
+    /**
      * @param iterable<ModifierInterface> $modifiers
      */
     public function __construct(
-        private readonly iterable $modifiers,
+        iterable $modifiers,
     ) {
+        // Materialized once: a TaggedIteratorArgument-injected iterable may be a one-shot
+        // \Generator, and applyModifiers() re-iterates it once per $modifierString.
+        $this->modifiers = is_array($modifiers) ? $modifiers : iterator_to_array($modifiers, false);
     }
 
     /**

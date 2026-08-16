@@ -23,38 +23,43 @@ final class KernelResponseEventListener
 
     public function __invoke(ResponseEvent $event): void
     {
-        $response = $event->getResponse();
+        if (!$event->isMainRequest()) {
+            return;
+        }
 
         $preloads = $this->preloadCollector->getUrls();
         if (empty($preloads)) {
             return;
         }
 
-        $links = [];
-        foreach ($preloads as $url => $attr) {
-            $link = sprintf('<%s>; rel=preload; as=%s; fetchpriority=%s',
-                $url, $attr['as'], $attr['priority']);
-            if (!empty($attr['imagesrcset'])) {
-                $link .= sprintf('; imagesrcset="%s"', $attr['imagesrcset']);
-            }
-            if (!empty($attr['imagesizes'])) {
-                $link .= sprintf('; imagesizes="%s"', $attr['imagesizes']);
-            }
-            $links[] = $link;
+        $response = $event->getResponse();
+
+        // The HTTP Link header is symfony/web-link's job: PreloadCollector::add() already
+        // registers a Link on the request's GenericLinkProvider, which FrameworkBundle's
+        // AddLinkHeaderListener turns into the response header automatically. Building it
+        // again here duplicated the header with slightly different formatting.
+        $contentType = $response->headers->get('Content-Type');
+        if (null !== $contentType && !str_starts_with($contentType, 'text/html')) {
+            return;
         }
-        $response->headers->set('Link', implode(', ', $links), false);
 
         $content = $response->getContent();
+        if (false === $content) {
+            // e.g. StreamedResponse/BinaryFileResponse, which don't support setContent().
+            return;
+        }
 
         $html = '';
         foreach ($preloads as $url => $attr) {
             $html .= sprintf('<link rel="preload" href="%s" as="%s" fetchpriority="%s"',
-                $url, $attr['as'], $attr['priority']);
+                htmlspecialchars($url, ENT_QUOTES),
+                htmlspecialchars($attr['as'], ENT_QUOTES),
+                htmlspecialchars($attr['priority'], ENT_QUOTES));
             if (!empty($attr['imagesrcset'])) {
-                $html .= sprintf(' imagesrcset="%s"', $attr['imagesrcset']);
+                $html .= sprintf(' imagesrcset="%s"', htmlspecialchars($attr['imagesrcset'], ENT_QUOTES));
             }
             if (!empty($attr['imagesizes'])) {
-                $html .= sprintf(' imagesizes="%s"', $attr['imagesizes']);
+                $html .= sprintf(' imagesizes="%s"', htmlspecialchars($attr['imagesizes'], ENT_QUOTES));
             }
             $html .= '>';
         }

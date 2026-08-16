@@ -17,7 +17,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -132,22 +131,18 @@ class ImageComponentTest extends PGITestCase
 
     public function testPreloadHeader(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->expects($this->once())
-            ->method('getBrowserPath')
-            ->with('/test.png', 'preview_big')
-            ->willReturn('http://localhost/media/cache/resolve/preview_big/test.png');
-
         $this->_bootKernel([
             'progressive_image' => [
-                'path_decorators' => ['progressive_image.decorator.liip_imagine'],
+                'path_decorators' => ['test.fake_filter_path_decorator'],
             ],
         ]);
 
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
+        // PreloadCollector::add() attaches its WebLink provider to the RequestStack's
+        // current request — a real request is always current while rendering a real page,
+        // so push one here too (renderTwigComponent() alone doesn't).
+        $requestStack = self::getContainer()->get('request_stack');
+        $request = new Request();
+        $requestStack->push($request);
 
         $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -167,28 +162,23 @@ class ImageComponentTest extends PGITestCase
         $expectedUrl = 'http://localhost/media/cache/resolve/preview_big/test.png';
         $this->assertArrayHasKey($expectedUrl, $urls);
 
+        // The Link header is symfony/web-link's responsibility (via PreloadCollector's
+        // GenericLinkProvider registration on the request), not KernelResponseEventListener's
+        // — dispatch both real listeners, as the real kernel.response event does, to prove
+        // the header still comes out correctly end-to-end.
         $eventListener = self::getContainer()->get(KernelResponseEventListener::class);
-        $request = new Request();
         $response = new \Symfony\Component\HttpFoundation\Response();
         $event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
 
         $eventListener($event);
+        (new \Symfony\Component\WebLink\EventListener\AddLinkHeaderListener())->onKernelResponse($event);
 
         $this->assertTrue($response->headers->has('Link'));
-        $this->assertStringContainsString('<'.$expectedUrl.'>; rel=preload; as=image; fetchpriority=high', $response->headers->get('Link'));
+        $this->assertStringContainsString('<'.$expectedUrl.'>; rel="preload"; as="image"; fetchpriority="high"', $response->headers->get('Link'));
     }
 
     public function testRenderWithResponsiveStrategy(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function ($path, $filter) {
-                return 'http://localhost/media/cache/resolve/'.$filter.$path;
-            });
-
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -208,8 +198,6 @@ class ImageComponentTest extends PGITestCase
                 ],
             ],
         ]);
-
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
 
         $html = $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -236,9 +224,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithMultipleBreakpoints(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -273,9 +258,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithLocalRetinaOverride(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -312,9 +294,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithRetina(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -353,9 +332,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithGlobalRetinaDefault(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -390,9 +366,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithGlobalRetinaDisabled(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'retina' => [
@@ -428,9 +401,6 @@ class ImageComponentTest extends PGITestCase
 
     public function testRenderWithOmittedBreakpoint(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -464,18 +434,8 @@ class ImageComponentTest extends PGITestCase
 
     public function testPreloadHeaderWithSrcset(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function ($path, $filter) {
-                return 'http://localhost/media/cache/resolve/'.$filter.$path;
-            });
-
         $this->_bootKernel([
             'progressive_image' => [
-                'path_decorators' => ['progressive_image.decorator.liip_imagine'],
                 'responsive_strategy' => [
                     'grid' => [
                         'columns' => 12,
@@ -494,7 +454,12 @@ class ImageComponentTest extends PGITestCase
             ],
         ]);
 
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
+        // PreloadCollector::add() attaches its WebLink provider to the RequestStack's
+        // current request — a real request is always current while rendering a real page,
+        // so push one here too (renderTwigComponent() alone doesn't).
+        $requestStack = self::getContainer()->get('request_stack');
+        $request = new Request();
+        $requestStack->push($request);
 
         $this->renderTwigComponent(
             name: 'pgi:Image',
@@ -506,33 +471,29 @@ class ImageComponentTest extends PGITestCase
             ]
         );
 
-        $preloadCollector = self::getContainer()->get(PreloadCollector::class);
-        $urls = $preloadCollector->getUrls();
-
-        $expectedUrl = 'http://localhost/test.png';
-        // LiipImagineDecorator might be used, let's check what URL we got
-        $actualUrl = array_key_first($urls);
-
         $eventListener = self::getContainer()->get(KernelResponseEventListener::class);
-        $request = new Request();
         $response = new \Symfony\Component\HttpFoundation\Response();
         $response->setContent('<html><head></head><body></body></html>');
         $event = new ResponseEvent(self::$kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
 
         $eventListener($event);
+        (new \Symfony\Component\WebLink\EventListener\AddLinkHeaderListener())->onKernelResponse($event);
 
         $this->assertTrue($response->headers->has('Link'));
         $linkHeader = $response->headers->get('Link');
-        $this->assertStringContainsString('rel=preload', $linkHeader);
-        $this->assertStringContainsString('as=image', $linkHeader);
+        $this->assertStringContainsString('rel="preload"', $linkHeader);
+        $this->assertStringContainsString('as="image"', $linkHeader);
         $this->assertStringContainsString('imagesrcset="', $linkHeader);
         $this->assertStringContainsString('1920w', $linkHeader);
-        $this->assertStringContainsString('imagesizes="100vw"', $linkHeader);
+        // A single preload hint now carries the combined sizes across ALL breakpoints
+        // (mobile's plain "100vw" and desktop's media-conditioned fragment), not just one
+        // breakpoint's fragment from whichever assignment happened to be processed.
+        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px, 100vw"', $linkHeader);
 
         $content = $response->getContent();
         $this->assertStringContainsString('<link rel="preload"', $content);
         $this->assertStringContainsString('imagesrcset="', $content);
-        $this->assertStringContainsString('imagesizes="100vw"', $content);
+        $this->assertStringContainsString('imagesizes="(min-width: 1024px) 100px, 100vw"', $content);
     }
 
     public function testRenderFrameworkAttribute(): void

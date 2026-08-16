@@ -17,6 +17,7 @@ use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierProvider;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
+use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
 class TestModifier implements ModifierInterface
 {
@@ -48,16 +49,27 @@ class CustomFilter implements ModifierInterface
     }
 }
 
+/**
+ * Echoes whatever context it's given straight into the query string — these tests only
+ * care whether the modifier chain (ModifierProvider, tag priority) produces the right
+ * context, not how any particular URL generator renders it.
+ */
+final class ContextEchoingUrlGenerator implements ResponsiveImageUrlGeneratorInterface
+{
+    public function generateUrl(string $path, int $targetW, ?int $targetH = null, ?string $pointInterest = null, array $context = []): string
+    {
+        return $path.'?'.http_build_query($context);
+    }
+}
+
 class ModifierIntegrationTest extends TestCase
 {
-    public function testModifiersAreRegisteredAndApplied(): void
+    private function bootKernelWithEchoingUrlGenerator(\Closure $registerModifier): ProgressiveImageTestingKernel
     {
-        if (!class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
         $kernel = new ProgressiveImageTestingKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
+                    'generator' => 'test.url_generator',
                     'grid' => [
                         'layouts' => [
                             'md' => ['min_viewport' => 768, 'max_container' => 720],
@@ -71,12 +83,23 @@ class ModifierIntegrationTest extends TestCase
             ],
         ]);
 
-        $kernel->setCustomConfiguration(function (ContainerBuilder $container) {
-            $container->register(TestModifier::class)
-                ->addTag('progressive_image.modifier');
+        $kernel->setCustomConfiguration(function (ContainerBuilder $container) use ($registerModifier) {
+            $container->register('test.url_generator', ContextEchoingUrlGenerator::class)
+                ->setPublic(true);
+            $registerModifier($container);
         });
 
         $kernel->boot();
+
+        return $kernel;
+    }
+
+    public function testModifiersAreRegisteredAndApplied(): void
+    {
+        $kernel = $this->bootKernelWithEchoingUrlGenerator(function (ContainerBuilder $container): void {
+            $container->register(TestModifier::class)
+                ->addTag('progressive_image.modifier');
+        });
         $container = $kernel->getContainer()->get('test.service_container');
 
         $this->assertTrue($container->has(ModifierProvider::class) || $kernel->getContainer()->has(ModifierProvider::class));
@@ -98,31 +121,10 @@ class ModifierIntegrationTest extends TestCase
 
     public function testFilterPriority(): void
     {
-        if (!class_exists(\Liip\ImagineBundle\LiipImagineBundle::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $kernel = new ProgressiveImageTestingKernel([
-            'progressive_image' => [
-                'responsive_strategy' => [
-                    'grid' => [
-                        'layouts' => [
-                            'md' => ['min_viewport' => 768, 'max_container' => 720],
-                        ],
-                        'columns' => 12,
-                    ],
-                    'ratios' => [
-                        'landscape' => '16/9',
-                    ],
-                ],
-            ],
-        ]);
-
-        $kernel->setCustomConfiguration(function (ContainerBuilder $container) {
+        $kernel = $this->bootKernelWithEchoingUrlGenerator(function (ContainerBuilder $container): void {
             $container->register(CustomFilter::class)
                 ->addTag('progressive_image.modifier'); // default priority 0 > -100
         });
-
-        $kernel->boot();
         $container = $kernel->getContainer()->get('test.service_container');
 
         /** @var ResponsiveAttributeGenerator $generator */

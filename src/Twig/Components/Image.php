@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Twig\Components;
 
+use Psr\Log\LoggerInterface;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Tito10047\ProgressiveImageBundle\Decorators\PathDecoratorInterface;
@@ -47,7 +48,7 @@ final class Image
     /**
      * @var BreakpointAssignment[]
      */
-    private array $breakpoinsts = [];
+    private array $breakpoints = [];
 
     private ?ResponsiveAttributesInterface $responsiveAttributes = null;
 
@@ -61,6 +62,7 @@ final class Image
         private readonly PreloadCollector $preloadCollector,
         private readonly string $framework = 'custom',
         private readonly bool $defaultRetina = true,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -75,27 +77,39 @@ final class Image
             return;
         }
 
+        // Materialized once: $this->pathDecorator is typed `iterable` and may be a
+        // one-shot \Generator, which would silently yield nothing on a second pass.
+        $decorators = is_array($this->pathDecorator) ? $this->pathDecorator : iterator_to_array($this->pathDecorator, false);
+
         $this->decoratedSrc = $this->src;
-        foreach ($this->pathDecorator as $decorator) {
+        foreach ($decorators as $decorator) {
             $this->decoratedSrc = $decorator->decorate($this->decoratedSrc, $this->context);
         }
 
         try {
             $this->metadata = $this->analyzer->getMetadata($this->src);
-        } catch (PathResolutionException) {
+        } catch (PathResolutionException $e) {
             $this->metadata = null;
+            $this->logger?->warning('Could not resolve metadata for image "{src}": {message}', [
+                'src' => $this->src,
+                'message' => $e->getMessage(),
+                'exception' => $e,
+            ]);
         }
-        $this->breakpoinsts = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
-        if ($this->breakpoinsts && $this->responsiveAttributeGenerator) {
+        $metadata = $this->metadata;
+        $this->breakpoints = $this->sizes ? BreakpointAssignment::parseSegments($this->sizes, $this->ratio) : [];
+        if ($this->breakpoints && $this->responsiveAttributeGenerator) {
             $context = $this->context;
             if ($this->filter) {
                 $context['filter'] = $this->filter;
             }
-            $this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoinsts, $this->metadata->width ?? 0, $this->preload, $this->pointInterest, $context, $this->retina, $this->metadata?->height ?? 0);
+            $metadataWidth = null !== $metadata ? $metadata->width : 0;
+            $metadataHeight = null !== $metadata ? $metadata->height : 0;
+            $this->responsiveAttributes = $this->responsiveAttributeGenerator->generate($this->src, $this->breakpoints, $metadataWidth, $this->preload, $this->pointInterest, $context, $this->retina, $metadataHeight);
         } else {
-            $this->decoratedWidth = $this->metadata?->width;
-            $this->decoratedHeight = $this->metadata?->height;
-            foreach ($this->pathDecorator as $decorator) {
+            $this->decoratedWidth = null !== $metadata ? $metadata->width : null;
+            $this->decoratedHeight = null !== $metadata ? $metadata->height : null;
+            foreach ($decorators as $decorator) {
                 $size = $decorator->getSize($this->decoratedSrc, $this->context);
                 if ($size) {
                     $this->decoratedWidth = $size['width'];

@@ -11,6 +11,7 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Tito10047\ProgressiveImageBundle\DTO\BreakpointAssignment;
 use Tito10047\ProgressiveImageBundle\Modifier\ModifierInterface;
@@ -19,6 +20,10 @@ use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 use Tito10047\ProgressiveImageBundle\Service\ResponsiveAttributeGenerator;
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 
+// $urlGenerator/$preloadCollector are shared mocks reused across every test method: some
+// configure ->expects(), others only stub ->method()->willReturn() for return values they
+// don't care to verify — both are legitimate uses of the same fixture.
+#[AllowMockObjectsWithoutExpectations]
 class ResponsiveAttributeGeneratorTest extends TestCase
 {
     private array $gridConfig;
@@ -275,6 +280,141 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $this->assertEqualsWithDelta(2.142857, (float) $result3->getVariables()['--img-aspect'], 0.00001);
     }
 
+    public function testPreloadIsAddedOnceWithCombinedSrcsetAndSizesAcrossAllBreakpoints(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('xs', 12, 'square'),
+            new BreakpointAssignment('md', 6, 'landscape'),
+        ];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturnMap([
+            [$path, 360, 240, null, [], 'url-360'],
+            [$path, 1920, 1920, null, [], 'url-1920'],
+        ]);
+
+        $this->preloadCollector->expects($this->once())
+            ->method('add')
+            ->with(
+                $this->logicalOr('url-360', 'url-1920'),
+                'image',
+                'high',
+                $this->logicalAnd(
+                    $this->stringContains('url-360 360w'),
+                    $this->stringContains('url-1920 1920w'),
+                ),
+                $this->logicalAnd(
+                    $this->stringContains('(min-width: 768px) 360px'),
+                    $this->stringContains('100vw'),
+                ),
+            );
+
+        $this->generator->generate($path, $assignments, $originalWidth, true);
+    }
+
+    public function testPreloadIsNotAddedWhenDisabled(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [new BreakpointAssignment('md', 6, 'landscape')];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-360');
+
+        $this->preloadCollector->expects($this->never())->method('add');
+
+        $this->generator->generate($path, $assignments, $originalWidth, false);
+    }
+
+    public function testImgAspectVariableIsNotSetWhenRatioCannotBeResolved(): void
+    {
+        $path = 'test.jpg';
+        // 'default' breakpoint (min_viewport 0), no explicit ratio and no original
+        // height passed in, so resolveRatio() and $originalRatio are both null.
+        $assignments = [new BreakpointAssignment('default', 12, null)];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url');
+
+        $result = $this->generator->generate($path, $assignments, $originalWidth, false);
+
+        $this->assertArrayNotHasKey('--img-aspect', $result->getVariables());
+    }
+
+    public function testModifiersAreOnlyAppliedOncePerBreakpointNotPerRetinaMultiplier(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('md', 6, 'landscape', null, null, null, ['circle']),
+        ];
+        $originalWidth = 2000;
+
+        $modifier = $this->createMock(ModifierInterface::class);
+        $modifier->method('supports')->willReturnMap([['circle', true]]);
+        $modifier->expects($this->once())->method('modify')->with('circle', [])->willReturn(['circle' => true]);
+
+        $modifierProvider = new ModifierProvider([$modifier]);
+        // retina with 2 multipliers: without the fix, modify() would run once per multiplier.
+        $generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1, 2], $this->preloadCollector, $this->urlGenerator, $modifierProvider);
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-circle');
+
+        $generator->generate($path, $assignments, $originalWidth, false, null, [], true);
+    }
+
+    public function testFluidMaxWidthIsConfigurableInsteadOfHardcoded1920(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [new BreakpointAssignment('default', 12, null)];
+        $originalWidth = 3000;
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            null,
+            null,
+            2560,
+        );
+
+        $this->urlGenerator->expects($this->once())
+            ->method('generateUrl')
+            ->with($path, 2560, null, null, [])
+            ->willReturn('url-2560');
+
+        $generator->generate($path, $assignments, $originalWidth, false);
+    }
+
+    public function testWarnsWhenNoBreakpointProducesADefaultSource(): void
+    {
+        $path = 'test.jpg';
+        // Only a non-zero min_viewport breakpoint — nothing maps to the <img> fallback
+        // source (media === null).
+        $assignments = [new BreakpointAssignment('md', 6, 'landscape')];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturn('url-360');
+
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            null,
+            $logger,
+        );
+
+        $result = $generator->generate($path, $assignments, $originalWidth, false);
+
+        $this->assertSame('', $result->getDefaultSource()->getSrcset());
+    }
+
     public function testGenerateWithModifiers(): void
     {
         $path = 'test.jpg';
@@ -284,8 +424,8 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $originalWidth = 2000;
 
         $modifier = $this->createMock(ModifierInterface::class);
-        $modifier->method('supports')->with('circle')->willReturn(true);
-        $modifier->method('modify')->with('circle', [])->willReturn(['circle' => true]);
+        $modifier->method('supports')->willReturnMap([['circle', true]]);
+        $modifier->method('modify')->willReturnMap([['circle', [], ['circle' => true]]]);
 
         $modifierProvider = new ModifierProvider([$modifier]);
         $generator = new ResponsiveAttributeGenerator($this->gridConfig, $this->ratioConfig, [1], $this->preloadCollector, $this->urlGenerator, $modifierProvider);
@@ -298,5 +438,70 @@ class ResponsiveAttributeGeneratorTest extends TestCase
         $result = $generator->generate($path, $assignments, $originalWidth, false);
 
         $this->assertStringContainsString('url-circle 360w', $result->getSources()[0]->getSrcset());
+    }
+
+    public function testPictureFormatsProduceTypedSourcesBeforeThePlainSourcePerBreakpoint(): void
+    {
+        $path = 'test.jpg';
+        $assignments = [
+            new BreakpointAssignment('default', 12, 'square'),
+            new BreakpointAssignment('md', 6, 'landscape'),
+        ];
+        $originalWidth = 2000;
+
+        $this->urlGenerator->method('generateUrl')->willReturnCallback(
+            static function (string $p, int $w, ?int $h, ?string $poi, array $context) {
+                $format = $context['format'] ?? 'plain';
+                $quality = $context['quality'] ?? 'none';
+
+                return "url-{$w}-{$format}-{$quality}";
+            }
+        );
+
+        $generator = new ResponsiveAttributeGenerator(
+            $this->gridConfig,
+            $this->ratioConfig,
+            [1],
+            $this->preloadCollector,
+            $this->urlGenerator,
+            pictureFormats: [
+                'avif' => ['mime' => 'image/avif', 'quality' => 60],
+                'webp' => ['mime' => 'image/webp', 'quality' => 82],
+            ],
+        );
+
+        $result = $generator->generate($path, $assignments, $originalWidth, false);
+
+        $sources = $result->getSources();
+        $this->assertCount(5, $sources);
+
+        // md breakpoint group: avif, webp, plain — in that order, sharing the same media.
+        $this->assertSame('(min-width: 768px)', $sources[0]->getMedia());
+        $this->assertSame('image/avif', $sources[0]->getType());
+        $this->assertStringContainsString('url-360-avif-60', $sources[0]->getSrcset());
+
+        $this->assertSame('(min-width: 768px)', $sources[1]->getMedia());
+        $this->assertSame('image/webp', $sources[1]->getType());
+        $this->assertStringContainsString('url-360-webp-82', $sources[1]->getSrcset());
+
+        $this->assertSame('(min-width: 768px)', $sources[2]->getMedia());
+        $this->assertNull($sources[2]->getType());
+        $this->assertStringContainsString('url-360-plain-none', $sources[2]->getSrcset());
+        $this->assertStringNotContainsString('avif', $sources[2]->getSrcset());
+
+        // default breakpoint group (media null, otherwise only used for the <img> fallback):
+        // its format-typed sources still land in $sources so <picture> can offer them too.
+        $this->assertNull($sources[3]->getMedia());
+        $this->assertSame('image/avif', $sources[3]->getType());
+        $this->assertStringContainsString('url-1920-avif-60', $sources[3]->getSrcset());
+
+        $this->assertNull($sources[4]->getMedia());
+        $this->assertSame('image/webp', $sources[4]->getType());
+        $this->assertStringContainsString('url-1920-webp-82', $sources[4]->getSrcset());
+
+        // The plain/default-format source for the default breakpoint only ever becomes the
+        // <img> fallback (getDefaultSource()), never a typed <source>.
+        $this->assertNull($result->getDefaultSource()->getType());
+        $this->assertStringContainsString('url-1920-plain-none', $result->getDefaultSource()->getSrcset());
     }
 }

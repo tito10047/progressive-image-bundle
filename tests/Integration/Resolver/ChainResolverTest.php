@@ -39,7 +39,6 @@ class ChainResolverTest extends PGITestCase
         $metadataReader = $container->get(MetadataReader::class);
         $reflection = new \ReflectionClass($metadataReader);
         $property = $reflection->getProperty('pathResolver');
-        $property->setAccessible(true);
         $resolver = $property->getValue($metadataReader);
 
         $this->assertInstanceOf(\Tito10047\ProgressiveImageBundle\Resolver\ChainResolver::class, $resolver);
@@ -64,7 +63,6 @@ class ChainResolverTest extends PGITestCase
         $metadataReader = $container->get(MetadataReader::class);
         $reflection = new \ReflectionClass($metadataReader);
         $property = $reflection->getProperty('pathResolver');
-        $property->setAccessible(true);
         $resolver = $property->getValue($metadataReader);
 
         $this->assertInstanceOf(\Tito10047\ProgressiveImageBundle\Resolver\FileSystemResolver::class, $resolver);

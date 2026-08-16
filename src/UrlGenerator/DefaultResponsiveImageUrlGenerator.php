@@ -15,9 +15,8 @@ class DefaultResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorI
 {
     public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null, array $context = []): string
     {
-        // Simple fallback that just returns the path.
-        // In a real scenario, this might be replaced by something more sophisticated
-        // if LiipImagine is not used.
+        // Simple fallback that just returns the path unchanged — used when no other
+        // generator (a custom one, or the Variant pipeline) is configured.
         return $path;
     }
 }

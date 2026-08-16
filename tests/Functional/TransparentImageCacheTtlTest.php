@@ -47,7 +47,6 @@ class TransparentImageCacheTtlTest extends PGITestCase
         if ($cache instanceof TagAwareAdapter) {
             $reflection = new \ReflectionClass($cache);
             $property = $reflection->getProperty('pool');
-            $property->setAccessible(true);
             $innerPool = $property->getValue($cache);
         }
 
@@ -66,7 +65,6 @@ class TransparentImageCacheTtlTest extends PGITestCase
         $reflectionPool = new \ReflectionClass($innerPool);
         if ($reflectionPool->hasProperty('expiries')) {
             $expiriesProp = $reflectionPool->getProperty('expiries');
-            $expiriesProp->setAccessible(true);
             $expiries = $expiriesProp->getValue($innerPool);
             $expiry = $expiries[$cacheKey] ?? null;
         } else {
@@ -74,7 +72,6 @@ class TransparentImageCacheTtlTest extends PGITestCase
             $reflection = new \ReflectionClass($item);
             $expiryProperty = $reflection->hasProperty('expiry') ? $reflection->getProperty('expiry') : null;
             if ($expiryProperty) {
-                $expiryProperty->setAccessible(true);
                 $expiry = $expiryProperty->getValue($item);
             } else {
                 $expiry = null;

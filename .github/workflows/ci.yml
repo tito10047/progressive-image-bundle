@@ -50,7 +50,6 @@ jobs:
             fail-fast: false
             matrix:
                 php-version:
-                    - "8.2"
                     - "8.3"
                     - "8.4"
                     - "8.5"
@@ -90,7 +89,11 @@ jobs:
                     extensions: imagick
                     tools: php-coveralls
             -   name: "Install system dependencies"
-                run: sudo apt-get update && sudo apt-get install -y webp
+                # webp (cwebp), libavif-bin (avifenc), jpegoptim, pngquant: the CLI post-processor
+                # binaries the Variant pipeline shells out to. Installing all of them means the
+                # corresponding PostProcessor tests run for real instead of self-skipping via
+                # ExecutableFinder when the binary is missing from PATH.
+                run: sudo apt-get update && sudo apt-get install -y webp libavif-bin jpegoptim pngquant
             -   name: "Configure Symfony"
                 run: 'composer config extra.symfony.require "${{ matrix.symfony }}"'
             -   name: Get composer cache directory
@@ -135,7 +138,7 @@ jobs:
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: '8.2'
+                    php-version: '8.3'
                     extensions: mbstring, xml, ctype, iconv, gd, imagick
                     tools: composer
 

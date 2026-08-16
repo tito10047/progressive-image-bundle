@@ -11,6 +11,8 @@
 
 namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
@@ -49,23 +51,25 @@ final class CheckCacheInterfacePass implements CompilerPassInterface
 
         $class = $container->getParameterBag()->resolveValue($definition->getClass());
 
-        // If class is empty, it might be a factory. In that case we try to look at the factory
-        if (!$class && $definition->getFactory()) {
-            // Here it's difficult to determine the factory return type at compile time without executing code
-        }
-
-        if ($class && !is_subclass_of($class, TagAwareCacheInterface::class) && TagAwareCacheInterface::class !== $class) {
-            throw new \LogicException(sprintf('Cache service "%1$s" (class: %2$s) must implement TagAwareCacheInterface to be used in ProgressiveImageBundle. Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: tags: true } } } }', $cacheServiceId, $class));
-        }
-
-        // Special check for Symfony cache pools that don't have a class set immediately,
-        // but we can find out if they are taggable.
-        if (!$class || 'Symfony\Component\Cache\Adapter\ArrayAdapter' === $class || 'Symfony\Component\Cache\Adapter\FilesystemAdapter' === $class) {
+        // These are "provisional" classes: either the class couldn't be determined at all
+        // (e.g. a factory-defined service, whose return type we can't resolve without
+        // executing code) or it's one of the raw adapters FrameworkBundle uses internally
+        // before wrapping a pool in TagAwareAdapter when "tags: true" is set. Neither case
+        // can be checked via is_subclass_of(), so we trust the cache.taggable tag instead.
+        // This check MUST run before the strict TagAwareCacheInterface check below: both
+        // ArrayAdapter and FilesystemAdapter fail is_subclass_of(TagAwareCacheInterface),
+        // so if the strict check ran first it would reject every provisional pool outright,
+        // making this fallback unreachable.
+        if (!$class || ArrayAdapter::class === $class || FilesystemAdapter::class === $class) {
             if (!$definition->hasTag('cache.taggable')) {
-                // If it doesn't have the cache.taggable tag and the class is not TagAware, we throw an error.
-                // Symfony TagAwareAdapter has the class set to TagAwareAdapter.
                 throw new \LogicException(sprintf('Cache service "%1$s" is not "tag aware". Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: tags: true } } } }', $cacheServiceId));
             }
+
+            return;
+        }
+
+        if (!is_subclass_of($class, TagAwareCacheInterface::class) && TagAwareCacheInterface::class !== $class) {
+            throw new \LogicException(sprintf('Cache service "%1$s" (class: %2$s) must implement TagAwareCacheInterface to be used in ProgressiveImageBundle. Check if you have "tags: true" enabled for this pool in framework.cache configuration and then set it in bundle configuration: progressive_image: { image_cache_service: "%1$s" }. Example pool configuration: framework: { cache: { pools: { %1$s: { adapter: tags: true } } } }', $cacheServiceId, $class));
         }
     }
 }

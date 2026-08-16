@@ -11,7 +11,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Functional\Twig;
 
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 use Tito10047\ProgressiveImageBundle\Tests\Integration\PGITestCase;
@@ -31,15 +30,6 @@ class ImageOriginalBreakpointTest extends PGITestCase
 
     public function testRenderWithOriginalBreakpoint(): void
     {
-        if (!class_exists(CacheManager::class)) {
-            $this->markTestSkipped('LiipImagineBundle is not installed.');
-        }
-        $cacheManager = $this->createMock(CacheManager::class);
-        $cacheManager->method('getBrowserPath')
-            ->willReturnCallback(function ($path, $filter) {
-                return 'http://localhost/media/cache/resolve/'.$filter.$path;
-            });
-
         $this->_bootKernel([
             'progressive_image' => [
                 'responsive_strategy' => [
@@ -59,8 +49,6 @@ class ImageOriginalBreakpointTest extends PGITestCase
                 ],
             ],
         ]);
-
-        self::getContainer()->set('liip_imagine.cache.manager', $cacheManager);
 
         $html = $this->renderTwigComponent(
             name: 'pgi:Image',

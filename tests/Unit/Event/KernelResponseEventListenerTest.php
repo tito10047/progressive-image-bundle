@@ -11,14 +11,19 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Unit\Event;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Tito10047\ProgressiveImageBundle\Event\KernelResponseEventListener;
 use Tito10047\ProgressiveImageBundle\Service\PreloadCollector;
 
+// $preloadCollector/$httpKernel are shared mocks used purely as stubs in most tests here,
+// with call verification only where a specific test cares about it.
+#[AllowMockObjectsWithoutExpectations]
 class KernelResponseEventListenerTest extends TestCase
 {
     private PreloadCollector $preloadCollector;
@@ -48,7 +53,7 @@ class KernelResponseEventListenerTest extends TestCase
         $this->assertSame('<html><head></head><body></body></html>', $response->getContent());
     }
 
-    public function testSetLinkHeaderAndInjectHtml(): void
+    public function testInjectsPreloadLinkTagsIntoHtml(): void
     {
         $this->preloadCollector->method('getUrls')->willReturn([
             '/image1.jpg' => ['as' => 'image', 'priority' => 'high'],
@@ -65,13 +70,10 @@ class KernelResponseEventListenerTest extends TestCase
 
         $this->listener->__invoke($event);
 
-        // Verify Link header
-        $this->assertTrue($response->headers->has('Link'));
-        $linkHeader = $response->headers->get('Link');
-        $this->assertStringContainsString('</image1.jpg>; rel=preload; as=image; fetchpriority=high', $linkHeader);
-        $this->assertStringContainsString('</image2.jpg>; rel=preload; as=image; fetchpriority=low', $linkHeader);
+        // The HTTP Link header is symfony/web-link's job (via PreloadCollector's
+        // GenericLinkProvider registration) — this listener must not duplicate it.
+        $this->assertFalse($response->headers->has('Link'));
 
-        // Verify HTML injection
         $content = $response->getContent();
         $this->assertStringContainsString('<link rel="preload" href="/image1.jpg" as="image" fetchpriority="high">', $content);
         $this->assertStringContainsString('<link rel="preload" href="/image2.jpg" as="image" fetchpriority="low">', $content);
@@ -100,10 +102,98 @@ class KernelResponseEventListenerTest extends TestCase
 
         $this->listener->__invoke($event);
 
-        // Link header should still be set
-        $this->assertTrue($response->headers->has('Link'));
-
         // Content remains unchanged because </head> is missing
         $this->assertSame($initialContent, $response->getContent());
+    }
+
+    public function testSkipsSubRequests(): void
+    {
+        $this->preloadCollector->method('getUrls')->willReturn([
+            '/image1.jpg' => ['as' => 'image', 'priority' => 'high'],
+        ]);
+
+        $initialContent = '<html><head></head><body></body></html>';
+        $response = new Response($initialContent);
+        $event = new ResponseEvent(
+            $this->createMock(HttpKernelInterface::class),
+            new Request(),
+            HttpKernelInterface::SUB_REQUEST,
+            $response
+        );
+
+        $this->listener->__invoke($event);
+
+        $this->assertSame($initialContent, $response->getContent());
+    }
+
+    public function testSkipsResponsesWithAnExplicitNonHtmlContentType(): void
+    {
+        $this->preloadCollector->method('getUrls')->willReturn([
+            '/image1.jpg' => ['as' => 'image', 'priority' => 'high'],
+        ]);
+
+        // Contains a literal "</head>" string on purpose: a JSON/XML API response must
+        // never have markup spliced into it just because that substring happens to occur.
+        $initialContent = '{"note":"a stray </head> substring"}';
+        $response = new Response($initialContent);
+        $response->headers->set('Content-Type', 'application/json');
+        $event = new ResponseEvent(
+            $this->createMock(HttpKernelInterface::class),
+            new Request(),
+            HttpKernelInterface::MAIN_REQUEST,
+            $response
+        );
+
+        $this->listener->__invoke($event);
+
+        $this->assertSame($initialContent, $response->getContent());
+    }
+
+    public function testSkipsResponsesWithoutStringContent(): void
+    {
+        $this->preloadCollector->method('getUrls')->willReturn([
+            '/image1.jpg' => ['as' => 'image', 'priority' => 'high'],
+        ]);
+
+        $response = new StreamedResponse(function (): void {
+            echo 'streamed';
+        });
+        $event = new ResponseEvent(
+            $this->createMock(HttpKernelInterface::class),
+            new Request(),
+            HttpKernelInterface::MAIN_REQUEST,
+            $response
+        );
+
+        // Must not throw despite getContent() being false for a StreamedResponse.
+        $this->listener->__invoke($event);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testEscapesHtmlSpecialCharactersInPreloadAttributes(): void
+    {
+        $this->preloadCollector->method('getUrls')->willReturn([
+            '/img.jpg?a=1&b="><script>alert(1)</script>' => [
+                'as' => 'image',
+                'priority' => 'high',
+                'imagesrcset' => '/img.jpg?x="onerror="alert(1)',
+                'imagesizes' => null,
+            ],
+        ]);
+
+        $response = new Response('<html><head></head><body></body></html>');
+        $event = new ResponseEvent(
+            $this->createMock(HttpKernelInterface::class),
+            new Request(),
+            HttpKernelInterface::MAIN_REQUEST,
+            $response
+        );
+
+        $this->listener->__invoke($event);
+
+        $content = $response->getContent();
+        $this->assertStringNotContainsString('<script>', $content);
+        $this->assertStringNotContainsString('"><script>', $content);
+        $this->assertStringNotContainsString('"onerror="', $content);
     }
 }

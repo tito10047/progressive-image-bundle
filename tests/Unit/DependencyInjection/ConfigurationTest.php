@@ -123,4 +123,229 @@ class ConfigurationTest extends TestCase
         // Added custom
         $this->assertEquals(2000, $grid['layouts']['custom']['min_viewport']);
     }
+
+    public function testVariantContextDefaults(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        $this->assertNull($config['secret']);
+        $this->assertNull($config['variant_store']['storage']);
+        $this->assertSame('', $config['variant_store']['prefix']);
+        $this->assertSame('/media/pgi', $config['variant_store']['public_url_prefix']);
+        $this->assertSame(300, $config['variant_store']['fail_marker_ttl']);
+        $this->assertSame('async', $config['generation']['strategy']);
+        $this->assertSame('async_images', $config['generation']['transport']);
+        $this->assertSame('original', $config['generation']['fallback_while_pending']);
+        $this->assertNull($config['generation']['lock_store']);
+        $this->assertSame('jpeg', $config['formats']['default']);
+        $this->assertSame(85, $config['formats']['default_quality']);
+        $this->assertSame([], $config['formats']['negotiate']);
+        $this->assertSame([], $config['formats']['picture']);
+        $this->assertSame(['jpeg' => 85, 'webp' => 82, 'avif' => 60, 'png' => 90], $config['formats']['quality']);
+        $this->assertFalse($config['formats']['progressive']);
+        $this->assertFalse($config['formats']['strip_metadata']);
+        $this->assertSame([], $config['filter_sets']);
+    }
+
+    public function testFormatsProgressiveAndStripMetadataAreConfigurable(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'progressive' => true,
+                    'strip_metadata' => true,
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['formats']['progressive']);
+        $this->assertTrue($config['formats']['strip_metadata']);
+    }
+
+    public function testFormatsNegotiateAndQualityAreConfigurable(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'negotiate' => ['avif', 'webp'],
+                    'quality' => ['avif' => 55],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['avif', 'webp'], $config['formats']['negotiate']);
+        $this->assertSame(55, $config['formats']['quality']['avif']);
+        $this->assertSame(82, $config['formats']['quality']['webp'], 'unspecified formats keep their own defaults');
+    }
+
+    public function testFormatsPictureIsConfigurableAndValidatedAgainstTheSameEnum(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'picture' => ['avif', 'webp'],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['avif', 'webp'], $config['formats']['picture']);
+
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+        $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'formats' => [
+                    'picture' => ['heic'],
+                ],
+            ],
+        ]);
+    }
+
+    public function testPostProcessorsDefaultToDisabledWithTheirNameAsTheBinary(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        foreach (['jpegoptim', 'pngquant', 'cwebp', 'avifenc'] as $name) {
+            $this->assertFalse($config['post_processors'][$name]['enabled']);
+            $this->assertSame($name, $config['post_processors'][$name]['bin']);
+        }
+    }
+
+    public function testPostProcessorsCanBeEnabledWithACustomBinaryPath(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'post_processors' => [
+                    'jpegoptim' => ['enabled' => true, 'bin' => '/usr/local/bin/jpegoptim'],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['post_processors']['jpegoptim']['enabled']);
+        $this->assertSame('/usr/local/bin/jpegoptim', $config['post_processors']['jpegoptim']['bin']);
+    }
+
+    public function testVariantSourceHttpDefaultsToDisabled(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($config['variant_source']['http']['enabled']);
+        $this->assertSame([], $config['variant_source']['http']['allowed_hosts']);
+        $this->assertSame(5, $config['variant_source']['http']['timeout']);
+    }
+
+    public function testVariantSourceHttpCanBeEnabledWithAnAllowlist(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'variant_source' => [
+                    'http' => [
+                        'enabled' => true,
+                        'allowed_hosts' => ['images.example.com'],
+                        'timeout' => 10,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($config['variant_source']['http']['enabled']);
+        $this->assertSame(['images.example.com'], $config['variant_source']['http']['allowed_hosts']);
+        $this->assertSame(10, $config['variant_source']['http']['timeout']);
+    }
+
+    public function testVariantSourceHttpEnabledWithoutAllowedHostsIsInvalid(): void
+    {
+        $processor = new Processor();
+
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+
+        $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'variant_source' => [
+                    'http' => [
+                        'enabled' => true,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testVariantContextOverrides(): void
+    {
+        $processor = new Processor();
+        $config = $processor->processConfiguration(new Configuration(), [
+            'progressive_image' => [
+                'resolvers' => [
+                    'default' => ['type' => 'filesystem', 'roots' => ['/tmp']],
+                ],
+                'secret' => 'my-secret',
+                'variant_store' => [
+                    'storage' => 'oneup_flysystem.pgi_storage',
+                    'public_url_prefix' => 'https://cdn.example.com/pgi',
+                ],
+                'generation' => [
+                    'strategy' => 'sync',
+                    'fallback_while_pending' => 'wait',
+                ],
+                'filter_sets' => [
+                    'thumbnail_square' => [
+                        'filters' => ['thumbnail' => ['size' => [200, 200], 'mode' => 'outbound']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('my-secret', $config['secret']);
+        $this->assertSame('oneup_flysystem.pgi_storage', $config['variant_store']['storage']);
+        $this->assertSame('https://cdn.example.com/pgi', $config['variant_store']['public_url_prefix']);
+        $this->assertSame('sync', $config['generation']['strategy']);
+        $this->assertSame('wait', $config['generation']['fallback_while_pending']);
+        $this->assertArrayHasKey('thumbnail_square', $config['filter_sets']);
+    }
 }

@@ -11,7 +11,6 @@
 
 namespace Tito10047\ProgressiveImageBundle\Tests\Integration;
 
-use Liip\ImagineBundle\LiipImagineBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\TwigBundle\TwigBundle;
@@ -23,6 +22,8 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\UX\StimulusBundle\StimulusBundle;
 use Symfony\UX\TwigComponent\TwigComponentBundle;
 use Tito10047\ProgressiveImageBundle\ProgressiveImageBundle;
+use Tito10047\ProgressiveImageBundle\Tests\Fixtures\FakeDimensionsEchoingUrlGenerator;
+use Tito10047\ProgressiveImageBundle\Tests\Fixtures\FakeFilterPathDecorator;
 
 class ProgressiveImageTestingKernel extends Kernel
 {
@@ -32,9 +33,16 @@ class ProgressiveImageTestingKernel extends Kernel
 
     private ?\Closure $customConfiguration = null;
 
+    // spl_object_hash($this) is not safe here: PHP reuses object handles once an
+    // earlier kernel is garbage-collected, so two kernels booted with different
+    // config can end up sharing a cache dir — the second then silently loads the
+    // first's stale compiled container instead of recompiling with its own config.
+    private readonly string $cacheId;
+
     public function __construct(
         private array $options = [],
     ) {
+        $this->cacheId = bin2hex(random_bytes(16));
         parent::__construct('test', true);
     }
 
@@ -45,19 +53,13 @@ class ProgressiveImageTestingKernel extends Kernel
 
     public function registerBundles(): iterable
     {
-        $bundles = [
+        return [
             new FrameworkBundle(),
             new TwigComponentBundle(),
             new TwigBundle(),
             new StimulusBundle(),
             new ProgressiveImageBundle(),
         ];
-
-        if (class_exists(LiipImagineBundle::class)) {
-            $bundles[] = new LiipImagineBundle();
-        }
-
-        return $bundles;
     }
 
     public function registerContainerConfiguration(LoaderInterface $loader): void
@@ -82,33 +84,23 @@ class ProgressiveImageTestingKernel extends Kernel
                         ],
                     ],
                 ],
+                // generation.strategy defaults to "async", which needs a real transport for
+                // its default generation.transport ("async_images") to route to — an
+                // in-memory one is enough so tests that don't care about the async pipeline
+                // (most of them) don't have to configure their own just to boot the kernel.
+                'messenger' => [
+                    'transports' => [
+                        'async_images' => 'in-memory://',
+                    ],
+                ],
             ]);
 
             //            $container->setAlias('test.service_container', 'service_container')->setPublic(true);
 
-            if (class_exists(LiipImagineBundle::class)) {
-                $container->loadFromExtension('liip_imagine', [
-                    'loaders' => [
-                        'default' => [
-                            'filesystem' => [
-                                'data_root' => '%kernel.project_dir%/tests/Functional/Fixtures/images',
-                            ],
-                        ],
-                    ],
-                    'filter_sets' => [
-                        'cache' => [],
-                        'preview_big' => [
-                            'quality' => 75,
-                            'filters' => [
-                                'thumbnail' => [
-                                    'size' => [20, 20],
-                                    'mode' => 'outbound',
-                                ],
-                            ],
-                        ],
-                    ],
-                ]);
-            }
+            $container->register('test.fake_filter_path_decorator', FakeFilterPathDecorator::class)
+                ->setPublic(true);
+            $container->register('test.fake_dimensions_url_generator', FakeDimensionsEchoingUrlGenerator::class)
+                ->setPublic(true);
 
             $container->loadFromExtension('twig_component', [
                 'anonymous_template_directory' => 'components/',
@@ -138,18 +130,21 @@ class ProgressiveImageTestingKernel extends Kernel
     public function loadRoutes(LoaderInterface $loader): RouteCollection
     {
         $routes = new RouteCollection();
-        if (class_exists(\Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class)) {
-            $routes->add('progressive_image_filter', new Route('/progressive-image', [
-                '_controller' => \Tito10047\ProgressiveImageBundle\Controller\LiipImagineController::class.'::index',
-            ]));
-        }
+
+        $routes->add('pgi_variant_serve', new Route('/media/pgi/wait', [
+            '_controller' => \Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController::class.'::serve',
+        ]));
+
+        $routes->add('pgi_variant_resolve', new Route('/media/pgi/resolve/{filterSet}/{path}', [
+            '_controller' => \Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ResolveFilterController::class.'::resolve',
+        ], ['path' => '.+']));
 
         return $routes;
     }
 
     public function getCacheDir(): string
     {
-        return __DIR__.'/../../var/cache/tests/'.spl_object_hash($this);
+        return __DIR__.'/../../var/cache/tests/'.$this->cacheId;
     }
 
     public function shutdown(): void

@@ -14,6 +14,7 @@ namespace Tito10047\ProgressiveImageBundle\DependencyInjection;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
+use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
@@ -104,13 +105,15 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
 
     public function prepend(ContainerBuilder $builder): void
     {
-        $builder->prependExtensionConfig('framework', [
-            'asset_mapper' => [
-                'paths' => [
-                    __DIR__.'/../../assets' => 'tito10047/progressive-image-bundle',
+        if ($this->isAssetMapperAvailable($builder)) {
+            $builder->prependExtensionConfig('framework', [
+                'asset_mapper' => [
+                    'paths' => [
+                        __DIR__.'/../../assets' => '@tito10047/progressive-image-bundle',
+                    ],
                 ],
-            ],
-        ]);
+            ]);
+        }
         $builder->prependExtensionConfig('twig_component', [
             'defaults' => [
                 'Tito10047\ProgressiveImageBundle\Twig\Components\\' => [
@@ -134,6 +137,18 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
                 ],
             ]);
         }
+    }
+
+    private function isAssetMapperAvailable(ContainerBuilder $container): bool
+    {
+        if (!interface_exists(AssetMapperInterface::class)) {
+            return false;
+        }
+
+        $bundlesMetadata = $container->getParameter('kernel.bundles_metadata');
+
+        return isset($bundlesMetadata['FrameworkBundle'])
+            && is_file($bundlesMetadata['FrameworkBundle']['path'].'/Resources/config/asset_mapper.php');
     }
 
     public function load(array $configs, ContainerBuilder $container): void

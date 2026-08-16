@@ -25,4 +25,11 @@ final class DefaultOriginalUrlResolverTest extends TestCase
 
         self::assertSame('/uploads/hero.jpg', $resolver->resolve(new SourcePath('uploads/hero.jpg')));
     }
+
+    public function testEncodesSpecialCharactersInEachSegment(): void
+    {
+        $resolver = new DefaultOriginalUrlResolver();
+
+        self::assertSame('/uploads/my%20photo%20%231%3F.jpg', $resolver->resolve(new SourcePath('uploads/my photo #1?.jpg')));
+    }
 }

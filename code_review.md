@@ -146,7 +146,7 @@ Nálezy zoradené podľa toho, ako boli objavené (adresár po adresári). Form�
 
 ## src/Variant/Infrastructure/Symfony/DefaultOriginalUrlResolver.php
 
-- **DefaultOriginalUrlResolver.php:28** — `'/'.$source->value` bez `rawurlencode()` — rovnaký problém ako pri `FlysystemVariantStorage::publicPath()` (viď vyššie): `SourcePath` môže obsahovať medzery a iné URL-špeciálne znaky, ktoré sa tu vložia do vrátenej URL nezakódované.
+- [OPRAVENÉ] **DefaultOriginalUrlResolver.php:28** — `'/'.$source->value` bez `rawurlencode()` — rovnaký problém ako pri `FlysystemVariantStorage::publicPath()` (viď vyššie): `SourcePath` môže obsahovať medzery a iné URL-špeciálne znaky, ktoré sa tu vložia do vrátenej URL nezakódované. *(Fix: rovnaké riešenie ako pri `FlysystemVariantStorage::publicPath()` — každý `/`-oddelený segment sa `rawurlencode()`-uje samostatne. Pokryté testom `testEncodesSpecialCharactersInEachSegment`.)*
 
 ## src/Variant/Infrastructure/Sync/SyncGenerationDispatcher.php (kritický nález)
 

@@ -25,6 +25,6 @@ final readonly class DefaultOriginalUrlResolver implements OriginalUrlResolver
 {
     public function resolve(SourcePath $source): string
     {
-        return '/'.$source->value;
+        return '/'.implode('/', array_map(rawurlencode(...), explode('/', $source->value)));
     }
 }

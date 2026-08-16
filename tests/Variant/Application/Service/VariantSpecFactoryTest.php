@@ -187,4 +187,79 @@ final class VariantSpecFactoryTest extends TestCase
         $filters = iterator_to_array($spec->filters, false);
         self::assertSame(['resize' => ['w' => 400, 'h' => 300]], $filters[0]->canonical());
     }
+
+    /**
+     * createFromFilterSet() (used by pgi_filter() and the on-the-fly resolve route) must
+     * trust the filter set's own sizing filters (or lack thereof) exactly as configured —
+     * unlike create(), it never force-injects a Thumbnail/Crop pair. A filter set that
+     * defines its own thumbnail keeps exactly that filter, unmodified.
+     */
+    public function testCreateFromFilterSetKeepsTheFilterSetsOwnThumbnailUnmodified(): void
+    {
+        $factory = $this->makeFactory([
+            'thumb_small' => ['filters' => ['thumbnail' => ['size' => [100, 100], 'mode' => 'outbound']]],
+        ]);
+
+        $spec = $factory->createFromFilterSet('thumb_small');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertCount(1, $filters);
+        self::assertInstanceOf(Thumbnail::class, $filters[0]);
+        self::assertSame(['thumbnail' => ['w' => 100, 'h' => 100, 'mode' => 'outbound']], $filters[0]->canonical());
+    }
+
+    /**
+     * A filter set with no sizing filter at all (e.g. just a watermark) must produce a
+     * chain with no sizing filter — createFromFilterSet() never force-injects one, unlike
+     * create().
+     */
+    public function testCreateFromFilterSetWithNoSizingFilterProducesNoSizingFilter(): void
+    {
+        $factory = $this->makeFactory([
+            'grayscale_only' => ['filters' => ['resize' => ['size' => [50, 50]]]],
+        ]);
+
+        $spec = $factory->createFromFilterSet('grayscale_only');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertCount(1, $filters);
+        self::assertInstanceOf(Resize::class, $filters[0]);
+    }
+
+    public function testCreateFromFilterSetThrowsForUnknownFilterSetName(): void
+    {
+        $this->expectException(InvalidFilterDefinition::class);
+
+        $this->makeFactory()->createFromFilterSet('does_not_exist');
+    }
+
+    public function testCreateFromFilterSetAppliesImageConfigsAndContextInTheSameMergeOrderAsCreate(): void
+    {
+        $factory = $this->makeFactory([
+            'hero' => ['filters' => [], 'format' => 'jpeg', 'quality' => 90],
+        ]);
+
+        $spec = $factory->createFromFilterSet('hero', ['format' => 'avif']);
+
+        self::assertSame(OutputFormat::Avif, $spec->format);
+        self::assertSame(90, $spec->quality->value);
+    }
+
+    /**
+     * Regression guard: create()'s own forced-sizing behavior must be completely unaffected
+     * by createFromFilterSet() existing — both methods share the merge/parseFilters
+     * machinery, so this pins create() still always appends its own Thumbnail.
+     */
+    public function testCreateStillForcesItsOwnSizingThumbnailRegardlessOfCreateFromFilterSet(): void
+    {
+        $factory = $this->makeFactory([
+            'thumb_small' => ['filters' => ['thumbnail' => ['size' => [100, 100], 'mode' => 'outbound']]],
+        ]);
+
+        $spec = $factory->create(300, 300, 'thumb_small');
+
+        $filters = iterator_to_array($spec->filters, false);
+        self::assertCount(1, $filters);
+        self::assertSame(['thumbnail' => ['w' => 300, 'h' => 300, 'mode' => 'outbound']], $filters[0]->canonical());
+    }
 }

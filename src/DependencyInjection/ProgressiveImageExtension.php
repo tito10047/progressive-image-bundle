@@ -47,6 +47,7 @@ use Tito10047\ProgressiveImageBundle\UrlGenerator\DefaultResponsiveImageUrlGener
 use Tito10047\ProgressiveImageBundle\UrlGenerator\ResponsiveImageUrlGeneratorInterface;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Command\GenerateVariant;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\GenerateVariantHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveFilterUrlHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\ResolveVariantUrlHandler;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\DomainEventBus;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Port\GenerationDispatcher;
@@ -78,6 +79,7 @@ use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\Jpegopti
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\PostProcess\PngquantPostProcessor;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Controller\ImageVariantController;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\EventListener\ResponseCacheOverrideListener;
+use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\Twig\FilterUrlExtension;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\QueryPendingUrlBuilder;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Presentation\UrlGenerator\VariantResponsiveImageUrlGenerator;
 use Tito10047\ProgressiveImageBundle\Variant\Infrastructure\Source\ChainSourceReader;
@@ -443,6 +445,20 @@ final class ProgressiveImageExtension extends Extension implements PrependExtens
             ->setArgument('$fallback', $fallback)
             ->setPublic(true)
             ->setShared(false);
+
+        $container->register(ResolveFilterUrlHandler::class)
+            ->setArgument('$specFactory', new Reference(VariantSpecFactory::class))
+            ->setArgument('$hasher', new Reference(VariantIdHasher::class))
+            ->setArgument('$storage', new Reference(VariantStorage::class))
+            ->setArgument('$tracker', new Reference(PendingGenerationTracker::class))
+            ->setArgument('$dispatcher', new Reference(GenerationDispatcher::class))
+            ->setArgument('$originalUrlResolver', new Reference(OriginalUrlResolver::class))
+            ->setPublic(true)
+            ->setShared(false);
+
+        $container->register(FilterUrlExtension::class)
+            ->setArgument('$resolveHandler', new Reference(ResolveFilterUrlHandler::class))
+            ->addTag('twig.extension');
 
         $container->register(VariantResponsiveImageUrlGenerator::class)
             ->setArgument('$resolveHandler', new Reference(ResolveVariantUrlHandler::class))

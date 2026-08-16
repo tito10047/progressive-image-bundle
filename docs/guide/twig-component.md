@@ -100,3 +100,39 @@ resolved breakpoint gets additional `srcset` candidates at each configured multi
 Set `preload` on your largest-contentful-paint candidate (typically one hero image per
 page). It's collected by `PreloadCollector` and rendered as `<link rel="preload">` tags —
 wire your base layout to output them in `<head>` via the collector's link provider.
+
+## Generating a URL without the component
+
+`<twig:pgi:Image>` renders a full placeholder/`<picture>`/Stimulus markup block — the right
+choice for content in a page template, but not for the many places you just need a plain
+URL string: an `<img>` tag you're building by hand, `og:image`/Twitter-card meta tags, a
+JSON/API response, a sitemap, an email template. For those, use the `pgi_filter()` Twig
+function instead:
+
+```twig
+<meta property="og:image" content="{{ pgi_filter('images/hero.jpg', 'og_image') }}">
+
+<img src="{{ pgi_filter('images/hero.jpg', 'thumb_small') }}" alt="Hero">
+```
+
+```php
+// wherever you build the response
+$url = $twig->render('...'); // or inject the Twig Environment / call it from a controller via {{ }}
+```
+
+`pgi_filter(path, filterSetName, context = [])` resolves a `filter_sets` entry (the
+[same `filter_sets` config the component's `filter` prop uses](/guide/variant-pipeline/filters-formats-and-quality))
+into a variant URL. Two differences from the component's own filter-set handling matter:
+
+- **No forced resize.** The component's `sizes`/breakpoint machinery always ends up
+  applying its own `thumbnail`/`crop` sizing on top of whatever the filter set defines.
+  `pgi_filter()` does not — the filter set's own filters (a `thumbnail`, a plain
+  `watermark` with no resize at all, whatever you configured) are applied exactly as
+  written, nothing added.
+- **No "wait" pending fallback.** If the variant isn't ready yet, `pgi_filter()` always
+  returns the original image's URL while generation is triggered in the background — there
+  is no page render here to redirect through a signed "wait" endpoint, so
+  `generation.fallback_while_pending: wait` has no effect on this function.
+
+See [Migrating from LiipImagineBundle](/guide/migrating-from-liip) for how this maps onto
+Liip's `imagine_filter()`.

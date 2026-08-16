@@ -80,6 +80,24 @@ final readonly class VariantSpecFactory
     }
 
     /**
+     * Same merge (filter set -> imageConfigs -> context) and filter parsing as create(),
+     * but never force-injects a sizing Crop/Thumbnail — the filter set's own filters (or
+     * absence of any sizing filter) are used exactly as configured. Used by callers that
+     * generate a URL from a named filter set alone (pgi_filter(), the on-the-fly resolve
+     * route) rather than from an explicit (width, height) pair.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function createFromFilterSet(string $filterSetName, array $context = []): VariantSpec
+    {
+        $filterSetRaw = $this->filterSets->rawFilterSet($filterSetName);
+        $merged = self::mergeLayers($filterSetRaw, $this->imageConfigs, $context);
+        $chain = $this->parseFilters($merged);
+
+        return new VariantSpec($chain, $this->resolveFormat($merged), $this->resolveQuality($merged));
+    }
+
+    /**
      * Recursively merges config layers like array_replace_recursive(), except that
      * indexed (list) arrays are replaced wholesale rather than merged element-by-index.
      * array_replace_recursive() would merge e.g. filters.resize.size: [800, 600] with a

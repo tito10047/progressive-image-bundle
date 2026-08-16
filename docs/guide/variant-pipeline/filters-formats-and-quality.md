@@ -73,6 +73,23 @@ Every filter's `canonical()` representation feeds directly into `VariantIdHasher
 specs that produce different `canonical()` output always get different `VariantId`s and
 separate stored files.
 
+## SVG sources are never generated
+
+If a source path ends in `.svg` (case-insensitive), the Variant pipeline never attempts to
+generate a raster variant for it — `ResolveVariantUrlHandler` and `ResolveFilterUrlHandler`
+resolve straight to the original file's own URL instead, for both the responsive/breakpoint
+path and `pgi_filter()`. This is deliberate, not a limitation to work around:
+
+- SVGs are already infinitely scalable — there is no "size variant" to generate.
+- Intervention Image can't rasterize SVG anyway; without this short-circuit, generation
+  would just fail on every request.
+- Critically, an SVG source would otherwise report as permanently "pending" (never actually
+  ready), which forces `ResponseCacheOverrideListener` to mark the whole response `no-store`
+  — silently disabling HTTP caching on any page that references one.
+
+This is an extension check (the path literally ends in `.svg`), not content-sniffed —
+correct for the near-universal case of a file actually named `.svg`, with no I/O cost.
+
 ## Formats & quality
 
 ```yaml

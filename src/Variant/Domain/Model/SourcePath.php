@@ -40,4 +40,15 @@ final readonly class SourcePath implements \Stringable
     {
         return $this->value;
     }
+
+    /**
+     * Extension-based, not content-sniffed: cheap enough to check on every resolve without
+     * any I/O, and correct for the overwhelming majority of real sources (a file actually
+     * named .svg). Used to skip raster generation entirely for vector sources — SVGs are
+     * already scalable and Intervention Image can't rasterize them anyway.
+     */
+    public function isSvg(): bool
+    {
+        return str_ends_with(strtolower($this->value), '.svg');
+    }
 }

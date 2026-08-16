@@ -67,4 +67,20 @@ final class SourcePathTest extends TestCase
         yield 'nested traversal' => ['uploads/../../etc/passwd'];
         yield 'trailing traversal' => ['uploads/..'];
     }
+
+    public function testIsSvgIsTrueForAnSvgExtension(): void
+    {
+        self::assertTrue((new SourcePath('uploads/logo.svg'))->isSvg());
+    }
+
+    public function testIsSvgIsCaseInsensitive(): void
+    {
+        self::assertTrue((new SourcePath('uploads/logo.SVG'))->isSvg());
+    }
+
+    public function testIsSvgIsFalseForOtherExtensions(): void
+    {
+        self::assertFalse((new SourcePath('uploads/hero.jpg'))->isSvg());
+        self::assertFalse((new SourcePath('uploads/logo.svgx'))->isSvg());
+    }
 }

@@ -53,6 +53,15 @@ final class ResolveVariantUrlHandler
 
     public function __invoke(ResolveVariantUrl $query): ResolvedUrl
     {
+        // SVGs are never rasterized (already scalable, and Intervention Image can't decode
+        // them anyway) — resolving straight to the original avoids both pointless repeated
+        // failed-generation attempts and, more importantly, permanently poisoning the page's
+        // HTTP cache: without this, resolve() would report "pending" forever for an SVG, and
+        // ResponseCacheOverrideListener forces every such response to no-store.
+        if ($query->source->isSvg()) {
+            return new ResolvedUrl($this->originalUrlResolver->resolve($query->source), false);
+        }
+
         $spec = $this->specFactory->create(
             $query->width,
             $query->height,

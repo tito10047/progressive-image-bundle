@@ -191,4 +191,24 @@ final class ResolveVariantUrlHandlerTest extends TestCase
 
         self::assertCount(2, $this->dispatcher->dispatched());
     }
+
+    /**
+     * SVG sources are never rasterized — Intervention Image can't decode them, and they're
+     * already scalable, so generating a "variant" makes no sense. Resolving straight to the
+     * original avoids both the pointless repeated failed-generation attempts AND (more
+     * importantly) permanently poisoning the page's HTTP cache: without this short-circuit,
+     * resolve() would report "pending" forever for an SVG, and ResponseCacheOverrideListener
+     * forces every such response to no-store.
+     */
+    public function testSvgSourceResolvesDirectlyToTheOriginalWithoutDispatchingGeneration(): void
+    {
+        $query = new ResolveVariantUrl(new SourcePath('uploads/logo.svg'), 200, 200);
+
+        $resolved = ($this->makeHandler())($query);
+
+        self::assertFalse($resolved->pending, 'an SVG passthrough is a permanent, known state, not a transient "still generating" one');
+        self::assertSame('/original/uploads/logo.svg', $resolved->url);
+        self::assertCount(0, $this->dispatcher->dispatched());
+        self::assertFalse($this->tracker->hasPending(), 'must not poison the response into permanent no-store');
+    }
 }

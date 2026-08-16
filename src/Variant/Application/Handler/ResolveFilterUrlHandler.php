@@ -53,6 +53,13 @@ final class ResolveFilterUrlHandler
 
     public function __invoke(ResolveFilterUrl $query): ResolvedUrl
     {
+        // See ResolveVariantUrlHandler's identical check for why: SVGs are never rasterized,
+        // and skipping straight to the original avoids permanently poisoning the response
+        // into no-store via PendingGenerationTracker.
+        if ($query->source->isSvg()) {
+            return new ResolvedUrl($this->originalUrlResolver->resolve($query->source), false);
+        }
+
         $spec = $this->specFactory->createFromFilterSet($query->filterSet, $query->context);
         $variant = Variant::request($query->source, $spec, $this->hasher);
 

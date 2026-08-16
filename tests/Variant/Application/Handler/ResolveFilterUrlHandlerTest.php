@@ -126,4 +126,16 @@ final class ResolveFilterUrlHandlerTest extends TestCase
 
         self::assertCount(2, $this->dispatcher->dispatched());
     }
+
+    public function testSvgSourceResolvesDirectlyToTheOriginalWithoutDispatchingGeneration(): void
+    {
+        $query = new ResolveFilterUrl(new SourcePath('uploads/logo.svg'), 'thumb_small');
+
+        $resolved = ($this->makeHandler())($query);
+
+        self::assertFalse($resolved->pending);
+        self::assertSame('/original/uploads/logo.svg', $resolved->url);
+        self::assertCount(0, $this->dispatcher->dispatched());
+        self::assertFalse($this->tracker->hasPending());
+    }
 }

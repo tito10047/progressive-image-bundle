@@ -19,7 +19,10 @@ jobs:
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: '8.2'
+                    # Must match composer.json's "php": ">=8.3" — the bundle uses PHP 8.3
+                    # syntax (typed class constants, anonymous readonly classes) that a
+                    # lower PHP CLI's parser can't even lint, let alone fix.
+                    php-version: '8.3'
                     tools: php-cs-fixer
             -   name: Check CS
                 run: php-cs-fixer fix --dry-run --diff

@@ -16,6 +16,9 @@ namespace Tito10047\ProgressiveImageBundle\DTO;
  */
 final readonly class BreakpointAssignment
 {
+    /**
+     * @param string[] $modifiers
+     */
     public function __construct(
         public string $breakpoint,
         public int $columns,
@@ -81,7 +84,9 @@ final readonly class BreakpointAssignment
             throw new \InvalidArgumentException(sprintf('Invalid breakpoint assignment format: "%s"', $originalSegment));
         }
 
-        if (null !== $height && null === $segmentRatio && null !== $width) {
+        // $width is always set alongside $height (both come from the same "[WxH]"
+        // branch above), so checking $height here already implies $width is set too.
+        if (null !== $height && null === $segmentRatio) {
             $segmentRatio = $width.'x'.$height;
         }
 

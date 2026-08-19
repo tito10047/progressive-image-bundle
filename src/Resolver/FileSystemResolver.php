@@ -33,7 +33,7 @@ final class FileSystemResolver implements PathResolverInterface
      */
     public function __construct(array $roots = [], bool $allowUnresolvable = false)
     {
-        $this->roots = array_filter(array_map(function (string $root) use ($allowUnresolvable): ?string {
+        $this->roots = array_filter(array_map(function (string $root) use ($allowUnresolvable): string {
             return $this->sanitizeRootPath($root, $allowUnresolvable);
         }, $roots));
     }
@@ -90,7 +90,7 @@ final class FileSystemResolver implements PathResolverInterface
     /**
      * @throws \InvalidArgumentException
      */
-    private function sanitizeRootPath(string $path, bool $allowUnresolvable): ?string
+    private function sanitizeRootPath(string $path, bool $allowUnresolvable): string
     {
         if (!empty($path) && false !== $real = realpath($path)) {
             return $real;

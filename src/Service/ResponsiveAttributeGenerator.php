@@ -49,6 +49,7 @@ final class ResponsiveAttributeGenerator
 
     /**
      * @param BreakpointAssignment[] $assignments
+     * @param array<string, mixed>   $context
      */
     public function generate(string $path, array $assignments, int $originalWidth, bool $preload, ?string $pointInterest = null, array $context = [], bool $retina = false, int $originalHeight = 0): ResponsiveAttributesInterface
     {
@@ -248,6 +249,9 @@ final class ResponsiveAttributeGenerator
         return [$srcsetParts, $firstUrl];
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     private function generateUrl(
         string $path,
         int $basePixelWidth,

@@ -166,6 +166,9 @@ final class Image
         return $this->decoratedHeight;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getVariables(): array
     {
         return $this->responsiveAttributes?->getVariables() ?? [];

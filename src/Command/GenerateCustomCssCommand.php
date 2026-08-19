@@ -170,11 +170,17 @@ class GenerateCustomCssCommand extends Command
         return $content;
     }
 
+    /**
+     * @param array<string, array{min_viewport: int, max_container: int|null}> $sortedLayouts
+     */
     private function generateVariableFallback(array $sortedLayouts, string $type, bool $includeGeneric = true): string
     {
         return $this->buildVariableFallbackChain(array_keys($sortedLayouts), $type, $includeGeneric, ",\n\t\t\t");
     }
 
+    /**
+     * @param array<string, array{min_viewport: int, max_container: int|null}> $allLayouts
+     */
     private function generateVariableFallbackForBreakpoint(string $currentBreakpoint, array $allLayouts, string $type): string
     {
         // Get all layouts with min_viewport <= current min_viewport, sorted descending

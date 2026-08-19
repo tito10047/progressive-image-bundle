@@ -13,6 +13,9 @@ namespace Tito10047\ProgressiveImageBundle\UrlGenerator;
 
 class DefaultResponsiveImageUrlGenerator implements ResponsiveImageUrlGeneratorInterface
 {
+    /**
+     * @param array<string, mixed> $context
+     */
     public function generateUrl(string $path, int $targetW, ?int $targetH, ?string $pointInterest = null, array $context = []): string
     {
         // Simple fallback that just returns the path unchanged — used when no other

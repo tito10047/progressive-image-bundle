@@ -54,7 +54,7 @@ final class FileSystemResolver implements PathResolverInterface
         throw new PathResolutionException(\sprintf('Source image not resolvable "%s" in root path(s) "%s"', $path, implode(':', $this->roots)));
     }
 
-    protected function generateAbsolutePath(string $root, string $path): ?string
+    private function generateAbsolutePath(string $root, string $path): ?string
     {
         if (false !== $absolute = realpath($root.DIRECTORY_SEPARATOR.$path)) {
             return $absolute;

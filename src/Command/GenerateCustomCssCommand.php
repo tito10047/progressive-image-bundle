@@ -93,6 +93,7 @@ class GenerateCustomCssCommand extends Command
             if ($mediaLayouts[$a]['min_viewport'] === $mediaLayouts[$b]['min_viewport']) {
                 return 0;
             }
+
             return $mediaLayouts[$a]['min_viewport'] < $mediaLayouts[$b]['min_viewport'] ? -1 : 1;
         });
 
@@ -107,6 +108,7 @@ class GenerateCustomCssCommand extends Command
             if ($sortedLayouts[$a]['min_viewport'] === $sortedLayouts[$b]['min_viewport']) {
                 return strcmp($b, $a);
             }
+
             return $sortedLayouts[$a]['min_viewport'] > $sortedLayouts[$b]['min_viewport'] ? -1 : 1;
         });
 
@@ -137,12 +139,12 @@ class GenerateCustomCssCommand extends Command
                 $content .= "\t\t}\n";
                 $content .= "\t}\n\n";
 
-                $i++;
+                ++$i;
                 continue;
             }
 
             if (0 === $layout['min_viewport']) {
-                $i++;
+                ++$i;
                 continue;
             }
 
@@ -161,7 +163,7 @@ class GenerateCustomCssCommand extends Command
             $content .= "\t\t}\n";
             $content .= "\t}\n\n";
 
-            $i++;
+            ++$i;
         }
         $content .= "}\n\n";
 
@@ -182,6 +184,7 @@ class GenerateCustomCssCommand extends Command
             if ($filteredLayouts[$a]['min_viewport'] === $filteredLayouts[$b]['min_viewport']) {
                 return strcmp($b, $a);
             }
+
             return $filteredLayouts[$a]['min_viewport'] > $filteredLayouts[$b]['min_viewport'] ? -1 : 1;
         });
 

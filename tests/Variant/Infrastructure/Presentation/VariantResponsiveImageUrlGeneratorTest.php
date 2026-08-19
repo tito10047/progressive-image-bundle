@@ -54,8 +54,8 @@ final class VariantResponsiveImageUrlGeneratorTest extends TestCase
     }
 
     /**
-     * @param list<string>          $negotiateFormats
-     * @param array<string, int>    $qualityByFormat
+     * @param list<string>       $negotiateFormats
+     * @param array<string, int> $qualityByFormat
      */
     private function makeGenerator(
         SourceReader $sourceReader,

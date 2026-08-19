@@ -29,10 +29,10 @@ final class ResponsiveAttributeGenerator
      *      }>,
      *      columns: int
      *      } $gridConfig
-     * @param array<string, string> $ratioConfig
-     * @param int[]                 $retinaMultipliers
-     * @param array<string, array{mime: string, quality: int|null}> $pictureFormats formats rendered as extra
-     *                                                                              <picture><source type="..."> candidates, most preferred first
+     * @param array<string, string>                                 $ratioConfig
+     * @param int[]                                                 $retinaMultipliers
+     * @param array<string, array{mime: string, quality: int|null}> $pictureFormats    formats rendered as extra
+     *                                                                                 <picture><source type="..."> candidates, most preferred first
      */
     public function __construct(
         private array $gridConfig,

@@ -27,15 +27,7 @@ final readonly class CropBox
     public static function within(int $startX, int $startY, Dimensions $size, Dimensions $bounds): self
     {
         if ($startX + $size->width > $bounds->width || $startY + $size->height > $bounds->height) {
-            throw new InvalidFilterDefinition(sprintf(
-                'CropBox [%d,%d %dx%d] does not fit within bounds %dx%d.',
-                $startX,
-                $startY,
-                $size->width,
-                $size->height,
-                $bounds->width,
-                $bounds->height
-            ));
+            throw new InvalidFilterDefinition(sprintf('CropBox [%d,%d %dx%d] does not fit within bounds %dx%d.', $startX, $startY, $size->width, $size->height, $bounds->width, $bounds->height));
         }
 
         return new self($startX, $startY, $size);

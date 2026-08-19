@@ -38,12 +38,7 @@ final class ValidatePostProcessorBinariesPass implements CompilerPassInterface
 
             $bin = $container->getParameter($binParam);
             if (!is_string($bin) || !$this->isResolvable($bin, $finder)) {
-                throw new \LogicException(sprintf(
-                    'progressive_image.post_processors.%s is enabled but its binary "%s" could not be found. Install it or set post_processors.%s.enabled to false.',
-                    $name,
-                    is_string($bin) ? $bin : get_debug_type($bin),
-                    $name
-                ));
+                throw new \LogicException(sprintf('progressive_image.post_processors.%s is enabled but its binary "%s" could not be found. Install it or set post_processors.%s.enabled to false.', $name, is_string($bin) ? $bin : get_debug_type($bin), $name));
             }
         }
     }

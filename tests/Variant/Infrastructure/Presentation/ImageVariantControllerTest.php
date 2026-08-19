@@ -30,7 +30,6 @@ use Tito10047\ProgressiveImageBundle\Variant\Application\Service\FilterSetRegist
 use Tito10047\ProgressiveImageBundle\Variant\Application\Service\VariantSpecFactory;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Dimensions;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\GeneratedImage;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourceImage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Variant;

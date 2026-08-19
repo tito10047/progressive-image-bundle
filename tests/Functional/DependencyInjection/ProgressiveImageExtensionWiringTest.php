@@ -207,7 +207,7 @@ class ProgressiveImageExtensionWiringTest extends PGITestCase
                     'buses' => ['messenger.bus.default' => null],
                 ],
             ]);
-            $container->register('test.variant_storage.adapter', \League\Flysystem\Local\LocalFilesystemAdapter::class)
+            $container->register('test.variant_storage.adapter', LocalFilesystemAdapter::class)
                 ->setArgument('$location', sys_get_temp_dir());
             $container->register('test.variant_storage', Filesystem::class)
                 ->setArgument('$adapter', new Reference('test.variant_storage.adapter'))

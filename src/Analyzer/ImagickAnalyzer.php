@@ -74,11 +74,7 @@ final class ImagickAnalyzer implements ImageAnalyzerInterface
     private static function assertValidDimensions(int $width, int $height): void
     {
         if ($width < 1 || $height < 1) {
-            throw new ImageProcessingException(sprintf(
-                'Cannot compute pixel data for a degenerate image (width=%d, height=%d).',
-                $width,
-                $height
-            ));
+            throw new ImageProcessingException(sprintf('Cannot compute pixel data for a degenerate image (width=%d, height=%d).', $width, $height));
         }
     }
 }

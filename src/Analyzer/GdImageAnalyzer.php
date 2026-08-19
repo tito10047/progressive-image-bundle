@@ -45,11 +45,7 @@ final class GdImageAnalyzer implements ImageAnalyzerInterface
             restore_error_handler();
         }
         if (false === $image) {
-            throw new ImageProcessingException(sprintf(
-                'GD could not load image from data for path: %s%s',
-                $path,
-                null !== $gdWarning ? ' ('.$gdWarning.')' : ''
-            ));
+            throw new ImageProcessingException(sprintf('GD could not load image from data for path: %s%s', $path, null !== $gdWarning ? ' ('.$gdWarning.')' : ''));
         }
 
         $width = imagesx($image);
@@ -88,11 +84,7 @@ final class GdImageAnalyzer implements ImageAnalyzerInterface
     private static function calculateTargetDimensions(int $width, int $height): array
     {
         if ($width < 1 || $height < 1) {
-            throw new ImageProcessingException(sprintf(
-                'Cannot compute thumbnail dimensions for a degenerate image (width=%d, height=%d).',
-                $width,
-                $height
-            ));
+            throw new ImageProcessingException(sprintf('Cannot compute thumbnail dimensions for a degenerate image (width=%d, height=%d).', $width, $height));
         }
 
         if ($width > $height) {

@@ -22,6 +22,7 @@ use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\InMemoryVariantStorage
 use Tito10047\ProgressiveImageBundle\Tests\Variant\Double\SpyDomainEventBus;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Command\GenerateVariant;
 use Tito10047\ProgressiveImageBundle\Variant\Application\Handler\GenerateVariantHandler;
+use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\SourceNotReadable;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\FilterChain;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Filter\Thumbnail;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Dimensions;
@@ -29,7 +30,6 @@ use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\OutputFormat;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Quality;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourceImage;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\SourcePath;
-use Tito10047\ProgressiveImageBundle\Variant\Domain\Exception\SourceNotReadable;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\Variant;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Model\VariantSpec;
 use Tito10047\ProgressiveImageBundle\Variant\Domain\Port\SourceReader;

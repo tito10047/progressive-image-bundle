@@ -58,6 +58,9 @@
         "public-dir": "./tests/App/AssetMapper/public",
         "symfony": {
             "require": "6.4.*"
+        },
+        "branch-alias": {
+            "dev-main": "2.0.x-dev"
         }
     },
     "scripts" : {

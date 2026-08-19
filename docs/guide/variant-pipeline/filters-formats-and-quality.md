@@ -55,19 +55,98 @@ constructs the registry during container compilation), so a broken config breaks
 
 ## Available filters
 
-| Filter | Options | Notes |
-|:--|:--|:--|
-| `thumbnail` | `size: [w, h]`, `mode: outbound\|inset` | `outbound` crops to exactly fill the box; `inset` fits within it. |
-| `crop` | `size: [w, h]`, `start: [x, y]` (default `[0, 0]`) | Crops a fixed box. `start`/`size` accept either a `[a, b]` list or `{x:.., y:..}` / `{width:.., height:..}`. |
-| `resize` | `size: [w, h]` | Plain resize, no cropping. |
-| `rotate` | `angle: <int degrees>` | Normalized into `[0, 360)`. |
-| `background` | `color: '#rrggbb'` or `'#rrggbbaa'` | Fills transparent areas. |
-| `watermark` | `image: <path>`, `position: top_left\|top_right\|top\|bottom_left\|bottom_right\|bottom\|center` (default `center`), `opacity: 0-100` (default `100`) | `image` is resolved the same way as any other source path. |
-| `grayscale` | none | Removes color information. |
-| `negative` | none | Inverts colors. |
-| `auto_rotate` | none | Rotates upright according to EXIF orientation, then discards the tag. |
-| `paste` | `image: <path>`, `x: <int>` (default `0`), `y: <int>` (default `0`) | Pastes another source at an absolute offset from the top-left corner — unlike `watermark`, no alignment/opacity, just a fixed position. |
-| `relative_resize` | `width_percent: <float>`, `height_percent: <float>` (at least one required) | Scales relative to the image's dimensions **at that point in the filter chain**, not the original source — e.g. after a `thumbnail`, `relative_resize` scales the already-thumbnailed size. `50` halves it, `150` grows it by 50%. |
+Each block below is a ready-to-copy `filters` entry for a `filter_sets.<name>` definition.
+
+**`thumbnail`** — `outbound` crops to exactly fill the box; `inset` fits within it.
+
+```yaml
+filters:
+    thumbnail: { size: [400, 400], mode: outbound } # mode: outbound | inset
+```
+
+**`crop`** — crops a fixed box. `start`/`size` accept either a `[a, b]` list or
+`{x: .., y: ..}` / `{width: .., height: ..}`.
+
+```yaml
+filters:
+    crop:
+        size: [400, 400]
+        start: [0, 0] # default [0, 0]
+```
+
+**`resize`** — plain resize, no cropping.
+
+```yaml
+filters:
+    resize: { size: [400, 400] }
+```
+
+**`rotate`** — angle is normalized into `[0, 360)`.
+
+```yaml
+filters:
+    rotate: { angle: 90 }
+```
+
+**`background`** — fills transparent areas.
+
+```yaml
+filters:
+    background: { color: '#ffffff' } # or '#rrggbbaa'
+```
+
+**`watermark`** — `image` is resolved the same way as any other source path.
+
+```yaml
+filters:
+    watermark:
+        image: 'images/watermark.png'
+        position: bottom_right # default: center
+        opacity: 70             # default: 100
+```
+
+**`grayscale`** — removes color information, no options.
+
+```yaml
+filters:
+    grayscale: ~
+```
+
+**`negative`** — inverts colors, no options.
+
+```yaml
+filters:
+    negative: ~
+```
+
+**`auto_rotate`** — rotates upright according to EXIF orientation, then discards the tag, no
+options.
+
+```yaml
+filters:
+    auto_rotate: ~
+```
+
+**`paste`** — pastes another source at an absolute offset from the top-left corner — unlike
+`watermark`, no alignment/opacity, just a fixed position.
+
+```yaml
+filters:
+    paste:
+        image: 'images/logo.png'
+        x: 10 # default: 0
+        y: 10 # default: 0
+```
+
+**`relative_resize`** — scales relative to the image's dimensions **at that point in the
+filter chain**, not the original source — e.g. after a `thumbnail`, `relative_resize` scales
+the already-thumbnailed size. `50` halves it, `150` grows it by 50%. At least one of the two
+options is required.
+
+```yaml
+filters:
+    relative_resize: { width_percent: 50, height_percent: 50 }
+```
 
 Every filter's `canonical()` representation feeds directly into `VariantIdHasher` — two
 specs that produce different `canonical()` output always get different `VariantId`s and

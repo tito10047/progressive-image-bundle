@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, shallowRef, onMounted } from 'vue';
+import { codeToHtml } from 'shiki';
 
 const tabs = [
   {
@@ -39,6 +40,28 @@ progressive_image:
 ];
 
 const active = ref(tabs[0].key);
+const highlighted = shallowRef<Record<string, string>>({});
+
+onMounted(async () => {
+  const entries = await Promise.all(
+    tabs.map(async (tab) => {
+      const html = await codeToHtml(tab.code, {
+        lang: tab.lang,
+        themes: { light: 'github-light', dark: 'github-dark' },
+        transformers: [
+          {
+            pre(node) {
+              node.properties.class = `${node.properties.class ?? ''} vp-code`.trim();
+              delete node.properties.style;
+            },
+          },
+        ],
+      });
+      return [tab.key, html] as const;
+    }),
+  );
+  highlighted.value = Object.fromEntries(entries);
+});
 </script>
 
 <template>
@@ -61,7 +84,8 @@ const active = ref(tabs[0].key);
       </div>
 
       <div v-for="tab in tabs" :key="tab.key" v-show="active === tab.key">
-        <div class="language-block">
+        <div v-if="highlighted[tab.key]" class="language-block" v-html="highlighted[tab.key]" />
+        <div v-else class="language-block">
           <pre><code>{{ tab.code }}</code></pre>
         </div>
       </div>

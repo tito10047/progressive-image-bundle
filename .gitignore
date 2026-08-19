@@ -10,3 +10,4 @@ composer.lock
 /docs/node_modules/
 /docs/.vitepress/cache/
 /docs/.vitepress/dist/
+/tests_e2e/last-failure.html

@@ -17,8 +17,14 @@ Encore / bundler-based frontend, since it only needs a working
 composer require tito10047/progressive-image-bundle
 ```
 
-There's no published Symfony Flex recipe yet, so `composer require` won't auto-configure
-anything — register the bundle and import its routing manually, both shown below.
+That's it. The bundle ships a [Symfony Flex recipe](https://github.com/symfony/recipes-contrib),
+so on a Flex-enabled project (any app created via `composer create-project symfony/skeleton`
+or `symfony new`) `composer require` already registers the bundle, imports its routing, and
+drops a starter `config/packages/progressive_image.yaml` — including an AssetMapper-aware
+resolver chain if `symfony/asset-mapper` is installed. Skip to
+[step 3](#3-configure-a-tagged-cache-pool-optional-but-recommended).
+
+## 2. Not using Flex? Register and import manually
 
 ```php
 // config/bundles.php
@@ -27,8 +33,6 @@ return [
     Tito10047\ProgressiveImageBundle\ProgressiveImageBundle::class => ['all' => true],
 ];
 ```
-
-## 2. Import the routing
 
 The bundle exposes two routes: `pgi_variant_serve`, used to serve a variant that is still
 pending generation and as an nginx `try_files` fallback target (see
@@ -59,6 +63,11 @@ framework:
 ```
 
 ## 4. Configure the bundle
+
+> **Installed via Flex?** Step 1 already dropped a working
+> `config/packages/progressive_image.yaml` for you — this section is for reviewing or
+> adjusting it (e.g. picking a different `variant_store.storage`), not writing it from
+> scratch.
 
 At minimum, decide **how images get resolved from a Twig `src` string to a real file**
 (a `resolvers` entry) and, if you want the bundle to actually generate resized files
@@ -96,6 +105,10 @@ See the full [Configuration Reference](/guide/configuration-reference) for every
 and its default.
 
 ## 5. Generate the responsive CSS
+
+> **Installed via Flex?** The recipe already ran this for you once (via a
+> `composer-scripts` hook) and imported the result into `assets/app.js`. You only need to
+> re-run it yourself after changing `responsive_strategy`.
 
 The bundle communicates each breakpoint's target width to the browser via CSS custom
 properties. Generate the stylesheet once (re-run whenever you change breakpoints):
@@ -142,38 +155,6 @@ breakpoint, and (if `variant_store.storage` is configured) generates every requi
 first request — a `<picture>` element with the correct `srcset`/`sizes` is rendered
 immediately, and subsequent requests are served straight from storage. See
 [The Twig Component](/guide/twig-component) for every available attribute.
-
-## For maintainers: what a Flex recipe would look like
-
-Symfony Flex recipes live in the separate
-[`symfony/recipes-contrib`](https://github.com/symfony/recipes-contrib) repository (not
-inside this one) as a PR adding `tito10047/progressive-image-bundle/<version>/`, with:
-
-- `manifest.json`:
-  ```json
-  {
-      "bundles": {
-          "Tito10047\\ProgressiveImageBundle\\ProgressiveImageBundle": ["all"]
-      },
-      "copy-from-recipe": {
-          "config/": "%CONFIG_DIR%/"
-      }
-  }
-  ```
-- `config/packages/progressive_image.yaml` — a minimal starter config (at least one
-  `resolvers` entry, since that's required):
-  ```yaml
-  progressive_image:
-      resolvers:
-          default:
-              type: filesystem
-              roots: ['%kernel.project_dir%/public']
-  ```
-- `config/routes/progressive_image.yaml` — importing this bundle's `config/routes.php`,
-  the same snippet shown in step 2 above.
-
-This automates exactly the two manual steps above for anyone using Flex; until it's
-submitted and merged, follow steps 1–2 as written.
 
 ## What's next?
 

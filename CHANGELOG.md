@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `symfony/ux-twig-component` is now `^2.31|^3.0`. It was pinned to `^2.31`, so
+  installing this bundle held the whole application on Symfony UX 2 — including
+  `ux-live-component`, which is what a UI built on Live Components runs on. No
+  source change was needed: the full suite passes unmodified against both
+  ux-twig-component 2.36 and 3.5, the constraint was simply narrower than the
+  code.
+
+### Added
+
+- A CI job, *Tests (Symfony UX 2.x)*, that pins Symfony UX back to 2.x. Every
+  other job resolves to the highest version, so without it the 2.x half of the
+  supported range silently stops being tested.
+
 ## [2.0.0-rc1] - 2026-08-16 [BC BREAK]
 
 A from-scratch DDD rewrite of the Variant pipeline. First public release candidate —
